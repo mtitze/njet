@@ -86,7 +86,14 @@ class jet:
         self.order = n
         
     def __str__(self):
-        return f'{self.order}-jet({self.get_array()})'
+        outstr = ''
+        for e in self.get_array():
+            if not isinstance(e, type(self)):
+                outstr += e.__str__()
+            else:
+                outstr += str(e)
+            outstr += ', '
+        return f'{self.order}-jet({outstr[:-2]})'
 
     def _repr_html_(self):
         return f'<samp>{self.__str__()}</samp>'
