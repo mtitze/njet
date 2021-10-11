@@ -17,26 +17,6 @@
 '''
 
 from .functions import exp, log
-from .jet import jet as jet_source
+from .ad import jet, derive
 from .poly import polynom
 
-class jet(jet_source):    
-    def __pow__(self, other):
-        if not isinstance(other, jet):
-            other = jet(value=other) # n.b. convert from ad.py would convert to 'jet_source', not jet'.
-
-        if other.order == 0:
-            result = jet_source.__pow__(self, other)
-        else:
-            '''
-            General exponentiation, using exp and log functions.
-            '''
-            result = exp(other*log(self))
-            result.graph = [(2, '**'), self.graph, other.graph]
-        return result
-    
-    def __rpow__(self, other):
-        if not isinstance(other, jet):
-            other = jet(value=other) # n.b. convert from ad.py would convert to 'jet_source', not jet'.
-        return other**self
-    
