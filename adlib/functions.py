@@ -19,7 +19,7 @@
 
 # Collection of elementary functions whose derivatives are known as close expressions up to any order.
 
-from .ad import jet
+from .jet import jet
 
 import numpy as np
 import sympy

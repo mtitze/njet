@@ -16,18 +16,22 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
-def factorial(n):
+def factorials(n):
     k = 1
+    facts = [1]
     for j in range(1, n + 1):
         k *= j
-    return k
+        facts.append(k)
+    return facts
 
-def n_over_k(n, k):
-    return factorial(n)//(factorial(k)*factorial(n - k))
+def n_over_ks(n):
+    facts = factorials(n)
+    return [[facts[j]//(facts[k]*facts[j - k]) for k in range(j + 1)] for j in range(len(facts))]
 
-def general_leibnitz_rule(f1, f2):
-    n = len(f1) - 1 # len(f1): number of summands
-    return sum([n_over_k(n, k)*f1[n - k]*f2[k] for k in range(n + 1)])
+def general_leibnitz_rules(f1, f2):
+    nmax = len(f1) - 1 # len(f1): max number of summands
+    nok = n_over_ks(nmax)
+    return [sum([nok[n][k]*f1[n - k]*f2[k] for k in range(n + 1)]) for n in range(nmax + 1)]
 
 def faa_di_bruno(f, g):
     '''
@@ -55,9 +59,10 @@ def bell_polynomials(n, z):
     assert len(z) == n
     B = {}
     B[(0, 0)] = 1.0
+    nok = n_over_ks(n)
     for jn in range(n + 1):
         for jk in range(1, jn + 1):
-            B[(jn, jk)] = sum([n_over_k(jn - 1, m - 1)*z[m - 1]*B.get((jn - m, jk - 1), 0) for m in range(1, jn - jk + 2)])
+            B[(jn, jk)] = sum([nok[jn - 1][m - 1]*z[m - 1]*B.get((jn - m, jk - 1), 0) for m in range(1, jn - jk + 2)])
     return B
 
     
@@ -126,7 +131,9 @@ class jet:
         result = jet(n=max_order, graph=[(2, '*'), self.graph, other.graph])
         # compute the derivatives      
         f1, f2 = self.get_array(n=max_order), other.get_array(n=max_order)
-        result.array = lambda k: general_leibnitz_rule(f1[:k + 1], f2[:k + 1]) if k <= max_order else 0
+        glr = general_leibnitz_rules(f1, f2)
+        result.array = lambda n: glr[n] if n <= max_order else 0
+        # result.array = lambda k: general_leibnitz_rule(f1[:k + 1], f2[:k + 1]) if k <= max_order else 0
         # The next line would work for arbitrary orders, but it is also much slower instead of pre-loading the array:
         # result.array = lambda n: sum([n_over_k(n, k)*self.array(n - k)*other.array(k) for k in range(n + 1)])
         return result
@@ -160,10 +167,11 @@ class jet:
         fp = {}
         fp[(0, 0)] = f**(g - nmax)
         layer = g - nmax + 1
+        nok = n_over_ks(nmax - 1)
         for max_der in range(1, nmax + 1):
             fp[(max_der, 0)] = f**layer
-            for order in range(1, max_der + 1):
-                fp[(max_der, order)] = layer*sum([n_over_k(order - 1, k)*fp[(max_der - 1, order - 1 - k)]*self.array(k + 1) for k in range(order)])
+            for order in range(1, max_der + 1):           
+                fp[(max_der, order)] = layer*sum([nok[order - 1][k]*fp[(max_der - 1, order - 1 - k)]*self.array(k + 1) for k in range(order)])
             layer += 1
         # extract the derivatives
         df = [fp[(nmax, order)] for order in range(0, nmax + 1)] + [0]*n_additional_zeros
@@ -226,7 +234,8 @@ class jet:
         f = self.array(0)
         assert f != 0
 
-        invf = [(-1)**n*factorial(n)/f**(n + 1) for n in range(self.order + 1)]
+        facts = factorials(self.order)
+        invf = [(-1)**n*facts[n]/f**(n + 1) for n in range(self.order + 1)]
         result = self.copy()
         result.set_array(invf)
         result = result.compose(self)
@@ -242,4 +251,5 @@ def convert(other):
         return jet(value=other)
     else:
         return other
+        
     

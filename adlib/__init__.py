@@ -17,7 +17,8 @@
 '''
 
 from .functions import exp, log
-from .ad import jet as jet_source
+from .jet import jet as jet_source
+from .poly import polynom
 
 class jet(jet_source):    
     def __pow__(self, other):
@@ -38,3 +39,4 @@ class jet(jet_source):
         if not isinstance(other, jet):
             other = jet(value=other) # n.b. convert from ad.py would convert to 'jet_source', not jet'.
         return other**self
+    
