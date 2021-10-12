@@ -1,6 +1,6 @@
 # njet: Automatic Differentiation Library
 
-A leightweight AD package, using forward-mode automatic differentiation, in order to determine the
+A lightweight AD package, using forward-mode automatic differentiation, in order to determine the
 higher-order derivatives of a given function in multiple variables.
 
 ## Features
