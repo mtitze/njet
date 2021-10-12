@@ -1,5 +1,7 @@
 '''    
-    AD-Lib: Automatic Differentiation Library
+    njet: A leightweight automatic differentiation library for 
+          higher-order automatic differentiation
+    
     Copyright (C) 2021  Malte Titze
 
     This program is free software: you can redistribute it and/or modify

@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "adlib"
+name = "njet"
 version = "0.1.0"
-description = "Leightweight automatic differentiation package"
+description = "Leightweight automatic differentiation package for higher-order differentiation."
 authors = ["Malte Titze <mtitze@users.noreply.github.com>"]
 license = "GPL-3.0-or-later"
 

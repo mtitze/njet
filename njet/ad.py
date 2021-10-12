@@ -1,5 +1,7 @@
 '''    
-    AD-Lib: Automatic Differentiation Library
+    njet: A leightweight automatic differentiation library for 
+          higher-order automatic differentiation
+    
     Copyright (C) 2021  Malte Titze
 
     This program is free software: you can redistribute it and/or modify
@@ -60,13 +62,15 @@ class derive:
         self.order = order
         self._factorials = factorials(self.order)
         
-    def D(self, z):
+    def D(self, z, mult=True):
         '''
         Compute the derivatives of a (jet-)function up to n-th order.
 
         Input
         -----
         z: vector at which the function and its derivatives should be evaluated.
+        mult: (Boolean, default: True) Whether or not to include the factorials C(j1, ..., jm) (see below).
+            If False, then the C*Df's are returned. If True, then the Df's are returned.
 
         Returns
         -------
@@ -74,9 +78,11 @@ class derive:
 
         This multilinear map corresponds to the k-th derivative of func: Let m be the number of 
         arguments of func. Then
-          Df_k(z1, ..., zm) = sum_{j1 + ... + jm = k} Df[j1, ... jm] z1**j1 * ... * zm**jm
+          Df_k(z1, ..., zm) = sum_{j1 + ... + jm = k} C(j1, ..., jm) * Df[j1, ... jm] * z1**j1 * ... * zm**jm
         with
-          Df[j1, ..., jm] := \partial^j1/\partial_{z1}^j1 ... \partial^jm/\partial_{zm}^jm f .
+          Df[j1, ..., jm] := \partial^j1/\partial_{z1}^j1 ... \partial^jm/\partial_{zm}^jm f 
+        and combinatorial factor
+          C(j1, ..., jm) = 1/(j1! * ... * jm!) .
         '''
         # perform the computation, based on the input vector
         inp = []
@@ -94,11 +100,12 @@ class derive:
                 indices = [0]*self.n_args
                 multiplicity = 1
                 for tpl in key:
-                    if tpl == (0, 0): # the (0, 0)-entries correspond to the scalar 1 and will be ignored here
+                    if tpl == (0, 0): # the (0, 0)-entries correspond to the scalar 1 and will be ignored here. TODO: may need to improve this in polynom class.
                         continue
                     index, power = tpl
                     indices[index] = power
-                    multiplicity *= self._factorials[power]
+                    if mult:
+                        multiplicity *= self._factorials[power]
                 Df[tuple(indices)] = value/multiplicity
                 
         self._Df = Df
@@ -116,7 +123,8 @@ class derive:
         D = kwargs.get('Df', self._Df)
         return {j: D[j] for j in D.keys() if sum(j) == k}
     
-    def convert_indices(self, list_of_tuples):
+    @staticmethod
+    def convert_indices(list_of_tuples):
         l1g = [[tpl[j]*[j] for j in range(len(tpl))] for tpl in list_of_tuples]
         return [tuple(e for subl in l1 for e in subl) for l1 in l1g] # flatten l1 and return list of converted tuples
     
