@@ -23,7 +23,7 @@ pip install njet
 
 An example function we want to differentiate
 ```python
-from njet.functions exp
+from njet.functions import exp
 xmpl = lambda x, y, z: exp(-0.23*x**2 - 0.33*x*y - 0.11*z**2)
 ```
 
