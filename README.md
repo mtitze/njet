@@ -16,7 +16,7 @@ It is recommended to perform the installation inside a virtual environment.
 Install this module with pip
 
 ```sh
-pip install -U git+https://github.com/mtitze/njet.git
+pip install njet
 ```
 
 ## Quickstart
