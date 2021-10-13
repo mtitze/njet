@@ -2,18 +2,26 @@ class polynom:
     '''
     Implementation of a polynom with arbitrary number of variables.
     
-    The information of the coefficients is stored in self.values in form of a dictionary.
+    The information of the coefficients is stored internally as dictionary in 
+    the 'values' field.
+
+    A polynomial p can be initiated with a value v and (optional) its index (describing
+    the variable) and power n so that overall p = v*x_i**n. A general polynomial in several
+    variables can then be constructed by successive addition and multiplication of different 
+    classes with each other.
     
     Example
     -------    
-    self.values = {frozenset({(0, 1)}): 11,
-                   frozenset({(0, 4), (1, 22), (13, 1)}): 89,
-                   frozenset({(4, 9), (7, 2), (12, 33)}): -0.22}
+    | self.values = {
+    | frozenset({(0, 1)}): 11,
+    | frozenset({(0, 4), (1, 22), (13, 1)}): 89,
+    | frozenset({(4, 9), (7, 2), (12, 33)}): -0.22
+    | }
     
-    The interpretation is:
-    11*x0**1 +
-    89*x0**4*x1**22*x13**1 +
-    -0.22*x4**9*x7**2*x12**33
+    | The interpretation is:
+    | 11*x0**1 +
+    | 89*x0**4*x1**22*x13**1 +
+    | -0.22*x4**9*x7**2*x12**33
     '''
     def __init__(self, value=0, index: int=0, power: int=0, **kwargs):
         self.values = kwargs.get('values', {frozenset([(index, power)]): value})

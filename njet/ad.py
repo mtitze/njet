@@ -58,7 +58,7 @@ class derive:
 
         Returns
         -------
-        Df: dict
+        dict
             Dictionary of compontens of the multivariate Taylor expansion of the given function self.func:
 
             Let m be the number of arguments of self.func. 
@@ -111,7 +111,7 @@ class derive:
             
         Returns
         -------
-        Dfk: dict
+        dict
             The components of the k-th derivative of self.func.
         '''
         assert k <= self.order
@@ -131,7 +131,7 @@ class derive:
         
         Returns
         -------
-        list_of_indices: list
+        list
             List of tuples denoting the indices of a multilinear map.
         
         Example
@@ -161,7 +161,7 @@ class derive:
         
         Returns
         -------
-        tensor: dict
+        dict
             Dictionary representing non-zero components of the tensor which describes the multivariate 
             Taylor map of order k.
             Only values unequal to zero will be stored, and only one member for each set of entries
@@ -183,7 +183,7 @@ class derive:
             
         Returns
         -------
-        grad: dict
+        dict
             Dictionary containing the components of the gradient.
         '''
         return self.build_tensor(k=1, **kwargs)
@@ -199,7 +199,7 @@ class derive:
             
         Returns
         -------
-        grad: dict
+        dict
             Dictionary containing the components of the Hessian.
         '''
         return self.build_tensor(k=2, **kwargs)

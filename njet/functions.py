@@ -16,6 +16,17 @@ def detect_code(x):
     return code
 
 def sin(x, **kwargs):
+    '''
+    Compute the sin of a jet.
+
+    Parameters
+    ----------
+    x: jet
+
+    Returns
+    -------
+    jet
+    '''
     x0 = x.array(0)
     code = kwargs.get('code', detect_code(x0))
     s = code.sin(x0)
@@ -27,6 +38,17 @@ def sin(x, **kwargs):
     return result.compose(x)
 
 def exp(x, **kwargs):
+    '''
+    Compute the exponential of a jet.
+
+    Parameters
+    ----------
+    x: jet
+
+    Returns
+    -------
+    jet
+    '''
     x0 = x.array(0)
     code = kwargs.get('code', detect_code(x0))
     e = code.exp(x0)
@@ -37,6 +59,17 @@ def exp(x, **kwargs):
     return result.compose(x)
 
 def log(x, **kwargs):
+    '''
+    Compute the natural logarithm of a jet.
+
+    Parameters
+    ----------
+    x: jet
+
+    Returns
+    -------
+    jet
+    '''
     x0 = x.array(0)
     code = kwargs.get('code', detect_code(x0))
     ln = code.log(x0)

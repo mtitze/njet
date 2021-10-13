@@ -30,7 +30,7 @@ def general_leibnitz_rule(f1, f2):
         
     Returns
     -------
-    df1f2: list
+    list
         List containing the values (f1*f2)^k for k = 0, ..., n - 1.
     '''
     nmax = len(f1) - 1 # len(f1): max number of summands
@@ -70,6 +70,18 @@ def faa_di_bruno(f, g):
 def bell_polynomials(n: int, z):
     '''
     Compute the incomplete exponential Bell polynomials B(n, k, [z1, ..., z(n - k + 1)]) for all 1 <= k <= n.
+
+    Parameters
+    ----------
+    n: int
+        The maximal order to which the Bell polynomials should be computed.
+    z: subscriptable
+        List of values at which the Bell polynomials are supposed to be evaluated. Note that it must hold: len(z) == n.
+
+    Returns
+    -------
+    bp: dict
+        dict of Bell polynomials up to the given order n. Its keys denote the indices (n, k) of the polynomials.
     '''
     assert len(z) == n
     B = {}

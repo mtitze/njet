@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The n-jet class &mdash; njet 0.1.2 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Implemented functions" href="functions.html" />
+    <link rel="prev" title="Automatic differentiation" href="ad.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> njet
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="README.html">njet: Lightweight automatic differentiation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ad.html">Automatic differentiation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">The n-jet class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="functions.html">Implemented functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="poly.html">Polynoms</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">njet</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>The n-jet class</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/jet.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="the-n-jet-class">
+<h1>The n-jet class<a class="headerlink" href="#the-n-jet-class" title="Permalink to this headline"></a></h1>
+<p>The n-jet class is the fundamental object by which higher-order derivatives are computed. We import the class via</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">njet</span> <span class="kn">import</span> <span class="n">jet</span>
+</pre></div>
+</div>
+<p>We can then create an n-jet via</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>  <span class="n">j1</span> <span class="o">=</span> <span class="n">jet</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+  <span class="n">j1</span>
+<span class="o">&gt;</span> <span class="mi">5</span><span class="o">-</span><span class="n">jet</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In this example we have generated a jet of order 5, having value 3 and value 1 as it first derivative. The order defines the number of derivatives which should be displayed. Since this jet has a non-zero first order derivative, this jet corresponds to a variable, while a jet of the form</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>  <span class="n">j2</span> <span class="o">=</span> <span class="n">jet</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+  <span class="n">j2</span>
+<span class="o">&gt;</span> <span class="mi">5</span><span class="o">-</span><span class="n">jet</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>corresponds to the scalar 3. These jets can now be used in further operations:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>  <span class="n">j1</span><span class="o">*</span><span class="n">j1</span>
+<span class="o">&gt;</span> <span class="mi">5</span><span class="o">-</span><span class="n">jet</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To better understand what’s going on, we can use Sympy variables:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>  <span class="kn">from</span> <span class="nn">sympy</span> <span class="kn">import</span> <span class="n">Symbol</span>
+  <span class="n">j3</span> <span class="o">=</span> <span class="n">jet</span><span class="p">([</span><span class="n">Symbol</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">),</span> <span class="mi">1</span><span class="p">],</span> <span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+  <span class="n">j3</span><span class="o">**</span><span class="mi">2</span>
+<span class="o">&gt;</span> <span class="mi">5</span><span class="o">-</span><span class="n">jet</span><span class="p">(</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>So we see that the jet <code class="docutils literal notranslate"><span class="pre">j3**2</span></code> has the first and second derivative stored. This also works with several variables, but we have
+to pay attention:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>  <span class="n">j4</span> <span class="o">=</span> <span class="n">jet</span><span class="p">([</span><span class="n">Symbol</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">),</span> <span class="mi">1</span><span class="p">],</span> <span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+  <span class="n">j4</span> <span class="o">-</span> <span class="n">j3</span>
+<span class="o">&gt;</span> <span class="mi">5</span><span class="o">-</span><span class="n">jet</span><span class="p">(</span><span class="o">-</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This will just subtract the first orders and thus we end up with a basic scalar, because the code does not know that we are considering two
+<em>different</em> variables. What we would have to do is this instead:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>  <span class="n">j3</span> <span class="o">=</span> <span class="n">jet</span><span class="p">([</span><span class="n">Symbol</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">),</span> <span class="n">Symbol</span><span class="p">(</span><span class="s1">&#39;dx&#39;</span><span class="p">)],</span> <span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+  <span class="n">j4</span> <span class="o">=</span> <span class="n">jet</span><span class="p">([</span><span class="n">Symbol</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">),</span> <span class="n">Symbol</span><span class="p">(</span><span class="s1">&#39;dy&#39;</span><span class="p">)],</span> <span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+  <span class="n">j4</span> <span class="o">-</span> <span class="n">j3</span>
+<span class="o">&gt;</span> <span class="mi">5</span><span class="o">-</span><span class="n">jet</span><span class="p">(</span><span class="o">-</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">,</span> <span class="o">-</span><span class="n">dx</span> <span class="o">+</span> <span class="n">dy</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now we are ready to go to work with more complicated functions, for example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>  <span class="kn">from</span> <span class="nn">njet.functions</span> <span class="kn">import</span> <span class="n">log</span>
+  <span class="n">log</span><span class="p">(</span><span class="n">j4</span><span class="p">)</span><span class="o">*</span><span class="n">j3</span>
+<span class="o">&gt;</span> <span class="mi">5</span><span class="o">-</span><span class="n">jet</span><span class="p">(</span><span class="n">x</span><span class="o">*</span><span class="n">log</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">dx</span><span class="o">*</span><span class="n">log</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1.0</span><span class="o">*</span><span class="n">dy</span><span class="o">*</span><span class="n">x</span><span class="o">/</span><span class="n">y</span><span class="p">,</span> <span class="mf">2.0</span><span class="o">*</span><span class="n">dx</span><span class="o">*</span><span class="n">dy</span><span class="o">/</span><span class="n">y</span> <span class="o">-</span> <span class="mf">1.0</span><span class="o">*</span><span class="n">dy</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="o">/</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.0</span><span class="o">*</span><span class="n">dx</span><span class="o">*</span><span class="n">dy</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">2.0</span><span class="o">*</span><span class="n">dy</span><span class="o">**</span><span class="mi">3</span><span class="o">*</span><span class="n">x</span><span class="o">/</span><span class="n">y</span><span class="o">**</span><span class="mi">3</span><span class="p">,</span> <span class="mf">8.0</span><span class="o">*</span><span class="n">dx</span><span class="o">*</span><span class="n">dy</span><span class="o">**</span><span class="mi">3</span><span class="o">/</span><span class="n">y</span><span class="o">**</span><span class="mi">3</span> <span class="o">-</span> <span class="mf">6.0</span><span class="o">*</span><span class="n">dy</span><span class="o">**</span><span class="mi">4</span><span class="o">*</span><span class="n">x</span><span class="o">/</span><span class="n">y</span><span class="o">**</span><span class="mi">4</span><span class="p">,</span> <span class="o">-</span><span class="mf">30.0</span><span class="o">*</span><span class="n">dx</span><span class="o">*</span><span class="n">dy</span><span class="o">**</span><span class="mi">4</span><span class="o">/</span><span class="n">y</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> <span class="mf">24.0</span><span class="o">*</span><span class="n">dy</span><span class="o">**</span><span class="mi">5</span><span class="o">*</span><span class="n">x</span><span class="o">/</span><span class="n">y</span><span class="o">**</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In particular, we can get the higher-order derivatives at specific points by using symbols for the first derivatives</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>  <span class="n">point</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+  <span class="n">j3a</span> <span class="o">=</span> <span class="n">jet</span><span class="p">([</span><span class="n">point</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Symbol</span><span class="p">(</span><span class="s1">&#39;dx&#39;</span><span class="p">)],</span> <span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+  <span class="n">j4a</span> <span class="o">=</span> <span class="n">jet</span><span class="p">([</span><span class="n">point</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">Symbol</span><span class="p">(</span><span class="s1">&#39;dy&#39;</span><span class="p">)],</span> <span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+  <span class="n">j3a</span><span class="o">*</span><span class="n">j4a</span><span class="o">**</span><span class="mi">2</span>
+<span class="o">&gt;</span> <span class="mi">5</span><span class="o">-</span><span class="n">jet</span><span class="p">(</span><span class="mi">18</span><span class="p">,</span> <span class="mi">9</span><span class="o">*</span><span class="n">dx</span> <span class="o">+</span> <span class="mi">12</span><span class="o">*</span><span class="n">dy</span><span class="p">,</span> <span class="mi">12</span><span class="o">*</span><span class="n">dx</span><span class="o">*</span><span class="n">dy</span> <span class="o">+</span> <span class="mi">4</span><span class="o">*</span><span class="n">dy</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="o">*</span><span class="n">dx</span><span class="o">*</span><span class="n">dy</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>and taking into account the corresponding multiplicities.</p>
+<p>Internally, <em>njet</em> will however not work with SymPy Symbols, but has its own class <em>polynom</em> which is taylored specificially for the task
+to obtain the higher-order derivatives.</p>
+<p>There is also NumPy support:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>  <span class="n">jnp</span> <span class="o">=</span> <span class="n">jet</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">2.1</span><span class="p">,</span> <span class="mf">3.47</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">4.3</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.2</span><span class="p">])],</span> <span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+  <span class="n">jnp</span>
+<span class="o">&gt;</span> <span class="mi">5</span><span class="o">-</span><span class="n">jet</span><span class="p">([</span><span class="mf">2.1</span> <span class="mf">3.47</span><span class="p">],</span> <span class="p">[</span> <span class="mf">4.3</span> <span class="o">-</span><span class="mf">1.2</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+  <span class="n">jnp</span><span class="o">**</span><span class="mi">2</span>
+<span class="o">&gt;</span> <span class="mi">5</span><span class="o">-</span><span class="n">jet</span><span class="p">([</span> <span class="mf">4.41</span> <span class="mf">12.0409</span><span class="p">],</span> <span class="p">[</span><span class="mf">18.06</span> <span class="o">-</span><span class="mf">8.328</span><span class="p">],</span> <span class="p">[</span><span class="mf">36.98</span> <span class="mf">2.88</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In the following we list some of the functionality in the jet class:</p>
+<span class="target" id="module-njet.jet"></span><dl class="py function">
+<dt class="sig sig-object py" id="njet.jet.bell_polynomials">
+<span class="sig-prename descclassname"><span class="pre">njet.jet.</span></span><span class="sig-name descname"><span class="pre">bell_polynomials</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#njet.jet.bell_polynomials" title="Permalink to this definition"></a></dt>
+<dd><p>Compute the incomplete exponential Bell polynomials B(n, k, [z1, …, z(n - k + 1)]) for all 1 &lt;= k &lt;= n.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<em>int</em>) – The maximal order to which the Bell polynomials should be computed.</p></li>
+<li><p><strong>z</strong> (<em>subscriptable</em>) – List of values at which the Bell polynomials are supposed to be evaluated. Note that it must hold: len(z) == n.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>bp</strong> – dict of Bell polynomials up to the given order n. Its keys denote the indices (n, k) of the polynomials.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="njet.jet.faa_di_bruno">
+<span class="sig-prename descclassname"><span class="pre">njet.jet.</span></span><span class="sig-name descname"><span class="pre">faa_di_bruno</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">g</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#njet.jet.faa_di_bruno" title="Permalink to this definition"></a></dt>
+<dd><p>Consider the composition f o g of two functions and for h in [f, g] denote by h^k its k-th derivative. Then
+(f o g)^1 = (f^1 o g) g^1
+(f o g)^2 = (f^2 o g) (g^1)**2 + (f^1 o g) g^2
+(f o g)^3 = … and so on.</p>
+<p>Let F = [f o g, (f^1 o g), (f^2 o g), …] and G = [g, g^1, g^2, …] be given. Then this
+function will compute (f o g)^k up to the given (common) order, i.e. the
+chain rule for the k-th derivative.</p>
+<p>This routine hereby will make use of the equation
+(f^n o g) = sum_(k = 1)^n f^k B(n, k)(g^1, g^2, …, g^(n - k + 1)) ,
+where B(n, k) for n &gt;= k are the incomplete exponential Bell polynomials.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>f</strong> (<em>list</em>) – List containing the values F (see above).</p></li>
+<li><p><strong>g</strong> (<em>list</em>) – List containing the values G (see above).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>dfdg</strong> – List containing the values (f o g)^k for k = 0, …, len(f) - 1.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="njet.jet.general_leibnitz_rule">
+<span class="sig-prename descclassname"><span class="pre">njet.jet.</span></span><span class="sig-name descname"><span class="pre">general_leibnitz_rule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#njet.jet.general_leibnitz_rule" title="Permalink to this definition"></a></dt>
+<dd><p>Compute the higher-order derivatives of the product of two functions f1*f2.
+In the following denote by f^k the k-th derivative of f, evaluated at a specific point.
+It is assumed that len(f1) = len(f2) =: n.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>f1</strong> (<em>list</em>) – List containing the values f1^k for k = 0, …, n - 1.</p></li>
+<li><p><strong>f2</strong> (<em>list</em>) – List containing the values f2^k for k = 0, …, n - 1.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>List containing the values (f1*f2)^k for k = 0, …, n - 1.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ad.html" class="btn btn-neutral float-left" title="Automatic differentiation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="functions.html" class="btn btn-neutral float-right" title="Implemented functions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Malte Titze.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

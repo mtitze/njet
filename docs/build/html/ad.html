@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Automatic differentiation &mdash; njet 0.1.2 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="The n-jet class" href="jet.html" />
+    <link rel="prev" title="njet: Lightweight automatic differentiation" href="README.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> njet
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="README.html">njet: Lightweight automatic differentiation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Automatic differentiation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jet.html">The n-jet class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="functions.html">Implemented functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="poly.html">Polynoms</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">njet</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Automatic differentiation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/ad.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="automatic-differentiation">
+<h1>Automatic differentiation<a class="headerlink" href="#automatic-differentiation" title="Permalink to this headline"></a></h1>
+<p>Automatic (forward-mode) differentiation (AD) is performed here by first
+defining a function as a composition of elementary functions (as shown
+in the introduction).</p>
+<p>There is NumPy and SymPy support. For example, running each
+AD step separately …</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">njet</span> <span class="kn">import</span> <span class="n">derive</span><span class="p">,</span> <span class="n">exp</span>
+
+<span class="n">d2</span> <span class="o">=</span> <span class="n">derive</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y</span><span class="p">),</span> <span class="n">order</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">lin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">lin</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span> <span class="n">d2</span><span class="o">.</span><span class="n">eval</span><span class="p">([</span><span class="mf">2.1</span><span class="p">,</span> <span class="n">e</span><span class="p">])</span> <span class="p">)</span>
+
+<span class="p">{(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="o">-</span><span class="mf">1.0254017892444356</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span> <span class="mf">0.24414328315343706</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="mf">3.818400948519755</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span> <span class="o">-</span><span class="mf">1.0254017892444356</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span> <span class="mf">0.24414328315343706</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span> <span class="mf">3.8184009485197556</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">):</span> <span class="mf">0.24414328315343706</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="o">-</span><span class="mf">11.935676826805235</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span> <span class="o">-</span><span class="mf">1.0254017892444356</span><span class="p">}</span>
+<span class="p">{(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="o">-</span><span class="mf">1.4310634777750424</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span> <span class="mf">0.34072939947024816</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="mf">5.329007807714682</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span> <span class="o">-</span><span class="mf">1.4310634777750424</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span> <span class="mf">0.34072939947024816</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span> <span class="mf">5.329007807714681</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">):</span> <span class="mf">0.34072939947024816</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="o">-</span><span class="mf">16.657578881301497</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span> <span class="o">-</span><span class="mf">1.4310634777750422</span><span class="p">}</span>
+<span class="p">{(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="o">-</span><span class="mf">1.9972099706697595</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span> <span class="mf">0.47552618349279985</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="mf">7.4372295098273895</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span> <span class="o">-</span><span class="mf">1.9972099706697595</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span> <span class="mf">0.47552618349279985</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span> <span class="mf">7.4372295098273895</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">):</span> <span class="mf">0.47552618349279985</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="o">-</span><span class="mf">23.247524058596003</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span> <span class="o">-</span><span class="mf">1.9972099706697595</span><span class="p">}</span>
+<span class="p">{(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="o">-</span><span class="mf">2.7873310505725413</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span> <span class="mf">0.6636502501363193</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="mf">10.379489912132033</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span> <span class="o">-</span><span class="mf">2.7873310505725413</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span> <span class="mf">0.6636502501363193</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span> <span class="mf">10.379489912132033</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">):</span> <span class="mf">0.6636502501363193</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="o">-</span><span class="mf">32.44453342866438</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span> <span class="o">-</span><span class="mf">2.787331050572541</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>… can be speed up by directly passing the Numpy arrays into the code:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">d2</span><span class="o">.</span><span class="n">eval</span><span class="p">([</span><span class="mf">2.1</span><span class="p">,</span> <span class="n">lin</span><span class="p">])</span>
+
+<span class="p">{(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">1.02540179</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.43106348</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.99720997</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.78733105</span><span class="p">]),</span>
+ <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span> <span class="n">array</span><span class="p">([</span><span class="mf">0.24414328</span><span class="p">,</span> <span class="mf">0.3407294</span> <span class="p">,</span> <span class="mf">0.47552618</span><span class="p">,</span> <span class="mf">0.66365025</span><span class="p">]),</span>
+ <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="n">array</span><span class="p">([</span> <span class="mf">3.81840095</span><span class="p">,</span>  <span class="mf">5.32900781</span><span class="p">,</span>  <span class="mf">7.43722951</span><span class="p">,</span> <span class="mf">10.37948991</span><span class="p">]),</span>
+ <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span> <span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">1.02540179</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.43106348</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.99720997</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.78733105</span><span class="p">]),</span>
+ <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span> <span class="n">array</span><span class="p">([</span><span class="mf">0.24414328</span><span class="p">,</span> <span class="mf">0.3407294</span> <span class="p">,</span> <span class="mf">0.47552618</span><span class="p">,</span> <span class="mf">0.66365025</span><span class="p">]),</span>
+ <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span> <span class="n">array</span><span class="p">([</span> <span class="mf">3.81840095</span><span class="p">,</span>  <span class="mf">5.32900781</span><span class="p">,</span>  <span class="mf">7.43722951</span><span class="p">,</span> <span class="mf">10.37948991</span><span class="p">]),</span>
+ <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">):</span> <span class="n">array</span><span class="p">([</span><span class="mf">0.24414328</span><span class="p">,</span> <span class="mf">0.3407294</span> <span class="p">,</span> <span class="mf">0.47552618</span><span class="p">,</span> <span class="mf">0.66365025</span><span class="p">]),</span>
+ <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">11.93567683</span><span class="p">,</span> <span class="o">-</span><span class="mf">16.65757888</span><span class="p">,</span> <span class="o">-</span><span class="mf">23.24752406</span><span class="p">,</span> <span class="o">-</span><span class="mf">32.44453343</span><span class="p">]),</span>
+ <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span> <span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">1.02540179</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.43106348</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.99720997</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.78733105</span><span class="p">])}</span>
+</pre></div>
+</div>
+<p>It is also possible to pass SymPy symbols:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">Sympy</span> <span class="kn">import</span> <span class="n">Symbol</span>
+<span class="n">d2</span><span class="o">.</span><span class="n">eval</span><span class="p">([</span><span class="n">Symbol</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">),</span> <span class="n">Symbol</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">)])</span>
+
+<span class="p">{(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="o">-</span><span class="mf">2.0</span><span class="o">*</span><span class="n">x</span><span class="o">*</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y</span><span class="p">),</span>
+ <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span> <span class="mf">1.0</span><span class="o">*</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y</span><span class="p">),</span>
+ <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="mf">4.0</span><span class="o">*</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y</span><span class="p">)</span> <span class="o">-</span> <span class="mf">2.0</span><span class="o">*</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y</span><span class="p">),</span>
+ <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span> <span class="o">-</span><span class="mf">2.0</span><span class="o">*</span><span class="n">x</span><span class="o">*</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y</span><span class="p">),</span>
+ <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span> <span class="mf">1.0</span><span class="o">*</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y</span><span class="p">),</span>
+ <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span> <span class="mf">4.0</span><span class="o">*</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y</span><span class="p">)</span> <span class="o">-</span> <span class="mf">2.0</span><span class="o">*</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y</span><span class="p">),</span>
+ <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">):</span> <span class="mf">1.0</span><span class="o">*</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y</span><span class="p">),</span>
+ <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="o">-</span><span class="mf">8.0</span><span class="o">*</span><span class="n">x</span><span class="o">**</span><span class="mi">3</span><span class="o">*</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y</span><span class="p">)</span> <span class="o">+</span> <span class="mf">12.0</span><span class="o">*</span><span class="n">x</span><span class="o">*</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y</span><span class="p">),</span>
+ <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span> <span class="o">-</span><span class="mf">2.0</span><span class="o">*</span><span class="n">x</span><span class="o">*</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y</span><span class="p">)}</span>
+</pre></div>
+</div>
+<p>In the following the AD routines are explained in more detail.</p>
+<span class="target" id="module-njet.ad"></span><dl class="py class">
+<dt class="sig sig-object py" id="njet.ad.derive">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">njet.ad.</span></span><span class="sig-name descname"><span class="pre">derive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#njet.ad.derive" title="Permalink to this definition"></a></dt>
+<dd><p>Class to handle the derivatives of a (jet-)function (i.e. a function consisting of a composition
+of elementary functions).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="njet.ad.derive.build_tensor">
+<span class="sig-name descname"><span class="pre">build_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#njet.ad.derive.build_tensor" title="Permalink to this definition"></a></dt>
+<dd><p>Convert the components of the k-th derivative into the entries of a (self.n_args)**k tensor.
+See also self.convert_indices for details.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>k</strong> (<em>int</em>) – The degree of the derivatives to be considered.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Dictionary representing non-zero components of the tensor which describes the multivariate
+Taylor map of order k.
+Only values unequal to zero will be stored, and only one member for each set of entries
+which can be obtained by suitable permutations of the indices.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="njet.ad.derive.convert_indices">
+<em class="property"><span class="pre">static</span> </em><span class="sig-name descname"><span class="pre">convert_indices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">list_of_tuples</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#njet.ad.derive.convert_indices" title="Permalink to this definition"></a></dt>
+<dd><p>Convert a list of tuples denoting the indices in a multivariate Taylor expansion into a list of indices of
+the corresponding multilinear map.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>list_of_tuples</strong> (<em>list</em>) – List of (self.n_args)-tuples denoting the indices in the multivariate Taylor expansion.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>List of tuples denoting the indices of a multilinear map.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>list_of_tuples = [(0, 2, 1, 9), (1, 0, 3, 0)]
+In this example we are looking at indices in the Taylor expansion of a function in 4 variables.
+The first member, (0, 2, 1, 9), corresponds to x0**0*x1**2*x2*x3**9 which belongs to the multilinear map
+of order 0 + 2 + 1 + 9 = 12, the second member to x0*x2**3, belonging to the multilinear map of order
+1 + 3 = 4.
+Hence, these indices will be transformed to tuples of length 12 and 4, respectively:
+(1, 1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3) (variable 1 has power 2, variable 2 has power 1, variable 3 has power 9)
+and
+(0, 2, 2, 2) (variable 0 has power 1, variable 2 has power 3).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="njet.ad.derive.eval">
+<span class="sig-name descname"><span class="pre">eval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mult</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#njet.ad.derive.eval" title="Permalink to this definition"></a></dt>
+<dd><p>Evaluate the derivatives of a (jet-)function at a specific point up to self.order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>z</strong> (<em>subscriptable</em>) – Vector at which the function and its derivatives should be evaluated.</p></li>
+<li><p><strong>mult</strong> (<em>Boolean</em><em>, </em><em>optional</em>) – Whether or not to include the factorials C(j1, …, jm) default: True. (Details see below).
+If False, then the C*Df’s are returned. If True, then the Df’s are returned.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><p>Dictionary of compontens of the multivariate Taylor expansion of the given function self.func:</p>
+<p>Let m be the number of arguments of self.func.
+Then
+Df_k(z1, …, zm) = sum_{j1 + … + jm = k} C(j1, …, jm) * Df[j1, … jm] * z1**j1 * … * zm**jm
+with
+Df[j1, …, jm] := partial^j1/partial_{z1}^j1 … partial^jm/partial_{zm}^jm f (z1, …, zm)
+and combinatorial factor
+C(j1, …, jm) = (j1 + … + jm)!/(j1! * … * jm!) .</p>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="njet.ad.derive.extract">
+<span class="sig-name descname"><span class="pre">extract</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#njet.ad.derive.extract" title="Permalink to this definition"></a></dt>
+<dd><p>Extract the components of the k-th derivative from the output of self.eval.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>k</strong> (<em>int</em>) – The order of the derivatives to extract.</p></li>
+<li><p><strong>Df</strong> (<em>dict</em><em>, </em><em>optional</em>) – The output of self.eval, containing the entries of the derivative. If nothing
+specified, the most recent output will be used.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The components of the k-th derivative of self.func.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="njet.ad.derive.grad">
+<span class="sig-name descname"><span class="pre">grad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#njet.ad.derive.grad" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the gradient of the function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>kwargs</strong> (<em>dict</em>) – Additional arguments passed to self.build_tensor</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Dictionary containing the components of the gradient.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="njet.ad.derive.hess">
+<span class="sig-name descname"><span class="pre">hess</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#njet.ad.derive.hess" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the Hessian of the function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>kwargs</strong> (<em>dict</em>) – Additional arguments passed to self.build_tensor</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Dictionary containing the components of the Hessian.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="njet.ad.jet">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">njet.ad.</span></span><span class="sig-name descname"><span class="pre">jet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#njet.ad.jet" title="Permalink to this definition"></a></dt>
+<dd><p>Class to store and operate with higher-order derivatives of a given function.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="README.html" class="btn btn-neutral float-left" title="njet: Lightweight automatic differentiation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="jet.html" class="btn btn-neutral float-right" title="The n-jet class" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Malte Titze.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
