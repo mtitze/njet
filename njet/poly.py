@@ -38,21 +38,16 @@ class polynom:
     def __add__(self, other):
         if not other.__class__.__name__ == 'polynom':
             other = polynom(other)
-        #new_values = {k: self.values.get(k, 0) + other.values.get(k, 0) for k in set(self.values).union(set(other.values))}
-        
         new_values = {}
         for k in set(self.values).union(set(other.values)):
             new_value = self.values.get(k, 0) + other.values.get(k, 0)
-            if (lambda x: x == 0 if not hasattr(x, '__iter__') else all(x == 0))(new_value): # do not store 0-values
+            if (lambda x: x == 0 if not hasattr(x, '__iter__') else all(x == 0))(new_value): # do not store 0-values; x may be float or numpy array etc.
                 continue
             new_values[k] = new_value
-        
-        #new_values = {x:y for x,y in new_values.items() if y!=0}
         if len(new_values) == 0:
             return polynom(0)
         else:
             return polynom(values=new_values)
-        #return polynom(values={k: self.values.get(k, 0) + other.values.get(k, 0) for k in keys})
     
     def __radd__(self, other):
         other = polynom(other)
@@ -76,11 +71,12 @@ class polynom:
             other = polynom(other)
         pol_prod = {}
         for aj, value1 in self.values.items():
-            e1 = dict(aj)
+            e1 = dict(aj) # e.g. e1 = {0: 0, 1: 5, 2: 3}
             for bk, value2 in other.values.items():
                 value_prod = value1*value2
-                e2 = dict(bk)
-                e_prod = frozenset([(k, e1.get(k, 0) + e2.get(k, 0)) for k in set(e1).union(set(e2))])
+                e2 = dict(bk) # e.g. e2 = {0: 0, 1: 0, 2: 1}
+                e_prod = frozenset([(k, e1.get(k, 0) + e2.get(k, 0)) for k in set(e1).union(set(e2))]) # e.g. e_prod = frozenset([(0, 0), (1, 5), (2, 4)])
+                value_prod += pol_prod.get(e_prod, 0) # account for multiplicity
                 pol_prod[e_prod] = value_prod
         return polynom(values=pol_prod)
     

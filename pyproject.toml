@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "njet"
-version = "0.1.1"
+version = "0.1.2"
 description = "Lightweight automatic differentiation package for higher-order differentiation."
 authors = ["Malte Titze <mtitze@users.noreply.github.com>"]
 license = "GPL-3.0-or-later"

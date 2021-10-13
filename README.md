@@ -6,8 +6,8 @@ higher-order derivatives of a given function in several variables.
 ## Features
 
 - Higher-order forward-mode automatic differentiation with multiple variables.
-- Leightweight and easy to use.
 - Support for Numpy and Sympy.
+- Lightweight and easy to use.
 
 ## Installation
 

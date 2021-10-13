@@ -67,7 +67,7 @@ class derive:
             with
             Df[j1, ..., jm] := \partial^j1/\partial_{z1}^j1 ... \partial^jm/\partial_{zm}^jm f (z1, ..., zm)
             and combinatorial factor
-            C(j1, ..., jm) = 1/(j1! * ... * jm!) .
+            C(j1, ..., jm) = (j1 + ... + jm)!/(j1! * ... * jm!) .
         '''
         # perform the computation, based on the input vector
         inp = []
@@ -89,9 +89,10 @@ class derive:
                         continue
                     index, power = tpl
                     indices[index] = power
-                    if mult:
-                        multiplicity *= self._factorials[power]
-                Df[tuple(indices)] = value/multiplicity
+                    multiplicity *= self._factorials[power]
+                if mult:
+                    value *= multiplicity/self._factorials[sum(indices)]
+                Df[tuple(indices)] = value
                 
         self._Df = Df
         return Df
