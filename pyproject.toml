@@ -15,6 +15,8 @@ sympy = "^1.8"
 
 [tool.poetry.dev-dependencies]
 ipykernel = "^6.4.1"
+myst-parser = "^0.15.2"
+sphinx-rtd-theme = "^1.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
