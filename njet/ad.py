@@ -74,14 +74,14 @@ class derive:
         for k in range(self.n_args):
             jk = jet([z[k], polynom(1, index=k, power=1)], n=self.order)
             inp.append(jk)
-        evaluate = self.func(*inp)
+        evaluation = self.func(*inp)
         
         # extract Df from the result
         Df = {}
         for k in range(1, self.order + 1): # the k-th derivative
-            polynomials_k = evaluate.array(k).values
+            polynomials_k = evaluation.array(k).values
             for key, value in polynomials_k.items(): # loop over the individual polynomials of the k-th derivative
-                # key corresponds to a specific frozenset
+                # key corresponds to a specific frozenset, i.e. some indices and powers of a specific monomial.
                 indices = [0]*self.n_args
                 multiplicity = 1
                 for tpl in key:

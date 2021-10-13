@@ -10,6 +10,11 @@ def n_over_ks(n: int):
     facts = factorials(n)
     return [[facts[j]//(facts[k]*facts[j - k]) for k in range(j + 1)] for j in range(len(facts))]
 
+def sum_by_name(ls, name='polynom'):
+    # sum over the members of a given list so that each member e having e.__class__.__name__ appears on the
+    # left. This can be used to prevent that in case of numpy the new values are numpy.arrays.
+    return sum([e for e in ls if e.__class__.__name__ == name]) + sum([e for e in ls if e.__class__.__name__ != name])
+
 def general_leibnitz_rule(f1, f2):
     '''
     Compute the higher-order derivatives of the product of two functions f1*f2.
@@ -30,8 +35,7 @@ def general_leibnitz_rule(f1, f2):
     '''
     nmax = len(f1) - 1 # len(f1): max number of summands
     nok = n_over_ks(nmax)
-    result = []
-    return [sum([nok[n][k]*f1[n - k]*f2[k] for k in range(n + 1)]) for n in range(nmax + 1)]
+    return [sum_by_name([nok[n][k]*f1[n-k]*f2[k] if f1[n-k].__class__.__name__ == 'polynom' else nok[n][k]*f2[k]*f1[n-k] for k in range(n + 1)]) for n in range(nmax + 1)]
 
 def faa_di_bruno(f, g):
     '''
@@ -61,7 +65,7 @@ def faa_di_bruno(f, g):
         List containing the values (f o g)^k for k = 0, ..., len(f) - 1.
     '''
     bell = bell_polynomials(len(f) - 1, g[1:])
-    return [sum([bell.get((n, k), 0)*f[k] for k in range(len(f))]) for n in range(len(f))] # or with numpy arrays: np.matmul(bell, f)
+    return [sum_by_name([bell.get((n, k), 0)*f[k] for k in range(len(f))]) for n in range(len(f))] # or with numpy arrays: np.matmul(bell, f)
 
 def bell_polynomials(n: int, z):
     '''
@@ -73,7 +77,7 @@ def bell_polynomials(n: int, z):
     nok = n_over_ks(n)
     for jn in range(n + 1):
         for jk in range(1, jn + 1):
-            B[(jn, jk)] = sum([nok[jn - 1][m - 1]*B.get((jn - m, jk - 1), 0)*z[m - 1] for m in range(1, jn - jk + 2)])
+            B[(jn, jk)] = sum_by_name([nok[jn - 1][m - 1]*B.get((jn - m, jk - 1), 0)*z[m - 1] for m in range(1, jn - jk + 2)])
     return B
 
     
@@ -183,7 +187,7 @@ class jet:
         for max_der in range(1, nmax + 1):
             fp[(max_der, 0)] = f**layer
             for order in range(1, max_der + 1):           
-                fp[(max_der, order)] = layer*sum([nok[order - 1][k]*self.array(k + 1)*fp[(max_der - 1, order - 1 - k)] for k in range(order)])
+                fp[(max_der, order)] = layer*sum_by_name([nok[order - 1][k]*self.array(k + 1)*fp[(max_der - 1, order - 1 - k)] for k in range(order)])
             layer += 1
         # extract the derivatives
         df = [fp[(nmax, order)] for order in range(0, nmax + 1)] + [0]*n_additional_zeros

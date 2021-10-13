@@ -5,18 +5,15 @@ class polynom:
     The information of the coefficients is stored in self.values in form of a dictionary.
     
     Example
-    -------
-    bla
-    
-    
-      self.values = {frozenset({(0, 1)}): 11,
+    -------    
+    self.values = {frozenset({(0, 1)}): 11,
                    frozenset({(0, 4), (1, 22), (13, 1)}): 89,
                    frozenset({(4, 9), (7, 2), (12, 33)}): -0.22}
     
-      The interpretation is:
-      11*x0**1 +
-      89*x0**4*x1**22*x13**1 +
-      -0.22*x4**9*x7**2*x12**33
+    The interpretation is:
+    11*x0**1 +
+    89*x0**4*x1**22*x13**1 +
+    -0.22*x4**9*x7**2*x12**33
     '''
     def __init__(self, value=0, index: int=0, power: int=0, **kwargs):
         self.values = kwargs.get('values', {frozenset([(index, power)]): value})
@@ -29,7 +26,7 @@ class polynom:
                 if e[1] == 0: # do not show z**0
                     continue
                 fac += f'x{e[0]}**{e[1]} '
-            outstr += f'{value} {fac} + \n'
+            outstr += f'{value}*{fac} + \n'
         outstr = outstr[:-5]
         outstr += ']'
         return outstr
@@ -39,17 +36,17 @@ class polynom:
         return f'<samp>{outstr}</samp>'
     
     def __add__(self, other):
-        if not isinstance(other, polynom):
+        if not other.__class__.__name__ == 'polynom':
             other = polynom(other)
-        new_values = {k: self.values.get(k, 0) + other.values.get(k, 0) for k in set(self.values).union(set(other.values))}
-        '''
+        #new_values = {k: self.values.get(k, 0) + other.values.get(k, 0) for k in set(self.values).union(set(other.values))}
+        
         new_values = {}
         for k in set(self.values).union(set(other.values)):
             new_value = self.values.get(k, 0) + other.values.get(k, 0)
-            if new_value == 0: # do not store 0-values
+            if (lambda x: x == 0 if not hasattr(x, '__iter__') else all(x == 0))(new_value): # do not store 0-values
                 continue
             new_values[k] = new_value
-        '''
+        
         #new_values = {x:y for x,y in new_values.items() if y!=0}
         if len(new_values) == 0:
             return polynom(0)
@@ -75,15 +72,13 @@ class polynom:
     
     def __mul__(self, other):
         # Interpretation: (sum_j a_j)*(sum_k b_k) = sum_{j, k} a_j*b_k
-        if not isinstance(other, polynom):
+        if not other.__class__.__name__ == 'polynom':
             other = polynom(other)
         pol_prod = {}
         for aj, value1 in self.values.items():
             e1 = dict(aj)
             for bk, value2 in other.values.items():
                 value_prod = value1*value2
-                #if value_prod == 0: # only possible if one of the values was zero already, so not needed, but doesnt affect performance
-                #    continue
                 e2 = dict(bk)
                 e_prod = frozenset([(k, e1.get(k, 0) + e2.get(k, 0)) for k in set(e1).union(set(e2))])
                 pol_prod[e_prod] = value_prod
