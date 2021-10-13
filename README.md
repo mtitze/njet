@@ -1,7 +1,7 @@
-# njet: Automatic Differentiation Library
+# njet: Lightweight automatic differentiation
 
 A lightweight AD package, using forward-mode automatic differentiation, in order to determine the
-higher-order derivatives of a given function in multiple variables.
+higher-order derivatives of a given function in several variables.
 
 ## Features
 
@@ -33,10 +33,10 @@ from njet import derive
 d1 = derive(xmpl, order=3)
 ```
 
-Compute the derivatives at a specific point
+Evaluate the derivatives at a specific point
 ```python
 z = [3, 2, 1]
-d1.D(z)
+d1.eval(z)
 
 {(0, 0, 1): -0.0034336627423962197,
  (1, 0, 0): -0.03183941815676495,
@@ -61,9 +61,9 @@ d1.D(z)
 The indices here correspond to the powers of the variables x, y, z
 in the multivariate Taylor expansion. They can be translated to
 the tensor indices of the corresponding multilinear map using a
-built-in routine. Eg.:
+built-in routine. Example:
 
-Get the gradient and Hessian:
+Obtain the gradient and the Hessian
 ```python
 d1.grad()
 {(2,): -0.0034336627423962197,

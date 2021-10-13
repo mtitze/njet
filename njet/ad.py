@@ -1,31 +1,13 @@
-'''    
-    njet: A leightweight automatic differentiation library for 
-          higher-order automatic differentiation
-    
-    Copyright (C) 2021  Malte Titze
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-'''
-
-
 from .functions import exp, log
 from .jet import jet as jet_source
 from .jet import factorials
 from .poly import polynom
 
 
-class jet(jet_source):    
+class jet(jet_source):
+    '''
+    Class to store and operate with higher-order derivatives of a given function.
+    '''
     def __pow__(self, other):
         if not isinstance(other, jet):
             other = jet(value=other) # n.b. convert from ad.py would convert to 'jet_source', not jet'.
@@ -52,7 +34,7 @@ class derive:
     of elementary functions).
     '''
     
-    def __init__(self, func, order=1, **kwargs):
+    def __init__(self, func, order: int=1, **kwargs):
         self.func = func
         self.n_args = self.func.__code__.co_argcount # the number of any arguments of func (before *args)
         self.set_order(order)
@@ -62,27 +44,30 @@ class derive:
         self.order = order
         self._factorials = factorials(self.order)
         
-    def D(self, z, mult=True):
+    def eval(self, z, mult=True):
         '''
-        Compute the derivatives of a (jet-)function up to n-th order.
+        Evaluate the derivatives of a (jet-)function at a specific point up to self.order.
 
-        Input
-        -----
-        z: vector at which the function and its derivatives should be evaluated.
-        mult: (Boolean, default: True) Whether or not to include the factorials C(j1, ..., jm) (see below).
+        Parameters
+        ----------
+        z: subscriptable 
+            Vector at which the function and its derivatives should be evaluated.
+        mult: Boolean, optional
+            Whether or not to include the factorials C(j1, ..., jm) default: True. (Details see below).
             If False, then the C*Df's are returned. If True, then the Df's are returned.
 
         Returns
         -------
-        The tensor components Df_k, k = 1, ..., n, each representing the coefficients of a multilinear map.
+        Df: dict
+            Dictionary of compontens of the multivariate Taylor expansion of the given function self.func:
 
-        This multilinear map corresponds to the k-th derivative of func: Let m be the number of 
-        arguments of func. Then
-          Df_k(z1, ..., zm) = sum_{j1 + ... + jm = k} C(j1, ..., jm) * Df[j1, ... jm] * z1**j1 * ... * zm**jm
-        with
-          Df[j1, ..., jm] := \partial^j1/\partial_{z1}^j1 ... \partial^jm/\partial_{zm}^jm f 
-        and combinatorial factor
-          C(j1, ..., jm) = 1/(j1! * ... * jm!) .
+            Let m be the number of arguments of self.func. 
+            Then
+            Df_k(z1, ..., zm) = sum_{j1 + ... + jm = k} C(j1, ..., jm) * Df[j1, ... jm] * z1**j1 * ... * zm**jm
+            with
+            Df[j1, ..., jm] := \partial^j1/\partial_{z1}^j1 ... \partial^jm/\partial_{zm}^jm f (z1, ..., zm)
+            and combinatorial factor
+            C(j1, ..., jm) = 1/(j1! * ... * jm!) .
         '''
         # perform the computation, based on the input vector
         inp = []
@@ -111,13 +96,22 @@ class derive:
         self._Df = Df
         return Df
     
-    def extract(self, k, **kwargs):
+    def extract(self, k: int, **kwargs):
         '''
-        Extract the components of the k-th derivative.
+        Extract the components of the k-th derivative from the output of self.eval. 
         
-        Input
-        -----
-        - Df (optional): The output of self.D, containing the entries of the derivative.
+        Parameters
+        ----------
+        k: int
+            The order of the derivatives to extract.
+        Df: dict, optional
+            The output of self.eval, containing the entries of the derivative. If nothing
+            specified, the most recent output will be used.
+            
+        Returns
+        -------
+        Dfk: dict
+            The components of the k-th derivative of self.func.
         '''
         assert k <= self.order
         D = kwargs.get('Df', self._Df)
@@ -125,13 +119,52 @@ class derive:
     
     @staticmethod
     def convert_indices(list_of_tuples):
+        '''
+        Convert a list of tuples denoting the indices in a multivariate Taylor expansion into a list of indices of
+        the corresponding multilinear map.
+        
+        Parameters
+        ----------
+        list_of_tuples: list
+            List of (self.n_args)-tuples denoting the indices in the multivariate Taylor expansion.
+        
+        Returns
+        -------
+        list_of_indices: list
+            List of tuples denoting the indices of a multilinear map.
+        
+        Example
+        -------
+        list_of_tuples = [(0, 2, 1, 9), (1, 0, 3, 0)]
+        In this example we are looking at indices in the Taylor expansion of a function in 4 variables.
+        The first member, (0, 2, 1, 9), corresponds to x0**0*x1**2*x2*x3**9 which belongs to the multilinear map
+        of order 0 + 2 + 1 + 9 = 12, the second member to x0*x2**3, belonging to the multilinear map of order
+        1 + 3 = 4.
+        Hence, these indices will be transformed to tuples of length 12 and 4, respectively:
+        (1, 1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3) (variable 1 has power 2, variable 2 has power 1, variable 3 has power 9) 
+        and
+        (0, 2, 2, 2) (variable 0 has power 1, variable 2 has power 3).
+        '''
         l1g = [[tpl[j]*[j] for j in range(len(tpl))] for tpl in list_of_tuples]
         return [tuple(e for subl in l1 for e in subl) for l1 in l1g] # flatten l1 and return list of converted tuples
     
-    def build_tensor(self, k, **kwargs):
+    def build_tensor(self, k: int, **kwargs):
         '''
-        Convert the components of the k-th derivative into the entries of a self.n_args**k tensor. Only values unequal
-        to zero will be stored.
+        Convert the components of the k-th derivative into the entries of a (self.n_args)**k tensor.
+        See also self.convert_indices for details.
+        
+        Parameters
+        ----------
+        k: int
+            The degree of the derivatives to be considered.
+        
+        Returns
+        -------
+        tensor: dict
+            Dictionary representing non-zero components of the tensor which describes the multivariate 
+            Taylor map of order k.
+            Only values unequal to zero will be stored, and only one member for each set of entries
+            which can be obtained by suitable permutations of the indices.
         '''
         entries = self.extract(k=k, **kwargs)
         list_of_tuples = list(entries.keys())
@@ -141,12 +174,32 @@ class derive:
     def grad(self, **kwargs):
         '''
         Returns the gradient of the function.
+        
+        Parameters
+        ----------
+        kwargs: dict
+            Additional arguments passed to self.build_tensor
+            
+        Returns
+        -------
+        grad: dict
+            Dictionary containing the components of the gradient.
         '''
         return self.build_tensor(k=1, **kwargs)
     
     def hess(self, **kwargs):
         '''
         Returns the Hessian of the function.
+        
+        Parameters
+        ----------
+        kwargs: dict
+            Additional arguments passed to self.build_tensor
+            
+        Returns
+        -------
+        grad: dict
+            Dictionary containing the components of the Hessian.
         '''
         return self.build_tensor(k=2, **kwargs)
         

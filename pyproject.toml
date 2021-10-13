@@ -4,9 +4,9 @@ version = "0.1.1"
 description = "Lightweight automatic differentiation package for higher-order differentiation."
 authors = ["Malte Titze <mtitze@users.noreply.github.com>"]
 license = "GPL-3.0-or-later"
-homepage = "https://github.com/mtitze/njet"
+homepage = "https://njet.readthedocs.io/en/latest/index.html"
 repository = "https://github.com/mtitze/njet"
-keywords = ["AD", "jet"]
+keywords = ["AD", "jet", "njet"]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.11"

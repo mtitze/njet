@@ -1,23 +1,3 @@
-'''    
-    njet: A leightweight automatic differentiation library for 
-          higher-order automatic differentiation
-    
-    Copyright (C) 2021  Malte Titze
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-'''
-
 class polynom:
     '''
     Implementation of a polynom with arbitrary number of variables.
@@ -26,16 +6,19 @@ class polynom:
     
     Example
     -------
-    self.values = {frozenset({(0, 1)}): 11,
+    bla
+    
+    
+      self.values = {frozenset({(0, 1)}): 11,
                    frozenset({(0, 4), (1, 22), (13, 1)}): 89,
                    frozenset({(4, 9), (7, 2), (12, 33)}): -0.22}
     
-    The interpretation is:
-    11*x0**1 +
-    89*x0**4*x1**22*x13**1 +
-    -0.22*x4**9*x7**2*x12**33
+      The interpretation is:
+      11*x0**1 +
+      89*x0**4*x1**22*x13**1 +
+      -0.22*x4**9*x7**2*x12**33
     '''
-    def __init__(self, value=0, index=0, power=0, **kwargs):
+    def __init__(self, value=0, index: int=0, power: int=0, **kwargs):
         self.values = kwargs.get('values', {frozenset([(index, power)]): value})
         
     def __str__(self):
@@ -58,12 +41,16 @@ class polynom:
     def __add__(self, other):
         if not isinstance(other, polynom):
             other = polynom(other)
+        new_values = {k: self.values.get(k, 0) + other.values.get(k, 0) for k in set(self.values).union(set(other.values))}
+        '''
         new_values = {}
         for k in set(self.values).union(set(other.values)):
             new_value = self.values.get(k, 0) + other.values.get(k, 0)
             if new_value == 0: # do not store 0-values
                 continue
             new_values[k] = new_value
+        '''
+        #new_values = {x:y for x,y in new_values.items() if y!=0}
         if len(new_values) == 0:
             return polynom(0)
         else:
@@ -95,8 +82,8 @@ class polynom:
             e1 = dict(aj)
             for bk, value2 in other.values.items():
                 value_prod = value1*value2
-                if value_prod == 0: # only possible if one of the values was zero already, so not needed, but doesnt affect performance
-                    continue
+                #if value_prod == 0: # only possible if one of the values was zero already, so not needed, but doesnt affect performance
+                #    continue
                 e2 = dict(bk)
                 e_prod = frozenset([(k, e1.get(k, 0) + e2.get(k, 0)) for k in set(e1).union(set(e2))])
                 pol_prod[e_prod] = value_prod
@@ -116,4 +103,5 @@ class polynom:
         if remainder == 1:
             return self*half*half
         else:
-            return half*half    
+            return half*half
+

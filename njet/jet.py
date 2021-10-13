@@ -1,24 +1,4 @@
-'''    
-    njet: A leightweight automatic differentiation library for 
-          higher-order automatic differentiation
-    
-    Copyright (C) 2021  Malte Titze
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-'''
-
-def factorials(n):
+def factorials(n: int):
     k = 1
     facts = [1]
     for j in range(1, n + 1):
@@ -26,13 +6,31 @@ def factorials(n):
         facts.append(k)
     return facts
 
-def n_over_ks(n):
+def n_over_ks(n: int):
     facts = factorials(n)
     return [[facts[j]//(facts[k]*facts[j - k]) for k in range(j + 1)] for j in range(len(facts))]
 
-def general_leibnitz_rules(f1, f2):
+def general_leibnitz_rule(f1, f2):
+    '''
+    Compute the higher-order derivatives of the product of two functions f1*f2.
+    In the following denote by f^k the k-th derivative of f, evaluated at a specific point.
+    It is assumed that len(f1) = len(f2) =: n.
+    
+    Parameters
+    ----------
+    f1: list
+        List containing the values f1^k for k = 0, ..., n - 1.
+    f2: list
+        List containing the values f2^k for k = 0, ..., n - 1.
+        
+    Returns
+    -------
+    df1f2: list
+        List containing the values (f1*f2)^k for k = 0, ..., n - 1.
+    '''
     nmax = len(f1) - 1 # len(f1): max number of summands
     nok = n_over_ks(nmax)
+    result = []
     return [sum([nok[n][k]*f1[n - k]*f2[k] for k in range(n + 1)]) for n in range(nmax + 1)]
 
 def faa_di_bruno(f, g):
@@ -40,21 +38,32 @@ def faa_di_bruno(f, g):
     Consider the composition f o g of two functions and for h in [f, g] denote by h^k its k-th derivative. Then
     (f o g)^1 = (f^1 o g) g^1
     (f o g)^2 = (f^2 o g) (g^1)**2 + (f^1 o g) g^2
-    :
-    and so on.
+    (f o g)^3 = ... and so on.
     
     Let F = [f o g, (f^1 o g), (f^2 o g), ...] and G = [g, g^1, g^2, ...] be given. Then this
     function will compute (f o g)^k up to the given (common) order, i.e. the
     chain rule for the k-th derivative.
     
     This routine hereby will make use of the equation
-      (f^n o g) = sum_(k = 1)^n f^k B(n, k)(g^1, g^2, ..., g^(n - k + 1)) ,  
+    (f^n o g) = sum_(k = 1)^n f^k B(n, k)(g^1, g^2, ..., g^(n - k + 1)) ,  
     where B(n, k) for n >= k are the incomplete exponential Bell polynomials.
+    
+    Parameters
+    ----------
+    f: list
+        List containing the values F (see above).
+    g: list
+        List containing the values G (see above).
+        
+    Returns
+    -------
+    dfdg: list
+        List containing the values (f o g)^k for k = 0, ..., len(f) - 1.
     '''
     bell = bell_polynomials(len(f) - 1, g[1:])
     return [sum([bell.get((n, k), 0)*f[k] for k in range(len(f))]) for n in range(len(f))] # or with numpy arrays: np.matmul(bell, f)
 
-def bell_polynomials(n, z):
+def bell_polynomials(n: int, z):
     '''
     Compute the incomplete exponential Bell polynomials B(n, k, [z1, ..., z(n - k + 1)]) for all 1 <= k <= n.
     '''
@@ -64,12 +73,12 @@ def bell_polynomials(n, z):
     nok = n_over_ks(n)
     for jn in range(n + 1):
         for jk in range(1, jn + 1):
-            B[(jn, jk)] = sum([nok[jn - 1][m - 1]*z[m - 1]*B.get((jn - m, jk - 1), 0) for m in range(1, jn - jk + 2)])
+            B[(jn, jk)] = sum([nok[jn - 1][m - 1]*B.get((jn - m, jk - 1), 0)*z[m - 1] for m in range(1, jn - jk + 2)])
     return B
 
     
 class jet:
-    def __init__(self, value=0, **kwargs):
+    def __init__(self, value=0, **kwargs):        
         if hasattr(value, '__getitem__'):
             self.set_array(value, **kwargs)
         else:
@@ -133,7 +142,7 @@ class jet:
         result = jet(n=max_order, graph=[(2, '*'), self.graph, other.graph])
         # compute the derivatives      
         f1, f2 = self.get_array(n=max_order), other.get_array(n=max_order)
-        glr = general_leibnitz_rules(f1, f2)
+        glr = general_leibnitz_rule(f1, f2)
         result.array = lambda n: glr[n] if n <= max_order else 0
         # result.array = lambda k: general_leibnitz_rule(f1[:k + 1], f2[:k + 1]) if k <= max_order else 0
         # The next line would work for arbitrary orders, but it is also much slower instead of pre-loading the array:
@@ -146,7 +155,8 @@ class jet:
     
     def __pow__(self, other):
         '''
-        N.B.: Power defined here only for exponents in field (integer, float, complex numbers).
+        N.B.: Power defined here only for exponents in the given field (integer, float, complex numbers),
+        not jets themselves as exponents.
         '''
         other = convert(other)
         f = self.array(0)
@@ -173,7 +183,7 @@ class jet:
         for max_der in range(1, nmax + 1):
             fp[(max_der, 0)] = f**layer
             for order in range(1, max_der + 1):           
-                fp[(max_der, order)] = layer*sum([nok[order - 1][k]*fp[(max_der - 1, order - 1 - k)]*self.array(k + 1) for k in range(order)])
+                fp[(max_der, order)] = layer*sum([nok[order - 1][k]*self.array(k + 1)*fp[(max_der - 1, order - 1 - k)] for k in range(order)])
             layer += 1
         # extract the derivatives
         df = [fp[(nmax, order)] for order in range(0, nmax + 1)] + [0]*n_additional_zeros
@@ -249,7 +259,7 @@ def convert(other):
     '''
     Convert an object to a (constant) jet.
     '''
-    if not isinstance(other, jet):
+    if not other.__class__.__name__ == 'jet':
         return jet(value=other)
     else:
         return other
