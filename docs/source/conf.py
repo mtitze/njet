@@ -12,7 +12,6 @@
 #
 import os
 import sys
-import sphinx_rtd_theme, myst_parser
 sys.path.insert(0, os.path.abspath('../..'))
 
 
