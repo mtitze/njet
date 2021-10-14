@@ -23,7 +23,11 @@ In this example we have generated a jet of order 5, having value 3 and value 1 a
     j2
   > 5-jet(3, 0, 0, 0, 0, 0)
  
-corresponds to the scalar 3. These jets can now be used in further operations:
+corresponds to the scalar 3. The order of a jet is the number up to which higher-order calculations should be performed.
+To get the k-th entry of ``j2``, type ``j2.array(k)``. A jet is defined by its order and its array function. One can
+change the array function of ``j2`` directly, or by using the routine ``j2.set_array``.
+
+These jets can now be used in further operations:
 
 .. code-block:: python
 
