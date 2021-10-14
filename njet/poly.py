@@ -1,3 +1,7 @@
+def check_zero(value):
+    # check if a value is zero; value can be iterable
+    return (lambda x: x == 0 if not hasattr(x, '__iter__') else all(x == 0))(value)
+
 class polynom:
     '''
     Implementation of a polynom with arbitrary number of variables.
@@ -49,7 +53,7 @@ class polynom:
         new_values = {}
         for k in set(self.values).union(set(other.values)):
             new_value = self.values.get(k, 0) + other.values.get(k, 0)
-            if (lambda x: x == 0 if not hasattr(x, '__iter__') else all(x == 0))(new_value): # do not store 0-values; x may be float or numpy array etc.
+            if check_zero(new_value): # do not store 0-values; x may be float or numpy array etc.
                 continue
             new_values[k] = new_value
         if len(new_values) == 0:
@@ -86,6 +90,7 @@ class polynom:
                 e_prod = frozenset([(k, e1.get(k, 0) + e2.get(k, 0)) for k in set(e1).union(set(e2))]) # e.g. e_prod = frozenset([(0, 0), (1, 5), (2, 4)])
                 value_prod += pol_prod.get(e_prod, 0) # account for multiplicity
                 pol_prod[e_prod] = value_prod
+        pol_prod = {k: v for k, v in pol_prod.items() if not check_zero(v)} # remove zero values
         return polynom(values=pol_prod)
     
     def __rmul__(self, other):
