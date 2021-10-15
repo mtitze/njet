@@ -20,5 +20,5 @@
 
 from .functions import exp, log
 from .ad import jet, derive
-from .poly import polynom
+from .poly import jetpolynom
 

@@ -1,7 +1,7 @@
 from .functions import exp, log
 from .jet import jet as jet_source
 from .jet import factorials
-from .poly import polynom
+from .poly import jetpolynom
 
 
 class jet(jet_source):
@@ -72,7 +72,7 @@ class derive:
         # perform the computation, based on the input vector
         inp = []
         for k in range(self.n_args):
-            jk = jet([z[k], polynom(1, index=k, power=1)], n=self.order)
+            jk = jet([z[k], jetpolynom(1, index=k, power=1)], n=self.order)
             inp.append(jk)
         evaluation = self.func(*inp)
         
@@ -85,7 +85,7 @@ class derive:
                 indices = [0]*self.n_args
                 multiplicity = 1
                 for tpl in key:
-                    if tpl == (0, 0): # the (0, 0)-entries correspond to the scalar 1 and will be ignored here. TODO: may need to improve this in polynom class.
+                    if tpl == (0, 0): # the (0, 0)-entries correspond to the scalar 1 and will be ignored here. TODO: may need to improve this in jetpolynom class.
                         continue
                     index, power = tpl
                     indices[index] = power

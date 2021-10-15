@@ -15,7 +15,10 @@ Create an n-jet:
     j1
   > 5-jet(3, 1, 0, 0, 0, 0)
  
-In this example we have generated a jet of order 5, having value 3 and value 1 as it first derivative. The order defines the number of derivatives which should be displayed. Since this jet has a non-zero first order derivative, this jet corresponds to a variable, while a jet of the form
+In this example we have generated a jet of order 5, having value 3 and value 1 as it first derivative. 
+The order defines the number of derivatives which should be calculated and displayed. 
+Since this jet has a non-zero first order derivative, this jet 
+corresponds to a variable, while a jet of the form
 
 .. code-block:: python
 
@@ -23,9 +26,12 @@ In this example we have generated a jet of order 5, having value 3 and value 1 a
     j2
   > 5-jet(3, 0, 0, 0, 0, 0)
  
-corresponds to the scalar 3. The order of a jet is the number up to which higher-order calculations should be performed.
-To get the k-th entry of ``j2``, type ``j2.array(k)``. A jet is defined by its order and its array function. One can
-change the array function of ``j2`` directly, or by using the routine ``j2.set_array``.
+corresponds to the scalar 3. To get the k-th entry of ``j2``, type ``j2.array(k)``. 
+A jet is defined by its order and its array function. If required, one can
+change both of these properties on a specific jet. In our example the array function 
+of the jet ``j2`` can be set either directly by redefining ``j2.array``, 
+or by using the routine ``j2.set_array``, which may be more convenient if the entries
+should be set according to a specific list.
 
 These jets can now be used in further operations:
 
@@ -82,7 +88,7 @@ In particular, we can get the higher-order derivatives at specific points by usi
 
 and taking into account the corresponding multiplicities.
 
-Internally, *njet* will however not work with SymPy Symbols, but has its own class *polynom* which is taylored specificially for the task
+Internally, *njet* will however not work with SymPy Symbols, but has its own class *jetpolynom* which is taylored specifically for the task
 to obtain the higher-order derivatives.
 
 There is also NumPy support:
@@ -95,7 +101,7 @@ There is also NumPy support:
     jnp**2
   > 5-jet([ 4.41 12.0409], [18.06 -8.328], [36.98 2.88], 0, 0, 0)
 
-In the following we list some of the functionality in the jet class:
+In the following we list some of the functionality in the jet class.
 
 .. automodule:: njet.jet
     :members:

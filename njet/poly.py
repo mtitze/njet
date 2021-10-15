@@ -5,7 +5,7 @@ def check_zero(value):
     else:
         return all(value == 0)
 
-class polynom:
+class jetpolynom:
     '''
     Implementation of a polynom with arbitrary number of variables.
     
@@ -51,8 +51,8 @@ class polynom:
         return f'<samp>{outstr}</samp>'
     
     def __add__(self, other):
-        if not other.__class__.__name__ == 'polynom':
-            other = polynom(other)
+        if not other.__class__.__name__ == 'jetpolynom':
+            other = jetpolynom(other)
         new_values = {}
         for k in set(self.values).union(set(other.values)):
             new_value = self.values.get(k, 0) + other.values.get(k, 0)
@@ -60,19 +60,19 @@ class polynom:
                 continue
             new_values[k] = new_value
         if len(new_values) == 0:
-            return polynom(0)
+            return jetpolynom(0)
         else:
-            return polynom(values=new_values)
+            return jetpolynom(values=new_values)
     
     def __radd__(self, other):
-        other = polynom(other)
+        other = jetpolynom(other)
         return other + self
     
     def __neg__(self):
         new_values = {}
         for key, value in self.values.items():
             new_values[key] = -value
-        return polynom(values=new_values)
+        return jetpolynom(values=new_values)
     
     def __sub__(self, other):
         return self + -other
@@ -82,8 +82,8 @@ class polynom:
     
     def __mul__(self, other):
         # Interpretation: (sum_j a_j)*(sum_k b_k) = sum_{j, k} a_j*b_k
-        if not other.__class__.__name__ == 'polynom':
-            other = polynom(other)
+        if not other.__class__.__name__ == 'jetpolynom':
+            other = jetpolynom(other)
         pol_prod = {}
         for aj, value1 in self.values.items():
             e1 = dict(aj) # e.g. e1 = {0: 0, 1: 5, 2: 3}
@@ -94,16 +94,16 @@ class polynom:
                 value_prod += pol_prod.get(e_prod, 0) # account for multiplicity
                 pol_prod[e_prod] = value_prod
         pol_prod = {k: v for k, v in pol_prod.items() if not check_zero(v)} # remove zero values
-        return polynom(values=pol_prod)
+        return jetpolynom(values=pol_prod)
     
     def __rmul__(self, other):
-        other = polynom(other)
+        other = jetpolynom(other)
         return other*self
     
     def __pow__(self, other):
         assert (type(other) == int) and (other >= 0)
         if other == 0:
-            return polynom(1) # N.B. 0**0 := 1
+            return jetpolynom(1) # N.B. 0**0 := 1
 
         remainder = other%2
         half = self**(other//2)

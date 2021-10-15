@@ -10,7 +10,7 @@ def n_over_ks(n: int):
     facts = factorials(n)
     return [[facts[j]//(facts[k]*facts[j - k]) for k in range(j + 1)] for j in range(len(facts))]
 
-def sum_by_name(ls, name='polynom'):
+def sum_by_name(ls, name='jetpolynom'):
     # sum over the members of a given list so that each member e having e.__class__.__name__ appears on the
     # left. This can be used to prevent that in case of numpy the new values are numpy.arrays.
     return sum([e for e in ls if e.__class__.__name__ == name]) + sum([e for e in ls if e.__class__.__name__ != name])
@@ -35,7 +35,7 @@ def general_leibnitz_rule(f1, f2):
     '''
     nmax = len(f1) - 1 # len(f1): max number of summands
     nok = n_over_ks(nmax)
-    return [sum_by_name([nok[n][k]*f1[n-k]*f2[k] if f1[n-k].__class__.__name__ == 'polynom' else nok[n][k]*f2[k]*f1[n-k] for k in range(n + 1)]) for n in range(nmax + 1)]
+    return [sum_by_name([nok[n][k]*f1[n-k]*f2[k] if f1[n-k].__class__.__name__ == 'jetpolynom' else nok[n][k]*f2[k]*f1[n-k] for k in range(n + 1)]) for n in range(nmax + 1)]
 
 def faa_di_bruno(f, g):
     '''
