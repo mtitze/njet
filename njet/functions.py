@@ -37,6 +37,28 @@ def sin(x, **kwargs):
     result.array = lambda n: [s, c, -s, -c][n%4]
     return result.compose(x)
 
+def cos(x, **kwargs):
+    '''
+    Compute the cos of a jet.
+
+    Parameters
+    ----------
+    x: jet
+
+    Returns
+    -------
+    jet
+    '''
+    x0 = x.array(0)
+    code = kwargs.get('code', detect_code(x0))
+    s = code.sin(x0)
+    c = code.cos(x0)
+    result = jet(c, n=x.order, graph=[(1, 'cos'), x.graph])
+
+    # compute the derivatives
+    result.array = lambda n: [c, -s, -c, s][n%4]
+    return result.compose(x)
+
 def exp(x, **kwargs):
     '''
     Compute the exponential of a jet.
