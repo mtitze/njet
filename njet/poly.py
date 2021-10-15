@@ -1,6 +1,9 @@
 def check_zero(value):
-    # check if a value is zero; value can be iterable
-    return (lambda x: x == 0 if not hasattr(x, '__iter__') else all(x == 0))(value)
+    # check if a value is zero; value may be an iterable
+    if not hasattr(value, '__iter__'):
+        return value == 0
+    else:
+        return all(value == 0)
 
 class polynom:
     '''
@@ -37,9 +40,9 @@ class polynom:
             for e in key:
                 if e[1] == 0: # do not show z**0
                     continue
-                fac += f'x{e[0]}**{e[1]} '
-            outstr += f'{value}*{fac} + \n'
-        outstr = outstr[:-5]
+                fac += f'*x{e[0]}**{e[1]}'
+            outstr += f'{value}{fac} + \n'
+        outstr = outstr[:-4]
         outstr += ']'
         return outstr
     

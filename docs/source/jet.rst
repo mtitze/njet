@@ -1,13 +1,13 @@
 The n-jet class
 ===============
 
-The n-jet class is the fundamental object by which higher-order derivatives are computed. We import the class via
+The n-jet class is the fundamental object by which higher-order derivatives are computed. Import the class via
 
 .. code-block:: python
 
     from njet import jet
 
-We can then create an n-jet via
+Create an n-jet:
 
 .. code-block:: python
 
