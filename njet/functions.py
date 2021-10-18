@@ -103,3 +103,48 @@ def log(x, **kwargs):
     result = jet(n=x.order, graph=graph)
     result.set_array([ln] + drx_arr)
     return result
+
+def sinh(x, **kwargs):
+    '''
+    Compute the sinh of a jet.
+
+    Parameters
+    ----------
+    x: jet
+
+    Returns
+    -------
+    jet
+    '''
+    x0 = x.array(0)
+    code = kwargs.get('code', detect_code(x0))
+    sh = code.sinh(x0)
+    ch = code.cosh(x0)
+    result = jet(sh, n=x.order, graph=[(1, 'sinh'), x.graph])
+
+    # compute the derivatives
+    result.array = lambda n: [sh, ch][n%2]
+    return result.compose(x)
+
+def cosh(x, **kwargs):
+    '''
+    Compute the cosh of a jet.
+
+    Parameters
+    ----------
+    x: jet
+
+    Returns
+    -------
+    jet
+    '''
+    x0 = x.array(0)
+    code = kwargs.get('code', detect_code(x0))
+    ch = code.cosh(x0)
+    sh = code.sinh(x0)
+    result = jet(ch, n=x.order, graph=[(1, 'cosh'), x.graph])
+
+    # compute the derivatives
+    result.array = lambda n: [ch, sh][n%2]
+    return result.compose(x)
+
