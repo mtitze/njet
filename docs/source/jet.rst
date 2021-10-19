@@ -40,7 +40,7 @@ These jets can now be used in further operations:
     j1*j1
   > 5-jet(9, 6, 2, 0, 0, 0)
   
-To better understand what's going on, we can use Sympy variables:
+To better understand what's going on, we can use SymPy variables:
 
 .. code-block:: python
 
@@ -68,7 +68,7 @@ This will just subtract the first orders and thus we end up with a basic scalar,
    j4 - j3
  > 5-jet(-x + y, -dx + dy, 0, 0, 0, 0)
 
-Now we are ready to go to work with more complicated functions, for example
+Now we are ready to work with more complicated functions, for example
 
 .. code-block:: python
 
@@ -88,7 +88,7 @@ In particular, we can get the higher-order derivatives at specific points by usi
 
 and taking into account the corresponding multiplicities.
 
-Internally, *njet* will however not work with SymPy Symbols, but has its own class *jetpolynom* which is taylored specifically for the task
+Internally *njet* will however not work with SymPy Symbols, but has its own class *jetpolynom* which is taylored specifically for the task
 to obtain the higher-order derivatives.
 
 There is also NumPy support:
