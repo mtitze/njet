@@ -22,7 +22,8 @@ copyright = '2021, Malte Titze'
 author = 'Malte Titze'
 
 # The full version, including alpha/beta/rc tags
-release = "0.1.3"
+from njet import __version__
+release = __version__
 
 
 # -- General configuration ---------------------------------------------------

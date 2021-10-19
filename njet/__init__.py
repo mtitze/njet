@@ -18,6 +18,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
+from ._version import __version__
 from .functions import exp, log
 from .ad import jet, derive
 from .poly import jetpolynom
