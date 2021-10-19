@@ -8,7 +8,7 @@ except ImportError:
 def get_long_description():
     with open(f'./README.md', encoding='utf8') as fp:
         return fp.read()
-
+        
 setup(
     long_description=get_long_description(),
     name='njet',
