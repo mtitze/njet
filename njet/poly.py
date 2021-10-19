@@ -1,3 +1,5 @@
+from .jet import factorials
+
 def check_zero(value):
     # check if a value is zero; value may be an iterable
     if not hasattr(value, '__iter__'):
@@ -111,4 +113,46 @@ class jetpolynom:
             return self*half*half
         else:
             return half*half
+           
+    def derive(self, index: int, mult=False):
+        '''
+        Returns a polynom which correspond to the derivative of self with respect to the
+        variable given by the index.
+        
+        Parameters
+        ----------
+        index: int
+            The index of the variable by which we want to differentiate.
+        mult: boolean, optional
+            
+            
+        Returns
+        -------
+        jetpolynom
+            The derived polynom.
+        '''
+        new_values = {}
+        for fs, v in self.values.items():
+            fsd = dict(fs) # maps indices to powers
+            fsd_unmodified = {k: power for k, power in fsd.items() if k != index and power != 0}
+            fsd_modified = {k: power - 1 for k, power in fsd.items() if k == index and power != 0}
+            # original powers == 0 have been dropped entirely. Note that it still can hold: power - 1 == 0.
+            if len(fsd_modified) == 0: # In this case the derivative of the monomial is zero
+                continue
+            assert len(fsd_modified) == 1
+
+            new_dict = fsd_unmodified
+            for k, power in fsd_modified.items():
+                new_dict[k] = power
+                new_value = v*(power + 1)
+                    
+            new_fs = frozenset([(a, b) for a, b in new_dict.items()])
+            new_values[new_fs] = new_value
+                
+        if len(new_values) == 0: # special case: everything is zero. Then we put the scalar 0
+            return jetpolynom(0)
+        else:    
+            return jetpolynom(values=new_values)
+        
+        
 

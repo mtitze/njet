@@ -53,7 +53,7 @@ class derive:
         z: subscriptable 
             Vector at which the function and its derivatives should be evaluated.
         mult: Boolean, optional
-            Whether or not to include the factorials C(j1, ..., jm) default: True. (Details see below).
+            Whether or not to include the multiplicities C(j1, ..., jm). Default: True. (Details see below).
             If False, then the C*Df's are returned. If True, then the Df's are returned.
 
         Returns
@@ -63,7 +63,7 @@ class derive:
 
             Let m be the number of arguments of self.func. 
             Then
-            Df_k(z1, ..., zm) = sum_{j1 + ... + jm = k} C(j1, ..., jm) * Df[j1, ... jm] * z1**j1 * ... * zm**jm
+            self.func(z1, ..., zm) = sum_{j1 + ... + jm = k} C(j1, ..., jm) * Df[j1, ... jm] * z1**j1 * ... * zm**jm
             with
             Df[j1, ..., jm] := \partial^j1/\partial_{z1}^j1 ... \partial^jm/\partial_{zm}^jm f (z1, ..., zm)
             and combinatorial factor
@@ -84,10 +84,9 @@ class derive:
                 # key corresponds to a specific frozenset, i.e. some indices and powers of a specific monomial.
                 indices = [0]*self.n_args
                 multiplicity = 1
-                for tpl in key:
-                    if tpl == (0, 0): # the (0, 0)-entries correspond to the scalar 1 and will be ignored here. TODO: may need to improve this in jetpolynom class.
+                for index, power in key:
+                    if power == 0: # the (k, 0)-entries correspond to the scalar 1 and will be ignored here. TODO: may need to improve this in jetpolynom class.
                         continue
-                    index, power = tpl
                     indices[index] = power
                     multiplicity *= self._factorials[power]
                 if mult:

@@ -227,16 +227,26 @@ class jet:
         result.array = self.array
         return result
     
-    def derive(self):
+    def derive(self, index: int=None, **kwargs):
         '''
         Return the derivative of this jet, determined by shifting its array to the left by 1.
+        
+        Parameters
+        ----------
+        index: int, optional
+            if an index is provided, then the individual entries of the jet are derived with respect
+            to this index, if they are of class jetpolynom.
         '''
         array = self.get_array()
         result = self.copy()
         if len(array) == 1:
             result.set_array([0])
         else:
-            result.set_array(array[1:])
+            if index == None:
+                new_array = array[1:]
+            else:
+                new_array = [e.derive(index=index, **kwargs) if e.__class__.__name__ == 'jetpolynom' else e for e in array[1:]]
+            result.set_array(new_array)
         return result
     
     def compose(self, other):
@@ -269,6 +279,15 @@ class jet:
         result = result.compose(self)
         result.graph = [(1, '1/'), self.graph]
         return result
+            
+    def __eq__(self, other):
+        other = convert(other)
+        array1 = self.get_array()
+        array2 = other.get_array()
+        if len(array1) != len(array2): # jets of different order are considered different
+            return False
+        else:
+            return all([array1[k] == array2[k] for k in range(len(array1))])
 
     
 def convert(other):
