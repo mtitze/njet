@@ -5,9 +5,8 @@ try:
 except ImportError:
     from distutils.core import setup
 
-import os
 def get_long_description():
-    with open(f'{os.path.dirname(__file__)}/README.md', encoding='utf8') as fp:
+    with open(f'./README.md', encoding='utf8') as fp:
         return fp.read()
 
 setup(
