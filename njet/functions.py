@@ -1,7 +1,5 @@
 # Collection of elementary functions whose derivatives are known to any order.
 
-from .jet import jet
-
 import numpy
 import sympy
 
@@ -60,7 +58,7 @@ def sin(x, **kwargs):
     func2 = kwargs.get('code', detect_code(x0, name='cos'))
     s = func(x0)
     c = func2(x0)
-    result = jet(s, n=x.order, graph=[(1, 'sin'), x.graph])
+    result = x.__class__(s, n=x.order, graph=[(1, 'sin'), x.graph])
 
     # compute the derivatives
     result.array = lambda n: [s, c, -s, -c][n%4]
@@ -83,7 +81,7 @@ def cos(x, **kwargs):
     func2 = kwargs.get('code', detect_code(x0, name='cos'))
     s = func(x0)
     c = func2(x0)
-    result = jet(c, n=x.order, graph=[(1, 'cos'), x.graph])
+    result = x.__class__(c, n=x.order, graph=[(1, 'cos'), x.graph])
 
     # compute the derivatives
     result.array = lambda n: [c, -s, -c, s][n%4]
@@ -104,7 +102,7 @@ def exp(x, **kwargs):
     x0 = x.array(0)
     func = kwargs.get('code', detect_code(x0, name='exp'))
     e = func(x0)
-    result = jet(e, n=x.order, graph=[(1, 'exp'), x.graph])
+    result = x.__class__(e, n=x.order, graph=[(1, 'exp'), x.graph])
 
     # compute the derivatives
     result.array = lambda n: e
@@ -130,7 +128,7 @@ def log(x, **kwargs):
     # compute the derivatives
     dx = x.copy().derive()
     drx_arr = (dx/x).get_array()[:-1]
-    result = jet(n=x.order, graph=graph)
+    result = x.__class__(n=x.order, graph=graph)
     result.set_array([ln] + drx_arr)
     return result
 
@@ -151,7 +149,7 @@ def sinh(x, **kwargs):
     func2 = kwargs.get('code', detect_code(x0, name='cosh'))
     sh = func(x0)
     ch = func2(x0)
-    result = jet(sh, n=x.order, graph=[(1, 'sinh'), x.graph])
+    result = x.__class__(sh, n=x.order, graph=[(1, 'sinh'), x.graph])
 
     # compute the derivatives
     result.array = lambda n: [sh, ch][n%2]
@@ -174,7 +172,7 @@ def cosh(x, **kwargs):
     func2 = kwargs.get('code', detect_code(x0, name='cosh'))
     sh = func(x0)
     ch = func2(x0)
-    result = jet(ch, n=x.order, graph=[(1, 'cosh'), x.graph])
+    result = x.__class__(ch, n=x.order, graph=[(1, 'cosh'), x.graph])
 
     # compute the derivatives
     result.array = lambda n: [ch, sh][n%2]

@@ -131,14 +131,14 @@ class jet:
         return f'<samp>{self.__str__()}</samp>'
     
     def __neg__(self):
-        result = jet(n=self.order, graph=[(1, '-'), self.graph])
+        result = self.__class__(n=self.order, graph=[(1, '-'), self.graph])
         result.array = lambda n: -self.array(n)
         return result
     
     def __add__(self, other):
         other = self.convert(other)
         max_order = max([self.order, other.order])
-        result = jet(n=max_order, graph=[(2, '+'), self.graph, other.graph])
+        result = self.__class__(n=max_order, graph=[(2, '+'), self.graph, other.graph])
         result.array = lambda n: self.array(n) + other.array(n)
         return result
     
@@ -155,7 +155,7 @@ class jet:
     def __mul__(self, other):
         other = self.convert(other)
         max_order = max([self.order, other.order])
-        result = jet(n=max_order, graph=[(2, '*'), self.graph, other.graph])
+        result = self.__class__(n=max_order, graph=[(2, '*'), self.graph, other.graph])
         # compute the derivatives      
         f1, f2 = self.get_array(n=max_order), other.get_array(n=max_order)
         glr = general_leibnitz_rule(f1, f2)
@@ -203,7 +203,7 @@ class jet:
             layer += 1
         # extract the derivatives
         df = [fp[(nmax, order)] for order in range(0, nmax + 1)] + [0]*n_additional_zeros
-        result = jet(df)
+        result = self.__class__(df)
         result.graph = [(2, '**'), self.graph, other.graph]
         return result
     
@@ -223,7 +223,7 @@ class jet:
         '''
         Return a copy of this jet.
         '''
-        result = jet(n=self.order, graph=self.graph)
+        result = self.__class__(n=self.order, graph=self.graph)
         result.array = self.array
         return result
     

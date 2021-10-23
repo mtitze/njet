@@ -43,7 +43,7 @@ It is also possible to pass SymPy symbols:
 
 .. code-block:: python
 
-    from Sympy import Symbol
+    from sympy import Symbol
     d2.eval([Symbol('x'), Symbol('y')])
 
     {(1, 0): -2.0*x*exp(-x**2 + y),
