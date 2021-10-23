@@ -2,18 +2,46 @@
 
 from .jet import jet
 
-import numpy as np
+import numpy
 import sympy
 
-def detect_code(x):
+def detect_code(x, name):
     # Find the appropriate code to perform operations.
     # We shall assume that the code labels are identical (otherwise we may need to
     # implement a dictionary translating between the various names).
-    code = np
+    
+    sympy_dict = {'sin': sympy.sin,
+                  'cos': sympy.cos,
+                  'sinh': sympy.sinh,
+                  'cosh': sympy.cosh,
+                  'exp': sympy.exp,
+                  'log': sympy.log}
+    
+    numpy_dict = {'sin': numpy.sin,
+                  'cos': numpy.cos,
+                  'sinh': numpy.sinh,
+                  'cosh': numpy.cosh,
+                  'exp': numpy.exp,
+                  'log': numpy.log}
+    
+    jet_dict = {'sin': sin,
+                'cos': cos,
+                'sinh': sinh,
+                'cosh': cosh,
+                'exp': exp,
+                'log': log}
+
     if hasattr(x, '__module__'):
         if x.__module__[0:5] == 'sympy':
-            code = sympy
-    return code
+            func = sympy_dict[name]
+        elif x.__module__[0:4] == 'njet':
+            func = jet_dict[name]
+        else:
+            raise NotImplementedError('Unknown object.')
+    else:
+        func = numpy_dict[name]
+        
+    return func
 
 def sin(x, **kwargs):
     '''
@@ -28,9 +56,10 @@ def sin(x, **kwargs):
     jet
     '''
     x0 = x.array(0)
-    code = kwargs.get('code', detect_code(x0))
-    s = code.sin(x0)
-    c = code.cos(x0)
+    func = kwargs.get('code', detect_code(x0, name='sin'))
+    func2 = kwargs.get('code', detect_code(x0, name='cos'))
+    s = func(x0)
+    c = func2(x0)
     result = jet(s, n=x.order, graph=[(1, 'sin'), x.graph])
 
     # compute the derivatives
@@ -50,9 +79,10 @@ def cos(x, **kwargs):
     jet
     '''
     x0 = x.array(0)
-    code = kwargs.get('code', detect_code(x0))
-    s = code.sin(x0)
-    c = code.cos(x0)
+    func = kwargs.get('code', detect_code(x0, name='sin'))
+    func2 = kwargs.get('code', detect_code(x0, name='cos'))
+    s = func(x0)
+    c = func2(x0)
     result = jet(c, n=x.order, graph=[(1, 'cos'), x.graph])
 
     # compute the derivatives
@@ -72,8 +102,8 @@ def exp(x, **kwargs):
     jet
     '''
     x0 = x.array(0)
-    code = kwargs.get('code', detect_code(x0))
-    e = code.exp(x0)
+    func = kwargs.get('code', detect_code(x0, name='exp'))
+    e = func(x0)
     result = jet(e, n=x.order, graph=[(1, 'exp'), x.graph])
 
     # compute the derivatives
@@ -93,8 +123,8 @@ def log(x, **kwargs):
     jet
     '''
     x0 = x.array(0)
-    code = kwargs.get('code', detect_code(x0))
-    ln = code.log(x0)
+    func = kwargs.get('code', detect_code(x0, name='log'))
+    ln = func(x0)
     graph=[(1, 'log'), x.graph]
 
     # compute the derivatives
@@ -117,9 +147,10 @@ def sinh(x, **kwargs):
     jet
     '''
     x0 = x.array(0)
-    code = kwargs.get('code', detect_code(x0))
-    sh = code.sinh(x0)
-    ch = code.cosh(x0)
+    func = kwargs.get('code', detect_code(x0, name='sinh'))
+    func2 = kwargs.get('code', detect_code(x0, name='cosh'))
+    sh = func(x0)
+    ch = func2(x0)
     result = jet(sh, n=x.order, graph=[(1, 'sinh'), x.graph])
 
     # compute the derivatives
@@ -139,9 +170,10 @@ def cosh(x, **kwargs):
     jet
     '''
     x0 = x.array(0)
-    code = kwargs.get('code', detect_code(x0))
-    ch = code.cosh(x0)
-    sh = code.sinh(x0)
+    func = kwargs.get('code', detect_code(x0, name='sinh'))
+    func2 = kwargs.get('code', detect_code(x0, name='cosh'))
+    sh = func(x0)
+    ch = func2(x0)
     result = jet(ch, n=x.order, graph=[(1, 'cosh'), x.graph])
 
     # compute the derivatives

@@ -136,14 +136,14 @@ class jet:
         return result
     
     def __add__(self, other):
-        other = convert(other)
+        other = self.convert(other)
         max_order = max([self.order, other.order])
         result = jet(n=max_order, graph=[(2, '+'), self.graph, other.graph])
         result.array = lambda n: self.array(n) + other.array(n)
         return result
     
     def __radd__(self, other):
-        other = convert(other)
+        other = self.convert(other)
         return other + self
     
     def __sub__(self, other):
@@ -153,7 +153,7 @@ class jet:
         return other + -self
         
     def __mul__(self, other):
-        other = convert(other)
+        other = self.convert(other)
         max_order = max([self.order, other.order])
         result = jet(n=max_order, graph=[(2, '*'), self.graph, other.graph])
         # compute the derivatives      
@@ -166,7 +166,7 @@ class jet:
         return result
     
     def __rmul__(self, other):
-        other = convert(other)
+        other = self.convert(other)
         return other*self
     
     def __pow__(self, other):
@@ -174,7 +174,7 @@ class jet:
         N.B.: Power defined here only for exponents in the given field (integer, float, complex numbers),
         not jets themselves as exponents.
         '''
-        other = convert(other)
+        other = self.convert(other)
         f = self.array(0)
         g = other.array(0)
         n = self.order
@@ -208,15 +208,15 @@ class jet:
         return result
     
     def __rpow__(self, other):
-        other = convert(other)    
+        other = self.convert(other)    
         return other**self
     
     def __truediv__(self, other):
-        other = convert(other)
+        other = self.convert(other)
         return self.__mul__(other.inv())
     
     def __rtruediv__(self, other):
-        other = convert(other)
+        other = self.convert(other)
         return other.__mul__(self.inv())
     
     def copy(self):
@@ -281,22 +281,21 @@ class jet:
         return result
             
     def __eq__(self, other):
-        other = convert(other)
+        other = self.convert(other)
         array1 = self.get_array()
         array2 = other.get_array()
         if len(array1) != len(array2): # jets of different order are considered different
             return False
         else:
             return all([array1[k] == array2[k] for k in range(len(array1))])
-
     
-def convert(other):
-    '''
-    Convert an object to a (constant) jet.
-    '''
-    if not other.__class__.__name__ == 'jet':
-        return jet(value=other)
-    else:
-        return other
+    def convert(self, other):
+        '''
+        Convert an object to an instance of this class.
+        '''
+        if not other.__class__.__name__ == self.__class__.__name__:
+            return self.__class__(value=other)
+        else:
+            return other
         
     

@@ -9,8 +9,7 @@ class jet(jet_source):
     Class to store and operate with higher-order derivatives of a given function.
     '''
     def __pow__(self, other):
-        if not isinstance(other, jet):
-            other = jet(value=other) # n.b. convert from ad.py would convert to 'jet_source', not jet'.
+        other = self.convert(other)
 
         if other.order == 0:
             result = jet_source.__pow__(self, other)
@@ -18,14 +17,26 @@ class jet(jet_source):
             '''
             General exponentiation, using exp and log functions.
             '''
-            result = exp(other*log(self))
+            result = exp(log(self)*other)
             result.graph = [(2, '**'), self.graph, other.graph]
         return result
     
-    def __rpow__(self, other):
-        if not isinstance(other, jet):
-            other = jet(value=other) # n.b. convert from ad.py would convert to 'jet_source', not jet'.
-        return other**self
+    def reorder(self):
+        '''
+        Create a new jet in which the various polynomials (having general entries in jets) have been recursively expanded.
+        '''
+        fl = (jetpolynom(1, index=0, power=0)*self).flatten()
+        arr = [{frozenset([(0, 0)]): 0} for i in range(self.order + 1)]
+        for fs, v in fl.items():
+            power = sum([tpl[1] for tpl in fs])
+            if power > self.order:
+                continue
+            elif power == 0: # we treat scalars a bit differently, because we may apply functions on jets.
+                arr[0][frozenset([(0, 0)])] = v # default key for scalars.
+            else:
+                arr[power][fs] = v
+        #return jet([polynom(values=arr[k]) for k in range(len(arr))]) # would yield polynomial in first component, which we dont want
+        return jet([arr[0][frozenset([(0, 0)])]] + [jetpolynom(values=arr[k]) for k in range(1, len(arr))])
     
     
 class derive:
