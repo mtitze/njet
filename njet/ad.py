@@ -86,11 +86,10 @@ class derive:
         for k in range(self.n_args):
             jk = jet([z[k], jetpolynom(1, index=k, power=1)], n=self.order)
             inp.append(jk)
-        evaluation = self.func(*inp)
-        
+        evaluation = self.func(*inp)        
         # extract Df from the result
         Df = {}
-        for k in range(1, self.order + 1): # the k-th derivative
+        for k in range(1, evaluation.order + 1): # the k-th derivative
             polynomials_k = evaluation.array(k).values
             for key, value in polynomials_k.items(): # loop over the individual polynomials of the k-th derivative
                 # key corresponds to a specific frozenset, i.e. some indices and powers of a specific monomial.
@@ -104,7 +103,6 @@ class derive:
                 if mult:
                     value *= multiplicity/self._factorials[sum(indices)]
                 Df[tuple(indices)] = value
-                
         self._Df = Df
         return Df
     
