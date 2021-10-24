@@ -53,8 +53,8 @@ class jetpolynom:
         return f'<samp>{outstr}</samp>'
     
     def __add__(self, other):
-        if not other.__class__.__name__ == 'jetpolynom':
-            other = jetpolynom(other)
+        if not other.__class__.__name__ == self.__class__.__name__:
+            other = self.__class__(other)
         new_values = {}
         for k in set(self.values).union(set(other.values)):
             new_value = self.values.get(k, 0) + other.values.get(k, 0)
@@ -62,19 +62,19 @@ class jetpolynom:
                 continue
             new_values[k] = new_value
         if len(new_values) == 0:
-            return jetpolynom(0)
+            return self.__class__(0)
         else:
-            return jetpolynom(values=new_values)
+            return self.__class__(values=new_values)
     
     def __radd__(self, other):
-        other = jetpolynom(other)
+        other = self.__class__(other)
         return other + self
     
     def __neg__(self):
         new_values = {}
         for key, value in self.values.items():
             new_values[key] = -value
-        return jetpolynom(values=new_values)
+        return self.__class__(values=new_values)
     
     def __sub__(self, other):
         return self + -other
@@ -84,8 +84,8 @@ class jetpolynom:
     
     def __mul__(self, other):
         # Interpretation: (sum_j a_j)*(sum_k b_k) = sum_{j, k} a_j*b_k
-        if not other.__class__.__name__ == 'jetpolynom':
-            other = jetpolynom(other)
+        if not other.__class__.__name__ == self.__class__.__name__:
+            other = self.__class__(other)
         pol_prod = {}
         for aj, value1 in self.values.items():
             e1 = dict(aj) # e.g. e1 = {0: 0, 1: 5, 2: 3}
@@ -96,16 +96,19 @@ class jetpolynom:
                 value_prod += pol_prod.get(e_prod, 0) # account for multiplicity
                 pol_prod[e_prod] = value_prod
         pol_prod = {k: v for k, v in pol_prod.items() if not check_zero(v)} # remove zero values
-        return jetpolynom(values=pol_prod)
-    
+        if len(pol_prod) == 0: # in this case zero(s) are produced
+            return 0
+        else:
+            return self.__class__(values=pol_prod)
+
     def __rmul__(self, other):
-        other = jetpolynom(other)
+        other = self.__class__(other)
         return other*self
     
     def __pow__(self, other):
         assert (type(other) == int) and (other >= 0)
         if other == 0:
-            return jetpolynom(1) # N.B. 0**0 := 1
+            return self.__class__(1) # N.B. 0**0 := 1
 
         remainder = other%2
         half = self**(other//2)
@@ -113,6 +116,10 @@ class jetpolynom:
             return self*half*half
         else:
             return half*half
+        
+    def __float__(self):
+        zero_keys = [(a, b)]
+        return self.values
         
     def flatten(self, collection=None):
         '''
@@ -156,7 +163,6 @@ class jetpolynom:
         |  frozenset({(0, 0), (2, 1), (3, 6)}): -0.014993752603082056,
         |  frozenset({(0, 0), (2, 1), (3, 8)}): 0.00856785863033245,
         |  frozenset({(0, 0), (2, 1), (3, 10)}): -0.006119899021666472,
-        |  frozenset({(0, 0)}): 0,
         |  frozenset({(0, 0), (2, 3)}): -0.0024989587671803417,
         |  frozenset({(0, 0), (2, 3), (3, 2)}): 0.0014279764383887665,
         |  frozenset({(0, 0), (2, 3), (3, 4)}): -0.0010199831702776905,
@@ -165,16 +171,41 @@ class jetpolynom:
         |  frozenset({(0, 0), (2, 3), (3, 10)}): 0.0009991671872107942
         | }
         '''
-        if collection == None: # prevents overriding of default variable {}
+        if collection == None: # prevent overriding of default variable {}
             collection = {}
             
+        fs0 = frozenset([(0, 0)])
+            
         for fs, v in self.values.items():
-            if v.__class__.__name__ == 'jet':
-                new_jet = v*jetpolynom(values={fs: 1})
+            # ignore zero values
+            if check_zero(v):
+                continue
+                
+            # remove zero-powers
+            fs = frozenset([(a, b) for a, b in fs if b != 0])
+            if len(fs) == 0:
+                fs = fs0
+
+            if v.__class__.__name__ == 'jet':           
+                new_jet = v*self.__class__(values={fs: 1})
                 for p in new_jet.get_array():
-                    collection = p.flatten(collection=collection)
+                    if p.__class__.__name__ == self.__class__.__name__:
+                        collection = p.flatten(collection=collection) # call 'flatten' recursively on the members; update the collection
+                    else:
+                        new_value = collection.get(fs0, 0) + p
+                        # only add non-zero values
+                        if check_zero(new_value): # remove the key belonging to the zero value
+                            dump = collection.pop(fs, None)
+                        else:
+                            collection[fs0] = collection.get(fs0, 0) + p
             else:
-                collection[fs] = collection.get(fs, 0) + v
+                new_value = collection.get(fs, 0) + v
+                # only add non-zero values
+                if check_zero(new_value): # remove the key belonging to the zero value
+                    dump = collection.pop(fs, None)
+                else:
+                    collection[fs] = new_value
+                    
         return collection
         
 

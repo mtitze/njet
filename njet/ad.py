@@ -25,19 +25,16 @@ class jet(jet_source):
         '''
         Create a new jet in which the various polynomials (having general entries in jets) have been recursively expanded.
         '''
-        fl = (jetpolynom(1, index=0, power=0)*self).flatten()
-        arr = [{frozenset([(0, 0)]): 0} for i in range(self.order + 1)]
+        fl = jetpolynom(self).flatten()
+        arr = [{} for i in range(self.order + 1)]
         for fs, v in fl.items():
             power = sum([tpl[1] for tpl in fs])
             if power > self.order:
                 continue
-            elif power == 0: # we treat scalars a bit differently, because we may apply functions on jets.
-                arr[0][frozenset([(0, 0)])] = v # default key for scalars.
-            else:
-                arr[power][fs] = v
-        #return jet([polynom(values=arr[k]) for k in range(len(arr))]) # would yield polynomial in first component, which we dont want
-        return jet([arr[0][frozenset([(0, 0)])]] + [jetpolynom(values=arr[k]) for k in range(1, len(arr))])
-    
+
+            arr[power][fs] = v
+        # transform the first entry to float (because we will always consider polynoms in higher-orders)
+        return jet([sum(arr[0].values())] + [jetpolynom(values=arr[k]) for k in range(1, len(arr))])
     
 class derive:
     '''

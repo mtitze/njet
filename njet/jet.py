@@ -227,7 +227,7 @@ class jet:
         result.array = self.array
         return result
     
-    def derive(self, index: int=None, **kwargs):
+    def derive(self, **kwargs):
         '''
         Return the derivative of this jet, determined by shifting its array to the left by 1.
         
@@ -242,11 +242,7 @@ class jet:
         if len(array) == 1:
             result.set_array([0])
         else:
-            if index == None:
-                new_array = array[1:]
-            else:
-                new_array = [e.derive(index=index, **kwargs) if e.__class__.__name__ == 'jetpolynom' else e for e in array[1:]]
-            result.set_array(new_array)
+            result.set_array(array[1:])
         return result
     
     def compose(self, other):
