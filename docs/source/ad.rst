@@ -56,6 +56,83 @@ It is also possible to pass SymPy symbols:
      (3, 0): -8.0*x**3*exp(-x**2 + y) + 12.0*x*exp(-x**2 + y),
      (1, 2): -2.0*x*exp(-x**2 + y)}
 
+Nested expressions
+==================
+
+Expressions containing higher-order derivatives can straightforwardly be derived. Consider
+the following example:
+
+.. code-block:: python
+
+    from njet.functions import sin
+    f = lambda x, y: sin(1/x + y)
+    df = derive(f, order=3)
+    
+    dxxf = lambda x, y: df.eval([x, y])[(1, 1)] 
+    dxxyf = lambda x, y: df.eval([x, y])[(2, 1)]
+    
+    g = lambda x, y: f(x, y)/(1 + dxxf(x, y)) + dxxyf(x, y)**-3
+    
+We obtain the derivatives of the function ``g``, containing the function ``f`` itself
+and some of its higher-order derivatives, up to fourth order:
+
+.. code-block:: python
+
+    dg = derive(g, order=4)
+    dg.eval([0.2, 1.1])    
+ 
+    {(1, 0): -1.2893245550004897,
+     (0, 1): 0.07784343804658536,
+     (0, 2): 1.0912311590829322,
+     (2, 0): 608.7138384279668,
+     (1, 1): -25.28585653666342,
+     (2, 1): 13059.768934688353,
+     (0, 3): 22.863930873679625,
+     (3, 0): -321809.8708462019,
+     (1, 2): -540.6030970198217,
+     (3, 1): -9115018.77817841,
+     (0, 4): 638.7760280114579,
+     (1, 3): -15256.040672728306,
+     (4, 0): 227762162.9608126,
+     (2, 2): 370126.0266704479}
+     
+Of course, this also synergizes with either NumPy arrays or SymPy symbols. E.g.:
+
+.. code-block:: python
+
+    dg.eval([np.linspace(0.2, 0.64, 5), 1.1])
+    
+    {(1, 0): array([-1.28932456,  0.8244532 , 10.59476301,  1.63373827, 12.93969049]),
+     (0, 1): array([ 0.07784344, -0.00505105, -1.19829647, -0.41567626, -3.08965192]),
+     (0, 2): array([ 1.09123116e+00,  1.70120125e-02,  1.48647193e+01, -1.90986854e+00, 6.21825808e+01]),
+     (2, 0): array([608.71383843,   6.65953138, 770.48242475, -21.18301586, 946.75436686]),
+     (1, 1): array([ -25.28585654,   -0.24971327, -108.54451995,    5.59886998, -245.80653651]),
+     (2, 1): array([ 1.30597689e+04, -8.68288739e+00, -1.32996630e+04, -1.96661374e+02, -2.38423630e+04]),
+     (0, 3): array([ 2.28639309e+01, -3.49863419e-02, -2.75171895e+02, -1.34122433e+01, -1.70211185e+03]),
+     (3, 0): array([-3.21809871e+05,  1.13907036e+02,  8.86275855e+04,  8.81153961e+02, 8.62690730e+04]),
+     (1, 2): array([-5.40603097e+02,  6.12535213e-01,  1.93861032e+03,  4.78129009e+01, 6.43635888e+03]),
+     (3, 1): array([-9.11501878e+06, -3.41856494e+02, -2.10459443e+06,  7.83829609e+03, -2.60956636e+06]),
+     (0, 4): array([ 6.38776028e+02,  1.56152245e-01,  6.79315246e+03, -1.18250949e+02, 5.53778566e+04]),
+     (1, 3): array([-1.52560407e+04, -2.16266355e+00, -4.69698546e+04,  4.43941387e+02, -2.04118615e+05]),
+     (4, 0): array([ 2.27762163e+08,  3.56314244e+03,  1.36083587e+07, -3.62297999e+04, 9.01586775e+06]),
+     (2, 2): array([ 3.70126027e+05,  2.87900980e+01,  3.17958465e+05, -1.80550952e+03, 7.37728082e+05])}
+     
+Note that in the example above we can not call ``f`` or ``g`` with floats directly, because the njet functions expect 
+classes of type *jet* as input. The njet function ``sin`` above is used in the calculation of the derivatives. If we want to
+evaluate ``f`` or ``g`` at a specific point, we would have to consider a modification of ``f`` using e.g. ``numpy.sin``:
+
+.. code-block:: python
+
+    import numpy
+    fnp = lambda x, y: numpy.sin(1/x + y)
+    gnp = lambda x, y: fnp(x, y)/(1 + dxxf(x, y)) + dxxyf(x, y)**-3
+    
+    print (fnp(0.2, 1.1))
+  > -0.18216250427209588
+    print (gnp(0.2, 1.1))
+  > 0.051254720339244976
+
+
 In the following the AD routines are explained in more detail.
 
 .. automodule:: njet.ad

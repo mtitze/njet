@@ -101,11 +101,8 @@ def bell_polynomials(n: int, z):
 
     
 class jet:
-    def __init__(self, value=0, **kwargs):        
-        if hasattr(value, '__getitem__'):
-            self.set_array(value, **kwargs)
-        else:
-            self.set_array([value], **kwargs)
+    def __init__(self, value=0, **kwargs):    
+        self.set_array(value, **kwargs)
         self.graph = kwargs.get('graph', [(1, '0'), self]) # for keeping track of the computation graph
         
     def get_array(self, **kwargs):
@@ -113,6 +110,8 @@ class jet:
         return [self.array(k) for k in range(n + 1)]
     
     def set_array(self, array, **kwargs):
+        if not hasattr(array, '__getitem__') or not hasattr(array, '__iter__'):
+            array = [array]
         if hasattr(array, '__len__'):
             omax = len(array) - 1
             self.array = lambda k: array[k] if k <= omax else 0
@@ -273,7 +272,7 @@ class jet:
         "1/x o jet".
         '''
         f = self.array(0)
-        assert f != 0
+        assert not check_zero(f)
 
         facts = factorials(self.order)
         invf = [(-1)**n*facts[n]/f**(n + 1) for n in range(self.order + 1)]
@@ -285,11 +284,11 @@ class jet:
             
     def __eq__(self, other):
         other = self.convert(other, n=self.order) # if 'other' is no jet class, convert 'other' to jet with same order as self
-        array1 = self.get_array()
-        array2 = other.get_array()
-        if len(array1) != len(array2): # jets of different order are considered different
+        if self.order != other.order:  # jets of different order are considered different
             return False
         else:
+            array1 = self.get_array()
+            array2 = other.get_array()
             return all([check_zero(array1[k] - array2[k]) for k in range(len(array1))])
     
     def convert(self, other, n=0):

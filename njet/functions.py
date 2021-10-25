@@ -2,6 +2,7 @@
 
 import numpy
 import sympy
+import mpmath
 
 def detect_code(x, name):
     # Find the appropriate code to perform operations.
@@ -22,6 +23,13 @@ def detect_code(x, name):
                   'exp': numpy.exp,
                   'log': numpy.log}
     
+    mpmath_dict = {'sin': mpmath.sin,
+                  'cos': mpmath.cos,
+                  'sinh': mpmath.sinh,
+                  'cosh': mpmath.cosh,
+                  'exp': mpmath.exp,
+                  'log': mpmath.log}
+    
     jet_dict = {'sin': sin,
                 'cos': cos,
                 'sinh': sinh,
@@ -34,6 +42,8 @@ def detect_code(x, name):
             func = sympy_dict[name]
         elif x.__module__[0:4] == 'njet':
             func = jet_dict[name]
+        elif x.__module__[0:6] == 'mpmath':
+            func = mpmath_dict[name]
         else:
             raise NotImplementedError('Unknown object.')
     else:

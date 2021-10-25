@@ -6,8 +6,8 @@ higher-order derivatives of a given function in several variables.
 ## Features
 
 - Higher-order (forward-mode) automatic differentiation in several variables.
-- Support for NumPy and SymPy.
-- Evaluation of expressions containing nested higher-order derivatives.
+- Support for NumPy, SymPy and mpmath.
+- Differentiation of expressions containing nested higher-order derivatives.
 - Lightweight and easy to use.
 
 ## Installation
@@ -67,6 +67,7 @@ built-in routine. Example:
 Obtain the gradient and the Hessian
 ```python
 d1.grad()
+
 {(2,): -0.0034336627423962197,
  (0,): -0.03183941815676495,
  (1,): -0.015451482340782988}
@@ -74,6 +75,7 @@ d1.grad()
 
 ```python
 d1.hess()
+
 {(2, 2): -0.002678256939069051,
  (1, 1): 0.015296967517375158,
  (0, 2): 0.007004671994488288,
