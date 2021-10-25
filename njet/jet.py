@@ -1,3 +1,10 @@
+def check_zero(value):
+    # check if a value is zero; value may be an iterable
+    if not hasattr(value, '__iter__'):
+        return value == 0
+    else:
+        return all(value == 0)
+    
 def factorials(n: int):
     k = 1
     facts = [1]
@@ -277,21 +284,19 @@ class jet:
         return result
             
     def __eq__(self, other):
-        other = self.convert(other)
+        other = self.convert(other, n=self.order) # if 'other' is no jet class, convert 'other' to jet with same order as self
         array1 = self.get_array()
         array2 = other.get_array()
         if len(array1) != len(array2): # jets of different order are considered different
             return False
         else:
-            return all([array1[k] == array2[k] for k in range(len(array1))])
+            return all([check_zero(array1[k] - array2[k]) for k in range(len(array1))])
     
-    def convert(self, other):
+    def convert(self, other, n=0):
         '''
         Convert an object to an instance of this class.
         '''
         if not other.__class__.__name__ == self.__class__.__name__:
-            return self.__class__(value=other)
+            return self.__class__(value=other, n=n)
         else:
             return other
-        
-    

@@ -21,24 +21,6 @@ class jet(jet_source):
             result.graph = [(2, '**'), self.graph, other.graph]
         return result
     
-    def reorder(self):
-        '''
-        Create a new jet in which the various polynomials (having general entries in jets) have been recursively expanded.
-        '''
-        fs0 = frozenset([(0, 0)])
-        fl = jetpolynom(self).flatten()
-        arr = [{} for i in range(self.order + 1)]
-        for fs, v in fl.items():
-            power = sum([tpl[1] for tpl in fs])
-            if power > self.order:
-                continue
-            arr[power][fs] = v
-            
-        # add zeros to missing array entries in case there are no keys
-        arr = [e if len(e) > 0 else {fs0:0} for e in arr]
-            
-        # transform the first entry to float (because we will always consider polynoms in higher-orders)
-        return jet([sum(arr[0].values())] + [jetpolynom(values=arr[k]) for k in range(1, len(arr))])
     
 class derive:
     '''
@@ -86,12 +68,14 @@ class derive:
         for k in range(self.n_args):
             jk = jet([z[k], jetpolynom(1, index=k, power=1)], n=self.order)
             inp.append(jk)
-        evaluation = self.func(*inp)        
+        evaluation = self.func(*inp)
         # extract Df from the result
         Df = {}
         for k in range(1, evaluation.order + 1): # the k-th derivative
-            polynomials_k = evaluation.array(k).values
-            for key, value in polynomials_k.items(): # loop over the individual polynomials of the k-th derivative
+            entry = evaluation.array(k)
+            if not entry.__class__.__name__ == 'jetpolynom': # skip any non-polynomial entry
+                continue
+            for key, value in entry.values.items(): # loop over the individual polynomials of the k-th derivative
                 # key corresponds to a specific frozenset, i.e. some indices and powers of a specific monomial.
                 indices = [0]*self.n_args
                 multiplicity = 1

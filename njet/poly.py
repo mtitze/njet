@@ -1,11 +1,4 @@
-from .jet import factorials
-
-def check_zero(value):
-    # check if a value is zero; value may be an iterable
-    if not hasattr(value, '__iter__'):
-        return value == 0
-    else:
-        return all(value == 0)
+from .jet import factorials, check_zero
 
 class jetpolynom:
     '''
@@ -117,7 +110,9 @@ class jetpolynom:
         else:
             return half*half
         
-    def __float__(self):
-        zero_keys = [(a, b)]
-        return self.values
-
+    def __eq__(self, other):
+        if not other.__class__.__name__ == self.__class__.__name__:
+            return self.values == self.__class__(other).values
+        else:
+            return self.values == other.values
+        

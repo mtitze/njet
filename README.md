@@ -5,8 +5,9 @@ higher-order derivatives of a given function in several variables.
 
 ## Features
 
-- Higher-order forward-mode automatic differentiation with multiple variables.
+- Higher-order (forward-mode) automatic differentiation in several variables.
 - Support for NumPy and SymPy.
+- Evaluation of expressions containing nested higher-order derivatives.
 - Lightweight and easy to use.
 
 ## Installation
