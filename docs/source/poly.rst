@@ -1,8 +1,8 @@
-Polynoms
-========
+Polynomials
+===========
 
-The underlying class by which we compute higher-order derivatives is the
-*jetpolynom* class, representing a polynom in several variables. 
+
+The *jetpolynom* class is representing a polynomial in several variables. 
 
 Example to generate two monomials ``p1 = (2 + i)*x1`` and ``p2 = -0.5*x2**2`` (where ``p1`` has
 complex coefficient):
@@ -19,7 +19,7 @@ complex coefficient):
     (3+4j)*x0**2 +
     -0.25*x1**4]
 
-These polynoms can be used as jet entries:
+These polynomials can be used as jet entries:
 
 .. code-block:: python
 
@@ -41,9 +41,9 @@ will work:
     sin(j2p*j3p)
   > 3-jet(0.21822962308086932, [(0.4293948777054664+0.2146974388527332j)*x0**1 + -0.48794872466530276*x1**2], [-0.05455740577021733*x1**4 + (-0.03168694127134222-0.0422492550284563j)*x0**2 + (-1.8557738645056285-0.9278869322528143j)*x0**1*x1**2], [(0.6446451181643271+0.859526824219103j)*x0**2*x1**2 + (-0.9767350275217077-0.48836751376085386j)*x0**1*x1**4 + (-0.020782712080944576-0.11430491644519516j)*x0**3 + 0.12198718116632569*x1**6])
 
-However, an expression of the form ``sin(j1p)`` will not work. The reason is that an elementary function applied on a polynomial class is not defined.
+However, an expression of the form ``sin(j1p)`` will not work. The reason is that an elementary function applied on a class of type *jetpolynom* is not defined.
 
-The class jetpolynom has the following signature:
+The class *jetpolynom* has the following signature:
 
 .. automodule:: njet.poly
     :members:
