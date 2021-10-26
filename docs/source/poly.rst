@@ -4,7 +4,7 @@ Polynomials
 
 The *jetpolynom* class is representing a polynomial in several variables. 
 
-Example to generate two monomials ``p1 = (2 + i)*x1`` and ``p2 = -0.5*x2**2`` (where ``p1`` has
+Example to generate two monomials ``p1 = (2 + i)*x0`` and ``p2 = -0.5*x1**2`` (where ``p1`` has
 complex coefficient):
 
 .. code-block:: python
