@@ -182,7 +182,7 @@ def test_nd2(tol=1e-12, verbose=False):
 ######################## 
 # Performance
 ########################
-def test_performance(tol1=3.8, tol2=0.0008, n_points=6000):
+def test_performance(tol1=3.8, tol2=0.0025, n_points=6000):
     print (f'Performance test using tolarances {tol1}, {tol2} (Attention: Tolerances may have to be adjusted depending on machine) ...')
     import time
     d2 = derive(lambda x, y: exp(-x**2 + y), order=3)
@@ -212,19 +212,19 @@ def test_performance(tol1=3.8, tol2=0.0008, n_points=6000):
 
     # Short time tests
     start_time = time.time()
-    r = d2.eval([2.1, l])
+    r = d2.eval([2.1, lin])
     end_time = time.time()
     time1_short = end_time - start_time
     print (f'required time 4: {end_time - start_time}')
 
     start_time = time.time()
-    r = d2.eval([2.1, l])
+    r = d2.eval([2.1, lin])
     end_time = time.time()
     time2_short = end_time - start_time
     print (f'required time 5: {end_time - start_time}')
 
     start_time = time.time()
-    r = d2.eval([2.1, l])
+    r = d2.eval([2.1, lin])
     end_time = time.time()
     time3_short = end_time - start_time
     print (f'required time 6: {end_time - start_time}')
