@@ -1,6 +1,6 @@
 from .functions import exp, log
 from .jet import jet as jet_source
-from .jet import factorials
+from .jet import factorials, check_zero
 from .poly import jetpolynom
 
 
@@ -27,10 +27,15 @@ class derive:
     Class to handle the derivatives of a (jet-)function (i.e. a function consisting of a composition
     of elementary functions).
     '''
-    
     def __init__(self, func, order: int=1, **kwargs):
-        self.func = func
-        self.n_args = self.func.__code__.co_argcount # the number of any arguments of func (before *args)
+        # analyze function
+        n_args = func.__code__.co_argcount
+        if n_args > 1:
+            self.func = lambda z: func(*z)
+        else:
+            self.func = func
+        # self.func takes only a single object as argument
+        self.n_args = kwargs.get('n_args', n_args) # the number of any arguments of func (before *args)
         self.set_order(order)
         self._Df = {}
         
@@ -38,41 +43,48 @@ class derive:
         self.order = order
         self._factorials = factorials(self.order)
         
-    def eval(self, z, mult=True):
+    def taylor(self, z):
         '''
-        Evaluate the derivatives of a (jet-)function at a specific point up to self.order.
-
+        Pass a jet of order self.order, having polynoms in its higher-order entries,
+        through the given function, in order to obtain its Taylor-expansion.
+        
         Parameters
         ----------
-        z: subscriptable 
-            Vector at which the function and its derivatives should be evaluated.
-        mult: Boolean, optional
-            Whether or not to include the multiplicities C(j1, ..., jm). Default: True. (Details see below).
-            If False, then the C*Df's are returned. If True, then the Df's are returned.
-
+        z: subscriptable
+            List of values at which the function and its derivatives should be evaluated.
+        
         Returns
         -------
-        dict
-            Dictionary of compontens of the multivariate Taylor expansion of the given function self.func:
-
-            Let m be the number of arguments of self.func. 
-            Then
-            self.func(z1, ..., zm) = sum_{j1 + ... + jm = k} C(j1, ..., jm) * Df[j1, ... jm] * z1**j1 * ... * zm**jm
-            with
-            Df[j1, ..., jm] := \partial^j1/\partial_{z1}^j1 ... \partial^jm/\partial_{zm}^jm f (z1, ..., zm)
-            and combinatorial factor
-            C(j1, ..., jm) = (j1 + ... + jm)!/(j1! * ... * jm!) .
+        jet
+            Jet containing the value of the function in its zero-th entry and the
+            Taylor polynomials in the higher-order entries.
         '''
-        # perform the computation, based on the input vector
         inp = []
         for k in range(self.n_args):
             jk = jet([z[k], jetpolynom(1, index=k, power=1)], n=self.order)
             inp.append(jk)
-        evaluation = self.func(*inp)
-        # extract Df from the result
+        return self.func(inp)
+    
+    def get_taylor_coefficients(self, taylor, mult=False):
+        '''Extract the Taylor coefficients of order > 1 from a given Taylor polynomial (the output of self.taylor).
+        
+        Parameters
+        ----------
+        taylor: jet
+            A jet having jetpolynom entries in the k-th order entries for k > 0.
+            
+        mult: boolean, optional
+            See self.eval for a description. Default: False.
+            
+        Returns
+        -------
+        dict
+            Dictionary which maps the tuples representing the indices and powers of the individual
+            monomials to their values, corresponding to the Taylor expansion of the given expression.
+        '''
         Df = {}
-        for k in range(1, evaluation.order + 1): # the k-th derivative
-            entry = evaluation.array(k)
+        for k in range(1, taylor.order + 1): # the k-th derivative
+            entry = taylor.array(k)
             if not entry.__class__.__name__ == 'jetpolynom': # skip any non-polynomial entry
                 continue
             for key, value in entry.values.items(): # loop over the individual polynomials of the k-th derivative
@@ -86,7 +98,38 @@ class derive:
                     multiplicity *= self._factorials[power]
                 if mult:
                     value *= multiplicity/self._factorials[sum(indices)]
-                Df[tuple(indices)] = value
+                if not check_zero(value): # only add non-zero values
+                    Df[tuple(indices)] = value
+        return Df
+        
+    def eval(self, z, mult=True):
+        '''Evaluate the derivatives of a (jet-)function at a specific point up to self.order.
+        
+        Parameters
+        ----------
+        z: subscriptable 
+            List of values at which the function and its derivatives should be evaluated.
+        mult: Boolean, optional
+            Whether or not to include the multiplicities C(j1, ..., jm). Default: True. (Details see below).
+            If False, then the C*Df's are returned. If True, then the Df's are returned.
+
+        Returns
+        -------
+        dict
+            Dictionary of compontens of the multivariate Taylor expansion of the given function self.func:
+
+            Let m be the number of arguments of self.func. 
+            Then
+            self.func(z1, ..., zm) = sum_{j1 + ... + jm = k} C(j1, ..., jm) * Df[j1, ... jm] * z1**j1 * ... * zm**jm
+            with
+            Df[j1, ..., jm] := \\partial^j1/\\partial_{z1}^j1 ... \\partial^jm/\\partial_{zm}^jm f (z1, ..., zm)
+            and combinatorial factor
+            C(j1, ..., jm) = (j1 + ... + jm)!/(j1! * ... * jm!) .
+        '''
+        # perform the computation, based on the input vector
+        
+        evaluation = self.taylor(z)
+        Df = self.get_taylor_coefficients(evaluation, mult=mult)
         self._Df = Df
         return Df
     
@@ -109,6 +152,8 @@ class derive:
         '''
         assert k <= self.order
         D = kwargs.get('Df', self._Df)
+        if len(D) == 0:
+            raise RuntimeError('Derivative(s) need to be evaluated first.')
         return {j: D[j] for j in D.keys() if sum(j) == k}
     
     @staticmethod

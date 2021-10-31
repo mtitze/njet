@@ -215,19 +215,19 @@ def test_performance(tol1=3.8, tol2=0.0025, n_points=6000):
     r = d2.eval([2.1, lin])
     end_time = time.time()
     time1_short = end_time - start_time
-    print (f'required time 4: {end_time - start_time}')
+    print (f'required time 4: {time1_short}')
 
     start_time = time.time()
     r = d2.eval([2.1, lin])
     end_time = time.time()
     time2_short = end_time - start_time
-    print (f'required time 5: {end_time - start_time}')
+    print (f'required time 5: {time2_short}')
 
     start_time = time.time()
     r = d2.eval([2.1, lin])
     end_time = time.time()
     time3_short = end_time - start_time
-    print (f'required time 6: {end_time - start_time}')
+    print (f'required time 6: {time3_short}')
 
     if np.average([time1_long, time2_long, time3_long]) < tol1 and np.average([time1_short, time2_short, time3_short]) < tol2:
         print ('Performance test succeeded.')
