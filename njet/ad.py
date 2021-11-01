@@ -107,7 +107,7 @@ class derive:
         
         Parameters
         ----------
-        z: subscriptable 
+        z: subscriptable
             List of values at which the function and its derivatives should be evaluated.
         mult: Boolean, optional
             Whether or not to include the multiplicities C(j1, ..., jm). Default: True. (Details see below).
@@ -142,7 +142,7 @@ class derive:
             The order of the derivatives to extract.
         Df: dict, optional
             The output of self.eval, containing the entries of the derivative. If nothing
-            specified, the most recent output will be used.
+            specified, the last evaluation (stored in self._Df) will be used.
             
         Returns
         -------
@@ -218,13 +218,17 @@ class derive:
         kwargs: dict
             Additional arguments passed to self.build_tensor
             
+        z: subscriptable, optional
+            Point at which to compute the gradient. If nothing specified (default),
+            then the gradient is determined from the last evaluation.
+            
         Returns
         -------
         dict
             Dictionary containing the components of the gradient.
         '''
         if z != None:
-            Df = self.eval(z)
+            _ = self.eval(z)
         return self.build_tensor(k=1, **kwargs)
     
     def hess(self, z=None, **kwargs):
@@ -235,6 +239,10 @@ class derive:
         ----------
         kwargs: dict
             Additional arguments passed to self.build_tensor
+        
+        z: subscriptable, optional
+            Point at which to compute the Hessian. If nothing specified (default),
+            then the Hessian is determined from the last evaluation.
             
         Returns
         -------
@@ -242,7 +250,7 @@ class derive:
             Dictionary containing the components of the Hessian.
         '''
         if z != None:
-            Df = self.eval(z)
+            _ = self.eval(z)
         return self.build_tensor(k=2, **kwargs)
         
         
