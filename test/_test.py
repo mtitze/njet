@@ -177,7 +177,27 @@ def test_nd2(tol=1e-12, verbose=False):
     else:
         print (f'Nested derivative test 2 succeeded with given tolerance {tol}.')
     assert not nested_test2_failed
-
+    
+    
+def test_nd3():
+    def prime(f, k=0):
+        df = derive(f, order=1)
+        return lambda x: df.grad([x])[(k,)]
+    xmpl4 = lambda x: sin(x**2)
+    x = Symbol('x')
+    c, s = sympy.cos(x**2), sympy.sin(x**2)
+    d3f = prime(prime(prime(xmpl4)))(x)
+    check = d3f.expand() - (-8*x**3*c - 12*x*s)
+    nested_test3_failed = True
+    if check == 0:
+        nested_test3_failed = False
+    if nested_test3_failed:
+        print ('Nested derivative test 3 failed.')
+    else:
+        print ('Nested derivative test 3 succeeded.')
+        
+    assert not nested_test3_failed
+    
 
 ######################## 
 # Performance
@@ -245,5 +265,6 @@ if __name__ == '__main__':
     test_sd3()
     test_nd1()
     test_nd2()
+    test_nd3()
     test_performance()
     

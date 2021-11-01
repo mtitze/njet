@@ -59,8 +59,24 @@ It is also possible to pass SymPy symbols:
 Nested expressions
 ==================
 
-Expressions containing higher-order derivatives can straightforwardly be derived. Consider
-the following example:
+Expressions containing higher-order derivatives can straightforwardly be derived. For example, in the case
+of one variable:
+
+.. code-block:: python
+
+    def prime(f, k=0):
+        # Return \partial f / \partial x_k
+        df = derive(f, order=1)
+        return lambda x: df.grad([x])[(k,)]
+        
+    xmpl = lambda x: sin(x**2)
+        
+    from sympy import Symbol
+    f3 = prime(prime(prime(xmpl)))(Symbol('x'))
+    f3.expand() 
+  > -8*x**3*cos(x**2) - 12*x*sin(x**2)
+
+Here a more sophisticated example for two variables:
 
 .. code-block:: python
 

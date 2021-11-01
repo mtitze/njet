@@ -34,10 +34,10 @@ from njet import derive
 d1 = derive(xmpl, order=3)
 ```
 
-Evaluate the derivatives at a specific point
+Evaluate the derivatives at a specific point ``p``
 ```python
-z = [3, 2, 1]
-d1.eval(z)
+p = [3, 2, 1]
+d1.eval(p)
 
 {(0, 0, 1): -0.0034336627423962197,
  (1, 0, 0): -0.03183941815676495,
