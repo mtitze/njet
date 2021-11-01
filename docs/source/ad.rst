@@ -68,7 +68,8 @@ of one variable:
         # Return \partial f / \partial x_k
         df = derive(f, order=1)
         return lambda x: df.grad([x])[(k,)]
-        
+     
+    from njet.functions import sin     
     xmpl = lambda x: sin(x**2)
         
     from sympy import Symbol
@@ -80,7 +81,6 @@ Here a more sophisticated example for two variables:
 
 .. code-block:: python
 
-    from njet.functions import sin
     f = lambda x, y: sin(1/x + y)
     df = derive(f, order=3)
     
