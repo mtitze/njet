@@ -127,7 +127,6 @@ class derive:
             C(j1, ..., jm) = (j1 + ... + jm)!/(j1! * ... * jm!) .
         '''
         # perform the computation, based on the input vector
-        
         evaluation = self.taylor(z)
         Df = self.get_taylor_coefficients(evaluation, mult=mult)
         self._Df = Df
@@ -210,7 +209,7 @@ class derive:
         converted_indices = self.convert_indices(list_of_tuples)
         return {converted_indices[k]: entries[list_of_tuples[k]] for k in range(len(list_of_tuples))}
     
-    def grad(self, **kwargs):
+    def grad(self, z=None, **kwargs):
         '''
         Returns the gradient of the function.
         
@@ -224,9 +223,11 @@ class derive:
         dict
             Dictionary containing the components of the gradient.
         '''
+        if z != None:
+            Df = self.eval(z)
         return self.build_tensor(k=1, **kwargs)
     
-    def hess(self, **kwargs):
+    def hess(self, z=None, **kwargs):
         '''
         Returns the Hessian of the function.
         
@@ -240,6 +241,8 @@ class derive:
         dict
             Dictionary containing the components of the Hessian.
         '''
+        if z != None:
+            Df = self.eval(z)
         return self.build_tensor(k=2, **kwargs)
         
         
