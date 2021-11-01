@@ -27,24 +27,23 @@ class derive:
     Class to handle the derivatives of a (jet-)function (i.e. a function consisting of a composition
     of elementary functions).
     '''
-    def __init__(self, func, order: int=1, n_args=0, **kwargs):
+    def __init__(self, func, order: int=1, n_args: int=0, **kwargs):
         if n_args > 0:
             # if n_args > 0, then the function is assumed to depend on
-            # one variable whose elements are subscriptable
+            # one variable of length n_args, and this variable is subscriptable.
             self.func = func
             self.n_args = n_args
         else:
             self.n_args = func.__code__.co_argcount
             if self.n_args > 1:
-                # make a function of one variable whose elements are subscriptable
+                # make a function of one variable whose elements are subscriptable.
                 self.func = lambda z: func(*z)
             elif self.n_args == 1:
                 # the function depends on one variable, but its input is not subscriptable.
                 self.func = lambda z: func(z[0])
             else:
                 raise RuntimeError('The number of function arguments could not be determined.')
-        # Now in all cases self.func takes only a single object as argument, whose
-        # argument is subscriptable.
+        # Now in all cases self.func takes only a single subscriptable object as argument.
         self.set_order(order)
         self._Df = {}
         
