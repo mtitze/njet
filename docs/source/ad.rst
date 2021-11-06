@@ -10,6 +10,7 @@ AD step separately ...
 
 .. code-block:: python
 
+    import numpy as np
     from njet import derive
     from njet.functions import exp
 

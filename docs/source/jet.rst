@@ -95,6 +95,7 @@ There is also NumPy support:
 
 .. code-block:: python
 
+    import numpy as np
     jnp = jet([np.array([2.1, 3.47]), np.array([4.3, -1.2])], n=5)
     jnp
   > 5-jet([2.1 3.47], [ 4.3 -1.2], 0, 0, 0, 0)
