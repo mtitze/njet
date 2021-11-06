@@ -68,7 +68,7 @@ def faa_di_bruno(f, g):
         
     Returns
     -------
-    dfdg: list
+    list
         List containing the values (f o g)^k for k = 0, ..., len(f) - 1.
     '''
     bell = bell_polynomials(len(f) - 1, g[1:])
@@ -87,7 +87,7 @@ def bell_polynomials(n: int, z):
 
     Returns
     -------
-    bp: dict
+    dict
         dict of Bell polynomials up to the given order n. Its keys denote the indices (n, k) of the polynomials.
     '''
     assert len(z) == n

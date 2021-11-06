@@ -10,7 +10,8 @@ AD step separately ...
 
 .. code-block:: python
 
-    from njet import derive, exp
+    from njet import derive
+    from njet.functions import exp
 
     d2 = derive(lambda x, y: exp(-x**2 + y), order=3)
     lin = np.linspace(3, 4, 4)
