@@ -4,6 +4,37 @@ import sympy
 from sympy import Symbol
 import numpy as np
 
+######################
+# Chained expressions
+######################
+
+def test_ce1():
+    H = lambda x, y, px, py: 0.24*(x**2 + px**2) + 0.86*(y**2 + py**2) + x**3 - y**3 + 9*x**4*y + sin(x)
+    dH = derive(H, order=5)
+    
+    z = [1.1, 0.14, 1.26, 0.42]
+    z0 = [0, 0, 0, 0]
+    
+    H_shift = lambda x, y, px, py: H(x + z[0], y + z[1], px + z[2], py + z[3])
+    dH_shift = derive(H_shift, order=5)
+    
+    hdict = dH.eval(z)
+    hshiftdict = dH_shift.eval(z0)
+    
+    check1 = all([hdict[k] == hshiftdict[k] for k in hdict.keys()])
+    
+    hdict2 = dH.get_taylor_coefficients(dH.taylor(z))
+    hshiftdict2 = dH_shift.get_taylor_coefficients(dH_shift.taylor(z0))
+
+    check2 = all([hdict2[k] == hshiftdict2[k] for k in hdict2.keys()])
+    test_failed = not (check1 and check2)
+    if test_failed:
+        print ('Shift test failed.')
+    else:
+        print ('Shift test succeeded.')
+    assert not test_failed
+
+    
 ######################## 
 # Symbolic differentiation
 ########################
@@ -260,6 +291,7 @@ def test_performance(tol1=3.8, tol2=0.0025, n_points=6000):
 
 
 if __name__ == '__main__':
+    test_ce1()
     test_sd1()
     test_sd2()
     test_sd3()

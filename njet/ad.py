@@ -73,8 +73,16 @@ class derive:
             inp.append(jk)
         return self.func(inp)
     
-    def get_taylor_coefficients(self, taylor, mult=False, facts=False):
-        '''Extract the Taylor coefficients of order > 1 from a given Taylor polynomial (the output of self.taylor).
+    def get_taylor_coefficients(self, taylor, mult=False):
+        '''Extract the Taylor coefficients of order >= 1 from a given Taylor polynomial (the output of self.taylor).
+        
+        Let m be the number of arguments of self.func. Then the k-th derivative of self.func has the form
+        (D^k self.func)(z1, ..., zm) = sum_{j1 + ... + jm = k} Df[j1, ... jm]/(j1! * ... * jm!) * z1**j1 * ... * zm**jm
+        = sum_{S(j1, ... jm), j1 + ... + jm = k} C(j1, ..., jm) * Df[j1, ..., jm] * z1**j1 * ... * zm**jm.
+        with S(j1, ..., jm) an index denoting the set having the elements {j1, ..., jm},
+        Df[j1, ..., jm] := \\partial^j1/\\partial_{z1}^j1 ... \\partial^jm/\\partial_{zm}^jm f (z1, ..., zm)
+        and combinatorial factor
+        C(j1, ..., jm) = (j1 + ... + jm)!/(j1! * ... * jm!) .
         
         Parameters
         ----------
@@ -82,7 +90,8 @@ class derive:
             A jet having jetpolynom entries in the k-th order entries for k > 0.
             
         mult: boolean, optional
-            See self.eval for a description. Default: False.
+            How to deal with multiplicities C(j1, ..., jm) (notation see above).
+            If false (default), then the C's are included in the final output.
             
         Returns
         -------
@@ -103,42 +112,33 @@ class derive:
                     if power == 0: # the (k, 0)-entries correspond to the scalar 1 and will be ignored here. TODO: may need to improve this in jetpolynom class.
                         continue
                     indices[index] = power
-                    if mult:
+                    if mult: # remove the factorials in the Taylor expansion (related to the derivatives of the powers)
                         multiplicity *= self._factorials[power]
-                if facts:
-                    multiplicity /= self._factorials[sum(indices)]
+                multiplicity /= self._factorials[sum(indices)] # remove multiplicities emerging from permutations of derivatives.
                 value *= multiplicity
                 if not check_zero(value): # only add non-zero values
                     Df[tuple(indices)] = value
         return Df
         
-    def eval(self, z, mult=True, facts=True, **kwargs):
+    def eval(self, z, mult=True, **kwargs):
         '''Evaluate the derivatives of a (jet-)function at a specific point up to self.order.
         
         Parameters
         ----------
         z: subscriptable
             List of values at which the function and its derivatives should be evaluated.
-        mult: Boolean, optional
-            Whether or not to include the multiplicities C(j1, ..., jm). Default: True. (Details see below).
-            If False, then the C*Df's are returned. If True, then the Df's are returned.
+            
+        mult: boolean, optional
+            See self.get_taylor_coefficients for a description. Default: True
 
         Returns
         -------
         dict
-            Dictionary of compontens of the multivariate Taylor expansion of the given function self.func:
-
-            Let m be the number of arguments of self.func. 
-            Then
-            self.func(z1, ..., zm) = sum_{j1 + ... + jm = k} C(j1, ..., jm) * Df[j1, ... jm] * z1**j1 * ... * zm**jm
-            with
-            Df[j1, ..., jm] := \\partial^j1/\\partial_{z1}^j1 ... \\partial^jm/\\partial_{zm}^jm f (z1, ..., zm)
-            and combinatorial factor
-            C(j1, ..., jm) = (j1 + ... + jm)!/(j1! * ... * jm!) .
+            Dictionary of compontens of the multivariate Taylor expansion of the given function self.func
         '''
         # perform the computation, based on the input vector
         evaluation = self.taylor(z)
-        Df = self.get_taylor_coefficients(evaluation, mult=mult, facts=facts)
+        Df = self.get_taylor_coefficients(evaluation, mult=mult)
         self._Df = Df
         return Df
     
