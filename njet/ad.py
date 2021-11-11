@@ -22,27 +22,51 @@ class jet(jet_source):
         return result
     
     
+def standardize_function(f, n_args: int=0):
+    '''
+    Determine the signature of a function and return a function taking a single subscriptable object as argument.
+    
+    Parameters
+    ----------
+    f: callable
+        The function to be examined.
+        
+    n_args: int, optional
+        An optional parameter to help in identifying the number of arguments in case that f takes a single
+        subscriptable object as argument.
+        
+    Returns
+    -------
+    callable
+        A function taking a single subscriptable object as input.
+    '''
+    
+    if n_args > 0:
+        # if n_args > 0, then the function is assumed to depend on
+        # one variable of length n_args, and this variable is subscriptable.
+        f_out = f
+        n_args = n_args
+    else:
+        n_args = f.__code__.co_argcount
+        if n_args > 1:
+            # make a function of one variable whose elements are subscriptable.
+            f_out = lambda z: f(*z)
+        elif n_args == 1:
+            # the function depends on one variable, but its input is not subscriptable.
+            f_out = lambda z: f(z[0])
+        else:
+            raise RuntimeError('The number of function arguments could not be determined.')
+            
+    return f_out, n_args
+    
+    
 class derive:
     '''
     Class to handle the derivatives of a (jet-)function (i.e. a function consisting of a composition
     of elementary functions).
     '''
     def __init__(self, func, order: int=1, n_args: int=0, **kwargs):
-        if n_args > 0:
-            # if n_args > 0, then the function is assumed to depend on
-            # one variable of length n_args, and this variable is subscriptable.
-            self.func = func
-            self.n_args = n_args
-        else:
-            self.n_args = func.__code__.co_argcount
-            if self.n_args > 1:
-                # make a function of one variable whose elements are subscriptable.
-                self.func = lambda z: func(*z)
-            elif self.n_args == 1:
-                # the function depends on one variable, but its input is not subscriptable.
-                self.func = lambda z: func(z[0])
-            else:
-                raise RuntimeError('The number of function arguments could not be determined.')
+        self.func, self.n_args = standardize_function(func, n_args=n_args)
         # Now in all cases self.func takes only a single subscriptable object as argument.
         self.set_order(order)
         self._Df = {}
@@ -54,7 +78,7 @@ class derive:
     def taylor(self, z):
         '''
         Pass a jet of order self.order, having polynoms in its higher-order entries,
-        through the given function, in order to obtain its Taylor-expansion.
+        through the given function, in order to obtain its Taylor-expansion in a second step.
         
         Parameters
         ----------
@@ -114,8 +138,7 @@ class derive:
                     indices[index] = power
                     if mult: # remove the factorials in the Taylor expansion (related to the derivatives of the powers)
                         multiplicity *= self._factorials[power]
-                multiplicity /= self._factorials[sum(indices)] # remove multiplicities emerging from permutations of derivatives.
-                value *= multiplicity
+                value *= multiplicity/self._factorials[sum(indices)] # the denominator ensures to remove multiplicities emerging from permutations of derivatives.
                 if not check_zero(value): # only add non-zero values
                     Df[tuple(indices)] = value
         return Df
