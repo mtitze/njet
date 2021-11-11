@@ -12,8 +12,6 @@ higher-order derivatives of a given function in several variables.
 
 ## Installation
 
-It is recommended to perform the installation inside a virtual environment.
-
 Install this module with pip
 
 ```sh

@@ -103,14 +103,14 @@ class derive:
                     if power == 0: # the (k, 0)-entries correspond to the scalar 1 and will be ignored here. TODO: may need to improve this in jetpolynom class.
                         continue
                     indices[index] = power
-                    multiplicity *= self._factorials[power]
-                if mult:
-                    value *= multiplicity/self._factorials[sum(indices)]
+                    if mult:
+                        multiplicity *= self._factorials[power]
+                value *= multiplicity/self._factorials[sum(indices)]
                 if not check_zero(value): # only add non-zero values
                     Df[tuple(indices)] = value
         return Df
         
-    def eval(self, z, mult=True):
+    def eval(self, z, mult=True, **kwargs):
         '''Evaluate the derivatives of a (jet-)function at a specific point up to self.order.
         
         Parameters
@@ -236,7 +236,7 @@ class derive:
             Dictionary containing the components of the gradient.
         '''
         if z != None:
-            _ = self.eval(z)
+            _ = self.eval(z, **kwargs)
         return self.build_tensor(k=1, **kwargs)
     
     def hess(self, z=None, **kwargs):
@@ -258,6 +258,6 @@ class derive:
             Dictionary containing the components of the Hessian.
         '''
         if z != None:
-            _ = self.eval(z)
+            _ = self.eval(z, **kwargs)
         return self.build_tensor(k=2, **kwargs)
         
