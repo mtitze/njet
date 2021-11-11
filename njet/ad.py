@@ -73,7 +73,7 @@ class derive:
             inp.append(jk)
         return self.func(inp)
     
-    def get_taylor_coefficients(self, taylor, mult=False):
+    def get_taylor_coefficients(self, taylor, mult=False, facts=False):
         '''Extract the Taylor coefficients of order > 1 from a given Taylor polynomial (the output of self.taylor).
         
         Parameters
@@ -105,12 +105,14 @@ class derive:
                     indices[index] = power
                     if mult:
                         multiplicity *= self._factorials[power]
-                value *= multiplicity/self._factorials[sum(indices)]
+                if facts:
+                    multiplicity /= self._factorials[sum(indices)]
+                value *= multiplicity
                 if not check_zero(value): # only add non-zero values
                     Df[tuple(indices)] = value
         return Df
         
-    def eval(self, z, mult=True, **kwargs):
+    def eval(self, z, mult=True, facts=True, **kwargs):
         '''Evaluate the derivatives of a (jet-)function at a specific point up to self.order.
         
         Parameters
@@ -136,7 +138,7 @@ class derive:
         '''
         # perform the computation, based on the input vector
         evaluation = self.taylor(z)
-        Df = self.get_taylor_coefficients(evaluation, mult=mult)
+        Df = self.get_taylor_coefficients(evaluation, mult=mult, facts=facts)
         self._Df = Df
         return Df
     
