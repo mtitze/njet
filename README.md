@@ -32,7 +32,7 @@ from njet import derive
 df = derive(f, order=3)
 ```
 
-Evaluate the derivatives at a specific point ``p``
+Evaluate the derivatives at a specific point
 ```python
 df([0.4, 2.1, 1.73])
 
