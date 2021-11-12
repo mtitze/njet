@@ -75,10 +75,10 @@ class derive:
         self.order = order
         self._factorials = factorials(self.order)
         
-    def taylor(self, z):
+    def eval(self, z):
         '''
         Pass a jet of order self.order, having polynoms in its higher-order entries,
-        through the given function, in order to obtain its Taylor-expansion in a second step.
+        through the given function.
         
         Parameters
         ----------
@@ -143,7 +143,7 @@ class derive:
                     Df[tuple(indices)] = value
         return Df
         
-    def eval(self, z, mult=True, **kwargs):
+    def __call__(self, z, mult=True, **kwargs):
         '''Evaluate the derivatives of a (jet-)function at a specific point up to self.order.
         
         Parameters
@@ -160,7 +160,7 @@ class derive:
             Dictionary of compontens of the multivariate Taylor expansion of the given function self.func
         '''
         # perform the computation, based on the input vector
-        evaluation = self.taylor(z)
+        evaluation = self.eval(z)
         Df = self.get_taylor_coefficients(evaluation, mult=mult)
         self._Df = Df
         return Df
@@ -261,7 +261,7 @@ class derive:
             Dictionary containing the components of the gradient.
         '''
         if z != None:
-            _ = self.eval(z, **kwargs)
+            _ = self(z, **kwargs)
         return self.build_tensor(k=1, **kwargs)
     
     def hess(self, z=None, **kwargs):
@@ -283,6 +283,6 @@ class derive:
             Dictionary containing the components of the Hessian.
         '''
         if z != None:
-            _ = self.eval(z, **kwargs)
+            _ = self(z, **kwargs)
         return self.build_tensor(k=2, **kwargs)
         
