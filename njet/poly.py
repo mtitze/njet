@@ -1,6 +1,6 @@
 from .jet import factorials, check_zero
 
-class jetpolynom:
+class jetpoly:
     '''
     Implementation of a polynom with arbitrary number of variables.
     

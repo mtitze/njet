@@ -19,7 +19,6 @@
 '''
 
 from ._version import __version__
-from .functions import exp, log
 from .ad import jet, derive
-from .poly import jetpolynom
+from .poly import jetpoly
 

@@ -17,7 +17,7 @@ def get_long_description():
 setup(
     long_description=get_long_description(),
     name='njet',
-    version='0.2.1',
+    version='0.2.2',
     description='Lightweight automatic differentiation package for higher-order differentiation.',
     long_description_content_type='text/markdown',
     python_requires='<3.11,>=3.8',

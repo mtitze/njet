@@ -1,7 +1,7 @@
 from .functions import exp, log
 from .jet import jet as jet_source
 from .jet import factorials, check_zero
-from .poly import jetpolynom
+from .poly import jetpoly
 
 
 class jet(jet_source):
@@ -89,16 +89,16 @@ class derive:
         -------
         jet
             Jet containing the value of the function in its zero-th entry and the
-            Taylor polynomials in the higher-order entries.
+            jet-polynomials in the higher-order entries.
         '''
         inp = []
         for k in range(self.n_args):
-            jk = jet([z[k], jetpolynom(1, index=k, power=1)], n=self.order)
+            jk = jet([z[k], jetpoly(1, index=k, power=1)], n=self.order)
             inp.append(jk)
         return self.func(inp)
     
-    def get_taylor_coefficients(self, taylor, mult=False):
-        '''Extract the Taylor coefficients of order >= 1 from a given Taylor polynomial (the output of self.taylor).
+    def get_taylor_coefficients(self, ev, mult=False):
+        '''Extract the Taylor coefficients of order >= 1 from a given evaluation (the output of self.eval).
         
         Let m be the number of arguments of self.func. Then the k-th derivative of self.func has the form
         (D^k self.func)(z1, ..., zm) = sum_{j1 + ... + jm = k} Df[j1, ... jm]/(j1! * ... * jm!) * z1**j1 * ... * zm**jm
@@ -110,8 +110,8 @@ class derive:
         
         Parameters
         ----------
-        taylor: jet
-            A jet having jetpolynom entries in the k-th order entries for k > 0.
+        ev: jet
+            A jet having jetpoly entries in the k-th order entries for k > 0.
             
         mult: boolean, optional
             How to deal with multiplicities C(j1, ..., jm) (notation see above).
@@ -124,16 +124,16 @@ class derive:
             monomials to their values, corresponding to the Taylor expansion of the given expression.
         '''
         Df = {}
-        for k in range(1, taylor.order + 1): # the k-th derivative
-            entry = taylor.array(k)
-            if not entry.__class__.__name__ == 'jetpolynom': # skip any non-polynomial entry
+        for k in range(1, ev.order + 1): # the k-th derivative
+            entry = ev.array(k)
+            if not entry.__class__.__name__ == 'jetpoly': # skip any non-polynomial entry
                 continue
             for key, value in entry.values.items(): # loop over the individual polynomials of the k-th derivative
                 # key corresponds to a specific frozenset, i.e. some indices and powers of a specific monomial.
                 indices = [0]*self.n_args
                 multiplicity = 1
                 for index, power in key:
-                    if power == 0: # the (k, 0)-entries correspond to the scalar 1 and will be ignored here. TODO: may need to improve this in jetpolynom class.
+                    if power == 0: # the (k, 0)-entries correspond to the scalar 1 and will be ignored here. TODO: may need to improve this in jetpoly class.
                         continue
                     indices[index] = power
                     if mult: # remove the factorials in the Taylor expansion (related to the derivatives of the powers)

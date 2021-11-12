@@ -88,7 +88,7 @@ In particular, we can get the higher-order derivatives at specific points by usi
 
 and taking into account the corresponding multiplicities.
 
-Internally *njet* will however not work with SymPy symbols, but has its own class *jetpolynom* which is taylored specifically for the task to obtain the higher-order derivatives.
+Internally *njet* will however not work with SymPy symbols, but has its own class *jetpoly* which is taylored specifically for the task to obtain the higher-order derivatives.
 
 There is also NumPy support:
 
