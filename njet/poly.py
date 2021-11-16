@@ -117,7 +117,18 @@ class jetpoly:
             return self.values == other.values
         
     def conjugate(self):
-        # N.B. it is assumed that the underlying polynomials are independent from conjugation.
+        # Consider the following example:
+        # Let f = u + 1j*v be a complex function in which u and v are real functions from
+        # R^2 -> R^2. Denote by Df := \partial f/\partial z and D'f := \partial f/\partial \bar z
+        # the Wirtinger operators and for any g = x + 1j*y the complex conjugation g' = x - 1j*y.
+        # Then we have for the differential of f:
+        # df = Df*dz + D'f*dz'
+        # (df)' = D(f')*dz + D'(f')*dz'
+        # As our polynomials represent polynomials in differentials, in this example df plays 
+        # the role of a polynomial of the two independent variables dz and dz' (the variables z and z' behave
+        # independent when applying the Wirtinger operators to any function g(z, z'), as one can show). This means that
+        # in the complex case conjugation should be propagated to the underlying function: f --> f',
+        # without changing the differentials themselves (the keys below). Hence:
         new_values = {}
         for key, value in self.values.items():
             new_values[key] = value.conjugate()
