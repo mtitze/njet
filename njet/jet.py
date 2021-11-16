@@ -299,3 +299,10 @@ class jet:
             return self.__class__(value=other, n=n)
         else:
             return other
+        
+    def conjugate(self):
+        # N.B.: (f^(n)).conjugate() = (f.conjugate())^(n)
+        result = self.__class__(n=self.order, graph=[(1, 'cg'), self.graph])
+        result.array = lambda n: self.array(n).conjugate()
+        return result
+        

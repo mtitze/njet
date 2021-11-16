@@ -2,7 +2,7 @@ from .jet import factorials, check_zero
 
 class jetpoly:
     '''
-    Implementation of a polynom with arbitrary number of variables.
+    Implementation of a polynomial with arbitrary number of variables.
     
     The information of the coefficients is stored internally as dictionary in 
     the 'values' field.
@@ -115,4 +115,12 @@ class jetpoly:
             return self.values == self.__class__(other).values
         else:
             return self.values == other.values
+        
+    def conjugate(self):
+        # N.B. it is assumed that the underlying polynomials are independent from conjugation.
+        new_values = {}
+        for key, value in self.values.items():
+            new_values[key] = value.conjugate()
+        return self.__class__(values=new_values)
+        
         

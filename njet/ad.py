@@ -84,7 +84,7 @@ class derive:
         ----------
         z: subscriptable
             List of values at which the function and its derivatives should be evaluated.
-        
+                    
         Returns
         -------
         jet
