@@ -9,5 +9,5 @@ be easily computed up to any order.
 .. automodule:: njet.functions
     :members:
     :undoc-members:
-    :exclude-members: detect_code
+    :exclude-members: get_function, detect_code, jetfunc
 
