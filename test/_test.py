@@ -45,6 +45,7 @@ def test_sd1():
     a = x**2 - y
     c, s = sympy.cos(a), sympy.sin(a)
     Kref = {}
+    Kref[(0, 0)] = -s
     Kref[(1, 0)] = -2*x*c
     Kref[(0, 1)] = c
     Kref[(2, 0)] = 4*x**2*s - 2*c
@@ -73,7 +74,7 @@ def test_sd1():
 
 
 def test_sd2():
-    d2 = derive(lambda x, y: sin(-x**2 + y), order=4)
+    d2 = derive(lambda x, y: -sin(x**2 - y), order=4)
     df = lambda x, y: d2([x, y])[(2, 1)] # dx dx dy - component of the function above.
     df_nested = derive(df, order=3)
     x, y = Symbol('x'), Symbol('y')
@@ -81,6 +82,7 @@ def test_sd2():
     c, s = sympy.cos(a), sympy.sin(a)
     K2 = df_nested([x, y])
     Kref2 = {}
+    Kref2[(0, 0)] = -4*x**2*c - 2*s
     Kref2[(1, 0)] = 8*x**3*s - 12*x*c
     Kref2[(0, 1)] = -4*x**2*s + 2*c
     Kref2[(2, 0)] = 16*x**4*c + 8*x**2*s + 40*x**2*s - 12*c
@@ -104,7 +106,7 @@ def test_sd2():
 
 
 def test_sd3():
-    xmpl2 = lambda a, b, c: sin(a**5 + c*b**2)
+    xmpl2 = lambda a, b, c: sin(a**5 + b**2*c)
     dd = derive(xmpl2, order=3)
     a, b, c = Symbol('a'), Symbol('b'), Symbol('c')
     K3 = dd([a, b, c])
@@ -112,6 +114,7 @@ def test_sd3():
     si = sympy.sin(arg)
     co = sympy.cos(arg)
     Kref3 = {}
+    Kref3[(0, 0, 0)] = si
     Kref3[(0, 0, 1)] = b**2*co
     Kref3[(1, 0, 0)] = 5*a**4*co
     Kref3[(0, 1, 0)] = 2*b*c*co

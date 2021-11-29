@@ -124,6 +124,12 @@ class derive:
             monomials to their coefficients, corresponding to the Taylor expansion of the given expression.
         '''
         Df = {}
+        
+        # add the constant (if non-zero):
+        const = ev[0]
+        if not check_zero(const):
+            Df[(0,)*self.n_args] = const
+        
         for entry in ev[1:]: # iteration over the derivatives of order >= 1.
             if not entry.__class__.__name__ == 'jetpoly': # skip any non-polynomial entry.
                 continue
@@ -159,8 +165,7 @@ class derive:
             Dictionary of compontens of the multivariate Taylor expansion of the given function self.func
         '''
         # perform the computation, based on the input vector
-        evaluation = self.eval(z)
-        Df = self.get_taylor_coefficients(evaluation, mult=mult)
+        Df = self.get_taylor_coefficients(self.eval(z), mult=mult)
         self._Df = Df
         return Df
     

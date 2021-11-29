@@ -8,6 +8,7 @@ higher-order derivatives of a given function in several variables.
 - Higher-order (forward-mode) automatic differentiation in several variables.
 - Support for NumPy, SymPy and mpmath.
 - Differentiation of expressions containing nested higher-order derivatives.
+- Complex differentiation supported.
 - Lightweight and easy to use.
 
 ## Installation
@@ -36,7 +37,8 @@ Evaluate the derivatives at a specific point
 ```python
 df([0.4, 2.1, 1.73])
 
-{(0, 0, 1): -0.2000425221825019,
+{(0, 0, 0): 0.5255977986928584,
+ (0, 0, 1): -0.2000425221825019,
  (1, 0, 0): -0.46094926945363685,
  (0, 1, 0): -0.06937890942745731,
  (0, 0, 2): -0.03949533176976862,
