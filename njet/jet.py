@@ -1,9 +1,10 @@
 def check_zero(value):
     # check if a value is zero; value may be an iterable
-    if not hasattr(value, '__iter__'):
-        return value == 0
+    check = value == 0
+    if hasattr(check, '__iter__'):
+        return all(check)
     else:
-        return all(value == 0)
+        return check
     
 def factorials(n: int):
     k = 1
@@ -126,7 +127,12 @@ class jet:
     def __len__(self):
         return self.order + 1
     
+    def __iter__(self): 
+        # called whenever a jet is used in a for loop. If this routine does not exists, self.__getitem__ is used (which may not stop)
+        return iter(self.get_array())
+    
     def __getitem__(self, n):
+        # called whenver a jet is subscribed in the form jet[index].
         if isinstance(n, slice):
             start, stop, stride = n.indices(len(self))
             return [self.array(j) for j in range(start, stop, stride)]
@@ -297,9 +303,7 @@ class jet:
         if self.order != other.order:  # jets of different order are considered different
             return False
         else:
-            array1 = self.get_array()
-            array2 = other.get_array()
-            return all([check_zero(array1[k] - array2[k]) for k in range(len(array1))])
+            return all([check_zero(self[k] - other[k]) for k in range(self.order)])
     
     def convert(self, other, n=0):
         '''

@@ -124,9 +124,8 @@ class derive:
             monomials to their coefficients, corresponding to the Taylor expansion of the given expression.
         '''
         Df = {}
-        for k in range(1, ev.order + 1): # the k-th derivative
-            entry = ev[k]
-            if not entry.__class__.__name__ == 'jetpoly': # skip any non-polynomial entry
+        for entry in ev[1:]: # iteration over the derivatives of order >= 1.
+            if not entry.__class__.__name__ == 'jetpoly': # skip any non-polynomial entry.
                 continue
             for key, value in entry.values.items(): # loop over the individual polynomials of the k-th derivative
                 # key corresponds to a specific frozenset, i.e. some indices and powers of a specific monomial.
