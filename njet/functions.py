@@ -94,7 +94,7 @@ def jetfunc(func):
     def inner(x, **kwargs):
         code = kwargs.get('code', detect_code(x))
         if code != 'njet':
-            return get_function(code, 'sin')(x)
+            return get_function(code, func.__name__)(x)
         else:
             x0 = x.array(0)
             code_x0 = detect_code(x0)
