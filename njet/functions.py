@@ -180,11 +180,10 @@ def log(x, **kwargs):
     jet
     '''
     ln = kwargs.get('fx0')
-    graph = [(1, 'log'), x.graph]
     # compute the derivatives
     dx = x.copy().derive()
     drx_arr = (dx/x).get_array()[:-1]
-    result = x.__class__(n=x.order, graph=graph)
+    result = x.__class__(n=x.order, graph=[(1, 'log'), x.graph])
     result.set_array([ln] + drx_arr)
     return result
 
