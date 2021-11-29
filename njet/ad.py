@@ -125,7 +125,7 @@ class derive:
         '''
         Df = {}
         for k in range(1, ev.order + 1): # the k-th derivative
-            entry = ev.array(k)
+            entry = ev[k]
             if not entry.__class__.__name__ == 'jetpoly': # skip any non-polynomial entry
                 continue
             for key, value in entry.values.items(): # loop over the individual polynomials of the k-th derivative

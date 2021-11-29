@@ -93,16 +93,22 @@ def jetfunc(func):
     '''
     def inner(x, **kwargs):
         code = kwargs.get('code', detect_code(x))
+        name = func.__name__
         if code != 'njet':
-            return get_function(code, func.__name__)(x)
+            return get_function(code, name)(x)
         else:
-            x0 = x.array(0)
+            # The next lines are always executed,
+            # because the built-in functions need to be applied to the
+            # 0-th component of the jet:
+            x0 = x[0]
             code_x0 = detect_code(x0)
-            return func(x, x0, code_x0)
+            f = get_function(code_x0, name)
+            fx0 = f(x0)
+            return func(x, x0=x0, code_x0=code_x0, f=f, fx0=fx0)
     return inner
 
 @jetfunc    
-def sin(x, x0, code):
+def sin(x, **kwargs):
     '''
     Compute the sin of a jet.
 
@@ -114,16 +120,15 @@ def sin(x, x0, code):
     -------
     jet
     '''
-
-    s = get_function(code, 'sin')(x0)
-    c = get_function(code, 'cos')(x0)
+    s = kwargs.get('fx0')
+    c = get_function(kwargs.get('code_x0'), 'cos')(kwargs.get('x0'))
     result = x.__class__(s, n=x.order, graph=[(1, 'sin'), x.graph])
     # compute the derivatives
     result.array = lambda n: [s, c, -s, -c][n%4]
     return result.compose(x)
 
 @jetfunc
-def cos(x, x0, code):
+def cos(x, **kwargs):
     '''
     Compute the cos of a jet.
 
@@ -135,15 +140,15 @@ def cos(x, x0, code):
     -------
     jet
     '''
-    s = get_function(code, 'sin')(x0)
-    c = get_function(code, 'cos')(x0)
+    c = kwargs.get('fx0')
+    s = get_function(kwargs.get('code_x0'), 'sin')(kwargs.get('x0'))
     result = x.__class__(c, n=x.order, graph=[(1, 'cos'), x.graph])
     # compute the derivatives
     result.array = lambda n: [c, -s, -c, s][n%4]
     return result.compose(x)
 
 @jetfunc
-def exp(x, x0, code):
+def exp(x, **kwargs):
     '''
     Compute the exponential of a jet.
 
@@ -155,14 +160,14 @@ def exp(x, x0, code):
     -------
     jet
     '''
-    e = get_function(code, 'exp')(x0)
+    e = kwargs.get('fx0')
     result = x.__class__(e, n=x.order, graph=[(1, 'exp'), x.graph])
     # compute the derivatives
     result.array = lambda n: e
     return result.compose(x)
 
 @jetfunc
-def log(x, x0, code):
+def log(x, **kwargs):
     '''
     Compute the natural logarithm of a jet.
 
@@ -174,7 +179,7 @@ def log(x, x0, code):
     -------
     jet
     '''
-    ln = get_function(code, 'log')(x0)
+    ln = kwargs.get('fx0')
     graph = [(1, 'log'), x.graph]
     # compute the derivatives
     dx = x.copy().derive()
@@ -184,7 +189,7 @@ def log(x, x0, code):
     return result
 
 @jetfunc
-def sinh(x, x0, code):
+def sinh(x, **kwargs):
     '''
     Compute the sinh of a jet.
 
@@ -196,15 +201,15 @@ def sinh(x, x0, code):
     -------
     jet
     '''
-    sh = get_function(code, 'sinh')(x0)
-    sh = get_function(code, 'cosh')(x0)
+    sh = kwargs.get('fx0')
+    ch = get_function(kwargs.get('code_x0'), 'cosh')(kwargs.get('x0'))
     result = x.__class__(sh, n=x.order, graph=[(1, 'sinh'), x.graph])
     # compute the derivatives
     result.array = lambda n: [sh, ch][n%2]
     return result.compose(x)
 
 @jetfunc
-def cosh(x, x0, code):
+def cosh(x, **kwargs):
     '''
     Compute the cosh of a jet.
 
@@ -216,8 +221,8 @@ def cosh(x, x0, code):
     -------
     jet
     '''
-    sh = get_function(code, 'sinh')(x0)
-    sh = get_function(code, 'cosh')(x0)
+    ch = kwargs.get('fx0')
+    sh = get_function(kwargs.get('code_x0'), 'sinh')(kwargs.get('x0'))
     result = x.__class__(ch, n=x.order, graph=[(1, 'cosh'), x.graph])
     # compute the derivatives
     result.array = lambda n: [ch, sh][n%2]

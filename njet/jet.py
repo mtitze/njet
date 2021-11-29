@@ -123,6 +123,16 @@ class jet:
     def set_order(self, n):
         self.order = n
         
+    def __len__(self):
+        return self.order + 1
+    
+    def __getitem__(self, n):
+        if isinstance(n, slice):
+            start, stop, stride = n.indices(len(self))
+            return [self.array(j) for j in range(start, stop, stride)]
+        else:
+            return self.array(n)
+        
     def __str__(self):
         outstr = ''
         for e in self.get_array():
