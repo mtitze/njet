@@ -121,7 +121,7 @@ class derive:
         -------
         dict
             Dictionary which maps the tuples representing the indices and powers of the individual
-            monomials to their values, corresponding to the Taylor expansion of the given expression.
+            monomials to their coefficients, corresponding to the Taylor expansion of the given expression.
         '''
         Df = {}
         for k in range(1, ev.order + 1): # the k-th derivative

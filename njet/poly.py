@@ -99,7 +99,8 @@ class jetpoly:
         return other*self
     
     def __pow__(self, other):
-        assert (type(other) == int) and (other >= 0)
+        assert type(other) == int
+        assert other >= 0
         if other == 0:
             return self.__class__(1) # N.B. 0**0 := 1
 

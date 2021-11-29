@@ -4,10 +4,20 @@ import numpy
 import sympy
 import mpmath
 
-def detect_code(x, name):
-    # Find the appropriate code to perform operations.
-    # We shall assume that the code labels are identical (otherwise we may need to
-    # implement a dictionary translating between the various names).
+def get_function(code: str, name: str):
+    '''
+    Return the function to handle objects of a specific code.
+    
+    Parameters
+    ----------
+    code: str
+        The name of the code. Currently supported codes are: 'numpy', 'mpmath',
+        'sympy', 'njet'.
+        
+    name: str
+        The name of the function to be returned. See the source code of this
+        module for a list of supported functions. 
+    '''
     
     sympy_dict = {'sin': sympy.sin,
                   'cos': sympy.cos,
@@ -36,22 +46,63 @@ def detect_code(x, name):
                 'cosh': cosh,
                 'exp': exp,
                 'log': log}
+    
+    if code == 'numpy':
+        return numpy_dict[name]
+    elif code == 'mpmath':
+        return mpmath_dict[name]
+    elif code == 'sympy':
+        return sympy_dict[name]
+    elif code == 'njet':
+        return jet_dict[name]
+    
 
+def detect_code(x):
+    '''
+    Find the appropriate code to perform operations.
+    
+    Parameters
+    ----------
+    x: obj
+        The object to be examined.
+        
+    Returns
+    -------
+    str
+        A string denoting the code to be used on the object. 
+        Currently supported codes are: 'numpy', 'mpmath',
+        'sympy', 'njet'.
+    '''
     if hasattr(x, '__module__'):
         if x.__module__[0:5] == 'sympy':
-            func = sympy_dict[name]
+            return 'sympy'
         elif x.__module__[0:4] == 'njet':
-            func = jet_dict[name]
+            return 'njet'
         elif x.__module__[0:6] == 'mpmath':
-            func = mpmath_dict[name]
+            return 'mpmath'
         else:
             raise NotImplementedError('Unknown object.')
     else:
-        func = numpy_dict[name]
-        
-    return func
+        return 'numpy'
 
-def sin(x, **kwargs):
+    
+def jetfunc(func):
+    '''
+    General wrapper containing the treatment of input
+    which are no njets.
+    '''
+    def inner(x, **kwargs):
+        code = kwargs.get('code', detect_code(x))
+        if code != 'njet':
+            return get_function(code, 'sin')(x)
+        else:
+            x0 = x.array(0)
+            code_x0 = detect_code(x0)
+            return func(x, x0, code_x0)
+    return inner
+
+@jetfunc    
+def sin(x, x0, code):
     '''
     Compute the sin of a jet.
 
@@ -63,18 +114,16 @@ def sin(x, **kwargs):
     -------
     jet
     '''
-    x0 = x.array(0)
-    func = kwargs.get('code', detect_code(x0, name='sin'))
-    func2 = kwargs.get('code', detect_code(x0, name='cos'))
-    s = func(x0)
-    c = func2(x0)
-    result = x.__class__(s, n=x.order, graph=[(1, 'sin'), x.graph])
 
+    s = get_function(code, 'sin')(x0)
+    c = get_function(code, 'cos')(x0)
+    result = x.__class__(s, n=x.order, graph=[(1, 'sin'), x.graph])
     # compute the derivatives
     result.array = lambda n: [s, c, -s, -c][n%4]
     return result.compose(x)
 
-def cos(x, **kwargs):
+@jetfunc
+def cos(x, x0, code):
     '''
     Compute the cos of a jet.
 
@@ -86,18 +135,15 @@ def cos(x, **kwargs):
     -------
     jet
     '''
-    x0 = x.array(0)
-    func = kwargs.get('code', detect_code(x0, name='sin'))
-    func2 = kwargs.get('code', detect_code(x0, name='cos'))
-    s = func(x0)
-    c = func2(x0)
+    s = get_function(code, 'sin')(x0)
+    c = get_function(code, 'cos')(x0)
     result = x.__class__(c, n=x.order, graph=[(1, 'cos'), x.graph])
-
     # compute the derivatives
     result.array = lambda n: [c, -s, -c, s][n%4]
     return result.compose(x)
 
-def exp(x, **kwargs):
+@jetfunc
+def exp(x, x0, code):
     '''
     Compute the exponential of a jet.
 
@@ -109,16 +155,14 @@ def exp(x, **kwargs):
     -------
     jet
     '''
-    x0 = x.array(0)
-    func = kwargs.get('code', detect_code(x0, name='exp'))
-    e = func(x0)
+    e = get_function(code, 'exp')(x0)
     result = x.__class__(e, n=x.order, graph=[(1, 'exp'), x.graph])
-
     # compute the derivatives
     result.array = lambda n: e
     return result.compose(x)
 
-def log(x, **kwargs):
+@jetfunc
+def log(x, x0, code):
     '''
     Compute the natural logarithm of a jet.
 
@@ -130,11 +174,8 @@ def log(x, **kwargs):
     -------
     jet
     '''
-    x0 = x.array(0)
-    func = kwargs.get('code', detect_code(x0, name='log'))
-    ln = func(x0)
-    graph=[(1, 'log'), x.graph]
-
+    ln = get_function(code, 'log')(x0)
+    graph = [(1, 'log'), x.graph]
     # compute the derivatives
     dx = x.copy().derive()
     drx_arr = (dx/x).get_array()[:-1]
@@ -142,7 +183,8 @@ def log(x, **kwargs):
     result.set_array([ln] + drx_arr)
     return result
 
-def sinh(x, **kwargs):
+@jetfunc
+def sinh(x, x0, code):
     '''
     Compute the sinh of a jet.
 
@@ -154,18 +196,15 @@ def sinh(x, **kwargs):
     -------
     jet
     '''
-    x0 = x.array(0)
-    func = kwargs.get('code', detect_code(x0, name='sinh'))
-    func2 = kwargs.get('code', detect_code(x0, name='cosh'))
-    sh = func(x0)
-    ch = func2(x0)
+    sh = get_function(code, 'sinh')(x0)
+    sh = get_function(code, 'cosh')(x0)
     result = x.__class__(sh, n=x.order, graph=[(1, 'sinh'), x.graph])
-
     # compute the derivatives
     result.array = lambda n: [sh, ch][n%2]
     return result.compose(x)
 
-def cosh(x, **kwargs):
+@jetfunc
+def cosh(x, x0, code):
     '''
     Compute the cosh of a jet.
 
@@ -177,13 +216,9 @@ def cosh(x, **kwargs):
     -------
     jet
     '''
-    x0 = x.array(0)
-    func = kwargs.get('code', detect_code(x0, name='sinh'))
-    func2 = kwargs.get('code', detect_code(x0, name='cosh'))
-    sh = func(x0)
-    ch = func2(x0)
+    sh = get_function(code, 'sinh')(x0)
+    sh = get_function(code, 'cosh')(x0)
     result = x.__class__(ch, n=x.order, graph=[(1, 'cosh'), x.graph])
-
     # compute the derivatives
     result.array = lambda n: [ch, sh][n%2]
     return result.compose(x)
