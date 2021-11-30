@@ -138,22 +138,29 @@ Of course, this also synergizes with either NumPy arrays or SymPy symbols. E.g.:
      (1, 3): array([-1.52560407e+04, -2.16266355e+00, -4.69698546e+04,  4.43941387e+02, -2.04118615e+05]),
      (4, 0): array([ 2.27762163e+08,  3.56314244e+03,  1.36083587e+07, -3.62297999e+04, 9.01586775e+06]),
      (2, 2): array([ 3.70126027e+05,  2.87900980e+01,  3.17958465e+05, -1.80550952e+03, 7.37728082e+05])}
-     
-Note that in the example above we can not call ``f`` or ``g`` with floats directly, because the njet functions expect 
-classes of type *jet* as input. The njet function ``sin`` above is used in the calculation of the derivatives. If we want to
-evaluate ``f`` or ``g`` at a specific point, we would have to consider a modification of ``f`` using e.g. ``numpy.sin``:
+  
+
+Complex differentiation
+=======================
+
+Wirtinger calculus can (currently) be realized by modifying a function so that every variable has their
+complex conjugate counterparts. So what will *not* work is 
 
 .. code-block:: python
 
-    import numpy
-    fnp = lambda x, y: numpy.sin(1/x + y)
-    gnp = lambda x, y: fnp(x, y)/(1 + dxxf(x, y)) + dxxyf(x, y)**-3
-    
-    print (fnp(0.2, 1.1))
-  > -0.18216250427209588
-    print (gnp(0.2, 1.1))
-  > 0.051254720339244976
+    f = lambda z: z.conjugate()
+    df = derive(f)  
+    df([Symbol('z')])
+  > {(0,): conjugate(z), (1,): 1.0}
 
+The correct way to deal with this anti-holomorphic function would be:
+
+.. code-block:: python
+
+    f = lambda z, zc: zc
+    df = derive(f)  
+    df([Symbol('z'), Symbol('z').conjugate()])
+  > {(0, 0): conjugate(z), (0, 1): 1.0}
 
 In the following the AD routines are explained in more detail.
 

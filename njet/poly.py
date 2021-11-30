@@ -129,7 +129,11 @@ class jetpoly:
         # the role of a polynomial of the two independent variables dz and dz' (the variables z and z' behave
         # independent when applying the Wirtinger operators to any function g(z, z'), as one can show). This means that
         # in the complex case conjugation should be propagated to the underlying function: f --> f',
-        # without changing the differentials themselves (the keys below). Hence:
+        # without changing the differentials themselves (the keys below).
+        #
+        # However, this requires that the keys (related to the variables) are prepared in advance accordingly:
+        # Every variable needs his complex-conjugate partner, and in the original expression complex conjugation
+        # needs to be replaced by this partner variable.
         new_values = {}
         for key, value in self.values.items():
             new_values[key] = value.conjugate()

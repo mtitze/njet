@@ -98,7 +98,7 @@ class derive:
         return self.func(inp)
     
     def get_taylor_coefficients(self, ev, mult=False):
-        '''Extract the Taylor coefficients of order >= 1 from a given evaluation (the output of self.eval).
+        '''Extract the Taylor coefficients from a given jet-evaluation (the output of self.eval).
         
         Let m be the number of arguments of self.func. Then the k-th derivative of self.func has the form
         (D^k self.func)(z1, ..., zm) = sum_{j1 + ... + jm = k} Df[j1, ... jm]/(j1! * ... * jm!) * z1**j1 * ... * zm**jm
