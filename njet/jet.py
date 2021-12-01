@@ -288,7 +288,7 @@ class jet:
         "1/x o jet".
         '''
         f = self.array(0)
-        assert not check_zero(f)
+        assert not check_zero(f), 'Division by zero at requested point.'
 
         facts = factorials(self.order)
         invf = [(-1)**n*facts[n]/f**(n + 1) for n in range(self.order + 1)]

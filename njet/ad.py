@@ -1,10 +1,10 @@
 from .functions import exp, log
-from .jet import jet as jet_source
+from .jet import jet as _jet
 from .jet import factorials, check_zero
 from .poly import jetpoly
 
 
-class jet(jet_source):
+class jet(_jet):
     '''
     Class to store and operate with higher-order derivatives of a given function.
     '''
@@ -12,7 +12,7 @@ class jet(jet_source):
         other = self.convert(other)
 
         if other.order == 0:
-            result = jet_source.__pow__(self, other)
+            result = _jet.__pow__(self, other)
         else:
             '''
             General exponentiation, using exp and log functions.
@@ -47,15 +47,17 @@ def standardize_function(f, n_args: int=0):
         f_out = f
         n_args = n_args
     else:
-        n_args = f.__code__.co_argcount
+        try:
+            n_args = f.__code__.co_argcount
+        except:
+            raise RuntimeError('The number of function arguments could not be determined. Try passing n_args parameter.')
+        assert n_args > 0
         if n_args > 1:
             # make a function of one variable whose elements are subscriptable.
             f_out = lambda z: f(*z)
         elif n_args == 1:
             # the function depends on one variable, but its input is not subscriptable.
             f_out = lambda z: f(z[0])
-        else:
-            raise RuntimeError('The number of function arguments could not be determined.')
             
     return f_out, n_args
     

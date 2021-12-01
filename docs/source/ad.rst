@@ -144,7 +144,7 @@ Complex differentiation
 =======================
 
 Wirtinger calculus can (currently) be realized by modifying a function so that every variable has their
-complex conjugate counterparts. So what will *not* work is 
+complex conjugate counterpart. So what will *not* work is 
 
 .. code-block:: python
 

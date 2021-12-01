@@ -98,6 +98,10 @@ class jetpoly:
         other = self.__class__(other)
         return other*self
     
+    def __truediv__(self, other):
+        assert not check_zero(other)
+        return self.__class__(values={k: v/other for k, v in self.values.items()})
+    
     def __pow__(self, other):
         assert type(other) == int
         assert other >= 0
