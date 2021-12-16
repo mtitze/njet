@@ -33,7 +33,8 @@ def standardize_function(f, n_args: int=0):
         
     n_args: int, optional
         An optional parameter to help in identifying the number of arguments in case that f takes a single
-        subscriptable object as argument.
+        subscriptable object as argument. If nothing specified, then the number of arguments is
+        determined by the parameter func.__code__.__argcount__.
         
     Returns
     -------
@@ -66,6 +67,17 @@ class derive:
     '''
     Class to handle the derivatives of a (jet-)function (i.e. a function consisting of a composition
     of elementary functions).
+    
+    Parameters
+    ----------
+    func: callable
+        The function to be derived. Must be expressed in terms of polynomials and functions supported by njet.functions.
+
+    order: int
+        The order up to which the function should be derived.
+
+    n_args: int, optional
+        The number of arguments on which func depends on; passed to njet.ad.standardize_function.
     '''
     def __init__(self, func, order: int=1, n_args: int=0, **kwargs):
         self.func, self.n_args = standardize_function(func, n_args=n_args)
