@@ -34,7 +34,9 @@ def standardize_function(f, n_args: int=0):
     n_args: int, optional
         An optional parameter to help in identifying the number of arguments in case that f takes a single
         subscriptable object as argument. If nothing specified, then the number of arguments is
-        determined by the parameter func.__code__.__argcount__.
+        determined by the parameter f.__code__.__argcount__.
+        Default: 0. If > 0, then the function is assumed to depend on
+        one variable of length n_args, and this variable is subscriptable.
         
     Returns
     -------
@@ -43,8 +45,6 @@ def standardize_function(f, n_args: int=0):
     '''
     
     if n_args > 0:
-        # if n_args > 0, then the function is assumed to depend on
-        # one variable of length n_args, and this variable is subscriptable.
         f_out = f
         n_args = n_args
     else:
@@ -73,7 +73,7 @@ class derive:
     func: callable
         The function to be derived. Must be expressed in terms of polynomials and functions supported by njet.functions.
 
-    order: int
+    order: int, optional
         The order up to which the function should be derived.
 
     n_args: int, optional
@@ -137,8 +137,10 @@ class derive:
             Dictionary which maps the tuples representing the indices and powers of the individual
             monomials to their coefficients, corresponding to the Taylor expansion of the given expression.
         '''
-        Df = {}
+        input_cname = ev.__class__.__name__
+        assert input_cname == 'jet', f"Object of type 'jet' expected. Input of type '{input_cname}'."
         
+        Df = {}
         # add the constant (if non-zero):
         const = ev[0]
         if not check_zero(const):
