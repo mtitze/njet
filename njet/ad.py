@@ -111,7 +111,7 @@ class derive:
             inp.append(jk)
         return self.func(inp)
     
-    def get_taylor_coefficients(self, ev, mult=False):
+    def get_taylor_coefficients(self, ev, mult=True):
         '''Extract the Taylor coefficients from a given jet-evaluation (the output of self.eval).
         
         Let m be the number of arguments of self.func. Then the k-th derivative of self.func has the form
@@ -129,7 +129,7 @@ class derive:
             
         mult: boolean, optional
             How to deal with multiplicities C(j1, ..., jm) (notation see above).
-            If false (default), then the C's are included in the final output.
+            If True (default), then the C's are not included in the output.
             
         Returns
         -------
@@ -149,19 +149,10 @@ class derive:
         for entry in ev[1:]: # iteration over the derivatives of order >= 1.
             if not entry.__class__.__name__ == 'jetpoly': # skip any non-polynomial entry.
                 continue
-            for key, value in entry.values.items(): # loop over the individual polynomials of the k-th derivative
-                # key corresponds to a specific frozenset, i.e. some indices and powers of a specific monomial.
-                indices = [0]*self.n_args
-                multiplicity = 1
-                for index, power in key:
-                    if power == 0: # the (k, 0)-entries correspond to the scalar 1 and will be ignored here. TODO: may need to improve this in jetpoly class.
-                        continue
-                    indices[index] = power
-                    if mult: # remove the factorials in the Taylor expansion (related to the derivatives of the powers)
-                        multiplicity *= self._factorials[power]
-                value *= multiplicity/self._factorials[sum(indices)] # the denominator ensures to remove multiplicities emerging from permutations of derivatives.
-                if not check_zero(value): # only add non-zero values
-                    Df[tuple(indices)] = value
+            Df.update(entry.get_taylor_coefficients(n_args=self.n_args, facts=self._factorials, mult=mult))
+            # Since we loop over derivatives of a specific order, it is ensured that these Taylor coefficients are always different, 
+            # so the above procedure does not overwrite existing keys.
+            
         return Df
         
     def __call__(self, z, mult=True, **kwargs):

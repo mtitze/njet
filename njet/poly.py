@@ -143,4 +143,45 @@ class jetpoly:
             new_values[key] = value.conjugate()
         return self.__class__(values=new_values)
         
+    def get_taylor_coefficients(self, n_args: int, facts, mult: bool=True):
+        '''
+        Obtain the Taylor coefficients of the current polynomial.
+        
+        Parameters
+        ----------
+        n_args: int
+            The total number of involved parameters.
+            
+        facts: list
+            A list containing the factorial numbers up to the maximal order in the current polynomial.
+            Hereby it must hold facts[k] = k!.
+            
+        mult: bool, optional
+            Whether or not to include multiplicities into the final result (for example, if one is interested in
+            the higher-order derivatives of the polynomial.) If True, then these multiplicities are taken into account.
+        
+        Returns
+        -------
+        dict
+            A dictionary of the form tuple: value, where tuple consists of series of powers, hereby the entry
+            j denotes the power of the j-th variable.
+        '''
+        taylor_coeffs = {}
+        for key, value in self.values.items(): # loop over the individual polynomials of the k-th derivative
+            # key corresponds to a specific frozenset, i.e. some indices and powers of a specific monomial.
+            indices = [0]*n_args
+            multiplicity = 1
+            for index, power in key:
+                if power == 0: # the (k, 0)-entries correspond to the scalar 1 and will be ignored here. TODO: may need to improve this in jetpoly class.
+                    continue
+                indices[index] = power
+                # if mult, then remove the factorials in the Taylor expansion, here related to the derivatives of the powers.
+                if mult:
+                    multiplicity *= facts[power]
+            if not check_zero(value): # only add non-zero values
+                #if mult:
+                value *= multiplicity/facts[sum(indices)] # the denominator ensures to remove multiplicities emerging from permutations of derivatives.
+                taylor_coeffs[tuple(indices)] = value
+                
+        return taylor_coeffs
         

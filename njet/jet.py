@@ -277,10 +277,7 @@ class jet:
         '''        
         f = self.get_array()
         g = other.get_array()
-        dfg = faa_di_bruno(f, g)
-        result = self.copy()
-        result.set_array(dfg)
-        return result
+        return self.__class__(faa_di_bruno(f, g), n=self.order, graph=[(2, 'o'), self.graph, other.graph])
     
     def inv(self):
         '''
