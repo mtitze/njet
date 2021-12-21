@@ -166,7 +166,7 @@ class derive:
             List of values at which the function and its derivatives should be evaluated.
             
         **kwargs:
-            Optional arguments passed to self.get_taylor_coefficients
+            Optional arguments passed to self.get_taylor_coefficients routine.
 
         Returns
         -------

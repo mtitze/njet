@@ -175,10 +175,11 @@ class jetpoly:
             indices = [0]*n_args
             multiplicity = 1
             for index, power in key:
-                if power == 0: # the (k, 0)-entries correspond to the scalar 1 and will be ignored here. TODO: may need to improve this in jetpoly class.
+                if power == 0: # the (k, 0)-entries correspond to the scalar 1 and will be ignored here. TODO: may need to improve this.
                     continue
                 indices[index] = power
-                multiplicity *= facts[power]
+                if mult_prm or mult_drv:
+                    multiplicity *= facts[power]
             if not check_zero(value): # only add non-zero values
                 if mult_drv: # remove the factorials in the Taylor expansion, here related to the derivatives of the powers.
                     value *= multiplicity
