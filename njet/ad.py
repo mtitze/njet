@@ -111,7 +111,7 @@ class derive:
             inp.append(jk)
         return self.func(inp)
     
-    def get_taylor_coefficients(self, ev, mult=True):
+    def get_taylor_coefficients(self, ev, **kwargs):
         '''Extract the Taylor coefficients from a given jet-evaluation (the output of self.eval).
         
         Let m be the number of arguments of self.func. Then the k-th derivative of self.func has the form
@@ -127,9 +127,11 @@ class derive:
         ev: jet
             A jet having jetpoly entries in the k-th order entries for k > 0.
             
-        mult: boolean, optional
-            How to deal with multiplicities C(j1, ..., jm) (notation see above).
-            If True (default), then the C's are not included in the output.
+        **kwargs
+            Optional arguments passed to liepoly.get_taylor_coefficients routine.
+            
+            Note that one can control how to deal with multiplicities C(j1, ..., jm) (notation see above) by
+            passing mult_drv and mult_prm attributes to this routine.
             
         Returns
         -------
@@ -149,13 +151,13 @@ class derive:
         for entry in ev[1:]: # iteration over the derivatives of order >= 1.
             if not entry.__class__.__name__ == 'jetpoly': # skip any non-polynomial entry.
                 continue
-            Df.update(entry.get_taylor_coefficients(n_args=self.n_args, facts=self._factorials, mult=mult))
+            Df.update(entry.get_taylor_coefficients(n_args=self.n_args, facts=self._factorials, **kwargs))
             # Since we loop over derivatives of a specific order, it is ensured that these Taylor coefficients are always different, 
             # so the above procedure does not overwrite existing keys.
             
         return Df
         
-    def __call__(self, z, mult=True, **kwargs):
+    def __call__(self, z, **kwargs):
         '''Evaluate the derivatives of a (jet-)function at a specific point up to self.order.
         
         Parameters
@@ -163,8 +165,8 @@ class derive:
         z: subscriptable
             List of values at which the function and its derivatives should be evaluated.
             
-        mult: boolean, optional
-            See self.get_taylor_coefficients for a description. Default: True
+        **kwargs:
+            Optional arguments passed to self.get_taylor_coefficients
 
         Returns
         -------
@@ -172,7 +174,7 @@ class derive:
             Dictionary of compontens of the multivariate Taylor expansion of the given function self.func
         '''
         # perform the computation, based on the input vector
-        Df = self.get_taylor_coefficients(self.eval(z), mult=mult)
+        Df = self.get_taylor_coefficients(self.eval(z), **kwargs)
         self._Df = Df
         return Df
     

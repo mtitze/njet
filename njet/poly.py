@@ -143,7 +143,7 @@ class jetpoly:
             new_values[key] = value.conjugate()
         return self.__class__(values=new_values)
         
-    def get_taylor_coefficients(self, n_args: int, facts, mult: bool=True):
+    def get_taylor_coefficients(self, n_args: int, facts, mult_prm: bool=True, mult_drv: bool=True):
         '''
         Obtain the Taylor coefficients of the current polynomial.
         
@@ -156,9 +156,12 @@ class jetpoly:
             A list containing the factorial numbers up to the maximal order in the current polynomial.
             Hereby it must hold facts[k] = k!.
             
-        mult: bool, optional
-            Whether or not to include multiplicities into the final result (for example, if one is interested in
-            the higher-order derivatives of the polynomial.) If True, then these multiplicities are taken into account.
+        mult_prm: bool, optional
+            Whether or not to include multiplicities into the final result related to the permulation of expressions (e.g. derivatives)
+            (default: True).
+            
+        mult_drv: bool, optional
+            Whether or not to include multiplicities related to the derivatives of powers (default: True)
         
         Returns
         -------
@@ -175,12 +178,13 @@ class jetpoly:
                 if power == 0: # the (k, 0)-entries correspond to the scalar 1 and will be ignored here. TODO: may need to improve this in jetpoly class.
                     continue
                 indices[index] = power
-                # if mult, then remove the factorials in the Taylor expansion, here related to the derivatives of the powers.
-                if mult:
-                    multiplicity *= facts[power]
+                multiplicity *= facts[power]
             if not check_zero(value): # only add non-zero values
-                if mult:
-                    value *= multiplicity/facts[sum(indices)] # the denominator ensures to remove multiplicities emerging from permutations of derivatives.
+                if mult_drv: # remove the factorials in the Taylor expansion, here related to the derivatives of the powers.
+                    value *= multiplicity
+                if mult_prm:
+                    value /= facts[sum(indices)] # the denominator ensures to remove multiplicities emerging from permutations of derivatives.
+
                 taylor_coeffs[tuple(indices)] = value
                 
         return taylor_coeffs
