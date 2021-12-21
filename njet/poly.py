@@ -176,11 +176,10 @@ class jetpoly:
                     continue
                 indices[index] = power
                 # if mult, then remove the factorials in the Taylor expansion, here related to the derivatives of the powers.
-                if mult:
-                    multiplicity *= facts[power]
+                multiplicity *= facts[power]
             if not check_zero(value): # only add non-zero values
-                #if mult:
-                value *= multiplicity/facts[sum(indices)] # the denominator ensures to remove multiplicities emerging from permutations of derivatives.
+                if mult:
+                    value *= multiplicity/facts[sum(indices)] # the denominator ensures to remove multiplicities emerging from permutations of derivatives.
                 taylor_coeffs[tuple(indices)] = value
                 
         return taylor_coeffs
