@@ -115,7 +115,7 @@ class jetpoly:
         
     def __eq__(self, other):
         if not other.__class__.__name__ == self.__class__.__name__:
-            return False
+            return self.values == self.__class__(other).values
         else:
             return self.values == other.values
         
