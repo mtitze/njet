@@ -316,4 +316,4 @@ class jet:
         result = self.__class__(n=self.order, graph=[(1, 'cg'), self.graph])
         result.array = lambda n: self.array(n).conjugate()
         return result
-        
+    
