@@ -36,8 +36,8 @@ class jetpoly:
                 if e[1] == 0: # do not show z**0
                     continue
                 fac += f'*x{e[0]}**{e[1]}'
-            outstr += f'{value}]{fac} + \n'
-        return outstr[:-4]
+            outstr += f'{value}]{fac} + \n ['
+        return outstr[:-6]
     
     def _repr_html_(self):
         outstr = self.__str__().replace('\n', '<br>')
