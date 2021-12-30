@@ -62,7 +62,7 @@ def test_sd1():
     Kref[(4, 0)] = -16*x**4*s + 48*x**2*c + 12*s
     test_failed = False
     for k in K.keys():
-        check_k = K[k].expand() - Kref[k].expand()
+        check_k = sympy.nsimplify(K[k].expand() - Kref[k].expand()) # use of nsimplify due to: https://stackoverflow.com/questions/64761602/how-to-get-sympy-to-replace-ints-like-1-0-with-1
         if check_k != 0:
             print (k, check_k)
             test_failed = True
@@ -94,7 +94,7 @@ def test_sd2():
     Kref2[(1, 2)] = -8*x**3*s + 12*x*c
     test_failed = False
     for k in K2.keys():
-        check_k = K2[k].expand() - Kref2[k].expand()
+        check_k = sympy.nsimplify(K2[k].expand() - Kref2[k].expand())
         if check_k != 0:
             print (k, check_k)
             test_failed = True
@@ -136,7 +136,7 @@ def test_sd3():
     Kref3[(1, 0, 2)] = -5*a**4*b**4*co
     test_failed = False
     for k in K3.keys():
-        check_k = K3[k].expand() - Kref3[k].expand()
+        check_k = sympy.nsimplify(K3[k].expand() - Kref3[k].expand())
         if check_k != 0:
             print (k, check_k)
             test_failed = True
@@ -221,7 +221,7 @@ def test_nd3():
     x = Symbol('x')
     c, s = sympy.cos(x**2), sympy.sin(x**2)
     d3f = prime(prime(prime(xmpl4)))(x)
-    check = d3f.expand() - (-8*x**3*c - 12*x*s)
+    check = sympy.nsimplify(d3f.expand() - (-8*x**3*c - 12*x*s))
     nested_test3_failed = True
     if check == 0:
         nested_test3_failed = False
@@ -236,7 +236,7 @@ def test_nd3():
 ######################## 
 # Performance
 ########################
-def test_performance(tol1=3.8, tol2=0.0025, n_points=6000):
+def test_performance(tol1=5, tol2=0.0025, n_points=6000):
     print (f'Performance test using tolarances {tol1}, {tol2} (Attention: Tolerances may have to be adjusted depending on machine) ...')
     import time
     d2 = derive(lambda x, y: exp(-x**2 + y), order=3)

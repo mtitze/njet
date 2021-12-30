@@ -139,6 +139,11 @@ class jet:
         else:
             return self.array(n)
         
+    def __setitem__(self, index, value):
+        current_array = self.get_array()
+        current_array[index] = value
+        self.set_array(current_array)
+        
     def __str__(self):
         outstr = ''
         for e in self.get_array():
@@ -192,42 +197,31 @@ class jet:
         return other*self
     
     def __pow__(self, other):
-        '''
-        N.B.: Power defined here only for exponents in the given field (integer, float, complex numbers),
-        not jets themselves as exponents.
-        '''
-        other = self.convert(other)
-        f = self.array(0)
-        g = other.array(0)
-        n = self.order
         
-        # compute the derivatives
-        n_additional_zeros = 0
+        other = self.convert(other)
+        assert other.order == 0 # only scalars are accepted here.
+        m = other.array(0)
+        f = self.array(0)
+        n = self.order
+                
+        # compute the maximal number of derivatives of f**m
         for nmax in range(n + 1):
-            if g - nmax == 0:
-                n_additional_zeros = n - nmax
+            if m - nmax == 0:
                 break
-        # nmax defines the depth of the iteration. Any remaining derivatives are set to zero.
-
-        # fundamental equation:
-        #  fp[(y, n)] = y*sum([n_over_k(n - 1, k)*fp[(y - 1, n - 1 - k)]*f[k + 1] for k in range(n)]),
-        # so fp[(y, n)] depends on fp[(y - 1, n - 1)], fp[(y - 1, n - 2)], ..., fp[(y - 1, 0)]. This means for each "layer" with respect to y
-        # we need to compute the entire set of derivatives up to the (n-1)th order. The iteration start begins with n=1 at the lowest layer.
-        # The individual layers are labelled by the integer max_der.
-        fp = {}
-        fp[(0, 0)] = f**(g - nmax)
-        layer = g - nmax + 1
-        nok = n_over_ks(nmax - 1)
-        for max_der in range(1, nmax + 1):
-            fp[(max_der, 0)] = f**layer
-            for order in range(1, max_der + 1):           
-                fp[(max_der, order)] = layer*sum_by_name([nok[order - 1][k]*self.array(k + 1)*fp[(max_der - 1, order - 1 - k)] for k in range(order)])
-            layer += 1
-        # extract the derivatives
-        df = [fp[(nmax, order)] for order in range(0, nmax + 1)] + [0]*n_additional_zeros
-        result = self.__class__(df)
-        result.graph = [(2, '**'), self.graph, other.graph]
-        return result
+        # N.B. nmax <= self.order
+        
+        # compute the coefficients in the series [f**m, m*f**(m - 1), m*(m - 1)*f**(m - 2), ...]
+        coeff = 1
+        h = m
+        factors = []
+        for j in range(nmax + 1):
+            factors.append(coeff)
+            coeff *= h
+            h -= 1
+            
+        # compose the above series with the current jet
+        result = self.__class__([f**(m - k)*factors[k] for k in range(nmax + 1)], n=self.order, graph=[(2, '**'), self.graph, other.graph])
+        return result.compose(self)
     
     def __rpow__(self, other):
         other = self.convert(other)    
