@@ -55,11 +55,12 @@ def get_function(code: str, name: str):
         return sympy_dict[name]
     elif code == 'njet':
         return jet_dict[name]
+    else:
+        return numpy_dict[name] # fall-back to numpy as default
     
-
 def detect_code(x):
     '''
-    Find the appropriate code to perform operations.
+    Routine intended to get the package name of a specific object.
     
     Parameters
     ----------
@@ -70,21 +71,8 @@ def detect_code(x):
     -------
     str
         A string denoting the code to be used on the object. 
-        Currently supported codes are: 'numpy', 'mpmath',
-        'sympy', 'njet'.
     '''
-    if hasattr(x, '__module__'):
-        if x.__module__[0:5] == 'sympy':
-            return 'sympy'
-        elif x.__module__[0:4] == 'njet':
-            return 'njet'
-        elif x.__module__[0:6] == 'mpmath':
-            return 'mpmath'
-        else:
-            raise NotImplementedError('Unknown object.')
-    else:
-        return 'numpy'
-
+    return str(x.__class__.__mro__[0].__module__).split('.')[0]
     
 def jetfunc(func):
     '''
