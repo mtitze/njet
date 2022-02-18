@@ -1,7 +1,0 @@
-mpmath==1.2.1; python_version >= "3.6"
-numpy==1.21.2; python_version >= "3.7" and python_version < "3.11"
-sympy==1.9; python_version >= "3.6"
-sphinx==4.0.1
-sphinx_rtd_theme==0.5.2
-readthedocs-sphinx-search==0.1.0
-myst_parser==0.15.2
