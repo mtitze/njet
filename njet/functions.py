@@ -58,7 +58,7 @@ def get_function(code: str, name: str):
     else:
         return numpy_dict[name] # fall-back to numpy as default
     
-def detect_code(x):
+def get_package_name(x):
     '''
     Routine intended to get the package name of a specific object.
     
@@ -80,7 +80,7 @@ def jetfunc(func):
     which are no njets.
     '''
     def inner(x, **kwargs):
-        code = kwargs.get('code', detect_code(x))
+        code = kwargs.get('code', get_package_name(x))
         name = func.__name__
         if code != 'njet':
             return get_function(code, name)(x)
@@ -89,7 +89,7 @@ def jetfunc(func):
             # because the built-in functions need to be applied to the
             # 0-th component of the jet:
             x0 = x[0]
-            code_x0 = detect_code(x0)
+            code_x0 = get_package_name(x0)
             f = get_function(code_x0, name)
             fx0 = f(x0)
             return func(x, x0=x0, code_x0=code_x0, f=f, fx0=fx0)

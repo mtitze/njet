@@ -294,7 +294,7 @@ class jet:
         if self.order != other.order:  # jets of different order are considered different
             return False
         else:
-            return all([check_zero(self[k] - other[k]) for k in range(self.order)])
+            return all([check_zero(self[k] - other[k]) for k in range(self.order + 1)])
     
     def convert(self, other, n=0):
         '''

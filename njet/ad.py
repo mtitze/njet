@@ -91,7 +91,7 @@ class derive:
         
     def eval(self, z):
         '''
-        Pass a jet of order self.order, having polynoms in its higher-order entries,
+        Pass a jet of order self.order, having polynomials in its higher-order entries,
         through the given function.
         
         Parameters
