@@ -23,7 +23,7 @@ def sum_by_name(ls, name='jetpoly'):
     # left. This can be used to prevent that in case of numpy the new values are numpy.arrays.
     return sum([e for e in ls if e.__class__.__name__ == name]) + sum([e for e in ls if e.__class__.__name__ != name])
 
-def general_leibnitz_rule(f1, f2):
+def general_leibniz_rule(f1, f2):
     '''
     Compute the higher-order derivatives of the product of two functions f1*f2.
     In the following denote by f^k the k-th derivative of f, evaluated at a specific point.
@@ -185,9 +185,9 @@ class jet:
         result = self.__class__(n=max_order, graph=[(2, '*'), self.graph, other.graph])
         # compute the derivatives      
         f1, f2 = self.get_array(n=max_order), other.get_array(n=max_order)
-        glr = general_leibnitz_rule(f1, f2)
+        glr = general_leibniz_rule(f1, f2)
         result.array = lambda n: glr[n] if n <= max_order else 0
-        # result.array = lambda k: general_leibnitz_rule(f1[:k + 1], f2[:k + 1]) if k <= max_order else 0
+        # result.array = lambda k: general_leibniz_rule(f1[:k + 1], f2[:k + 1]) if k <= max_order else 0
         # The next line would work for arbitrary orders, but it is also much slower instead of pre-loading the array:
         # result.array = lambda n: sum([n_over_k(n, k)*self.array(n - k)*other.array(k) for k in range(n + 1)])
         return result
