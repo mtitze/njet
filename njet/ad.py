@@ -1,8 +1,6 @@
 from .functions import exp, log
 from .jet import jet as _jet
-from .jet import factorials, check_zero
-from .poly import jetpoly
-
+from .jet import factorials, check_zero, jetpoly
 
 class jet(_jet):
     '''
@@ -128,7 +126,7 @@ class derive:
             A jet having jetpoly entries in the k-th order entries for k > 0.
             
         **kwargs
-            Optional arguments passed to liepoly.get_taylor_coefficients routine.
+            Optional arguments passed to poly.get_taylor_coefficients routine.
             
             Note that one can control how to deal with multiplicities C(j1, ..., jm) (notation see above) by
             passing mult_drv and mult_prm attributes to this routine.
@@ -139,8 +137,7 @@ class derive:
             Dictionary which maps the tuples representing the indices and powers of the individual
             monomials to their coefficients, corresponding to the Taylor expansion of the given expression.
         '''
-        input_cname = ev.__class__.__name__
-        assert input_cname == 'jet', f"Object of type 'jet' expected. Input of type '{input_cname}'."
+        assert isinstance(ev, jet), f"Object of type 'jet' expected. Input of type '{ev.__class__.__name__}'."
         
         Df = {}
         # add the constant (if non-zero):
@@ -149,7 +146,7 @@ class derive:
             Df[(0,)*self.n_args] = const
         
         for entry in ev[1:]: # iteration over the derivatives of order >= 1.
-            if not entry.__class__.__name__ == 'jetpoly': # skip any non-polynomial entry.
+            if not isinstance(entry, jetpoly): # skip any non-polynomial entry.
                 continue
             Df.update(entry.get_taylor_coefficients(n_args=self.n_args, facts=self._factorials, **kwargs))
             # Since we loop over derivatives of a specific order, it is ensured that these Taylor coefficients are always different, 

@@ -1,5 +1,6 @@
 from njet import derive
 from njet.functions import sin, exp
+
 import sympy
 from sympy import Symbol
 import numpy as np

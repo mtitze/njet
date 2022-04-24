@@ -20,5 +20,4 @@
 
 from ._version import __version__
 from .ad import jet, derive
-from .poly import jetpoly
-
+from .jet import jetpoly
