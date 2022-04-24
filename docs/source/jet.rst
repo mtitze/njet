@@ -105,5 +105,5 @@ In the following we list some of the functionality in the jet class.
 
 .. automodule:: njet.jet
     :members:
-    :exclude-members: convert
+    :exclude-members: convert, jetpoly
 
