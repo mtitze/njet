@@ -458,6 +458,12 @@ class jetpoly:
         for key, value in self.values.items():
             new_values[key] = value.conjugate()
         return self.__class__(values=new_values)
+    
+    def real(self):
+        return (self + self.conjugate())/2
+    
+    def imag(self):
+        return (self - self.conjugate())/2/1j
         
     def get_taylor_coefficients(self, n_args: int, facts, mult_prm: bool=True, mult_drv: bool=True):
         '''
