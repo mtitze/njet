@@ -310,6 +310,12 @@ class jet:
         result = self.__class__(n=self.order, graph=[(1, 'cg'), self.graph])
         result.array = lambda n: self.array(n).conjugate()
         return result
+    
+    def real(self):
+        return (self.conjugate() + self)/2
+    
+    def imag(self):
+        return (self.conjugate() - self)/2/1j
 
     
 class jetpoly:
