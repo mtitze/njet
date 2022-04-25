@@ -312,10 +312,10 @@ class jet:
         return result
     
     def real(self):
-        return (self.conjugate() + self)/2
+        return (self + self.conjugate())/2
     
     def imag(self):
-        return (self.conjugate() - self)/2/1j
+        return (self - self.conjugate())/2/1j
 
     
 class jetpoly:
