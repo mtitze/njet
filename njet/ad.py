@@ -19,47 +19,29 @@ class jet(_jet):
             result.graph = [(2, '**'), self.graph, other.graph]
         return result
     
-    
-def standardize_function(f, n_args: int=0):
+def getNargs(f, **kwargs):
     '''
-    Determine the signature of a function and return a function taking a single subscriptable object as argument.
+    Determine the number of arguments of a function. Raise an error if they can not be determined.
     
     Parameters
     ----------
     f: callable
         The function to be examined.
         
-    n_args: int, optional
-        An optional parameter to help in identifying the number of arguments in case that f takes a single
-        subscriptable object as argument. If nothing specified, then the number of arguments is
-        determined by the parameter f.__code__.__argcount__.
-        Default: 0. If > 0, then the function is assumed to depend on
-        one variable of length n_args, and this variable is subscriptable.
-        
     Returns
     -------
-    callable
-        A function taking a single subscriptable object as input.
+    int
+        The number of arguments of the given function.
     '''
-    
-    if n_args > 0:
-        f_out = f
-        n_args = n_args
-    else:
+    error_msg = 'The number of function arguments could not be determined. Try passing n_args parameter.'
+    n_args = kwargs.get('n_args', 0)
+    if n_args == 0:
         try:
             n_args = f.__code__.co_argcount
         except:
-            raise RuntimeError('The number of function arguments could not be determined. Try passing n_args parameter.')
-        assert n_args > 0
-        if n_args > 1:
-            # make a function of one variable whose elements are subscriptable.
-            f_out = lambda z: f(*z)
-        elif n_args == 1:
-            # the function depends on one variable, but its input is not subscriptable.
-            f_out = lambda z: f(z[0])
-            
-    return f_out, n_args
-    
+            raise RuntimeError(error_msg)
+    assert n_args > 0, error_msg
+    return n_args    
     
 class derive:
     '''
@@ -75,10 +57,12 @@ class derive:
         The order up to which the function should be derived.
 
     n_args: int, optional
-        The number of arguments on which func depends on; passed to njet.ad.standardize_function.
+        The number of arguments on which func depends on; passed to getNargs routine.
     '''
-    def __init__(self, func, order: int=1, n_args: int=0, **kwargs):
-        self.func, self.n_args = standardize_function(func, n_args=n_args)
+    def __init__(self, func, order: int=1, **kwargs):
+        self.func = func
+        self.n_args = getNargs(func, **kwargs)
+        #self.func, self.n_args = standardize_function(func, n_args=n_args)
         # Now in all cases self.func takes only a single subscriptable object as argument.
         self.set_order(order)
         self._Df = {}
@@ -87,7 +71,7 @@ class derive:
         self.order = order
         self._factorials = factorials(self.order)
         
-    def eval(self, z):
+    def eval(self, *z, **kwargs):
         '''
         Pass a jet of order self.order, having polynomials in its higher-order entries,
         through the given function.
@@ -96,6 +80,9 @@ class derive:
         ----------
         z: subscriptable
             List of values at which the function and its derivatives should be evaluated.
+            
+        **kwargs:
+            Optional keyword arguments passed to the underlying function.
                     
         Returns
         -------
@@ -107,7 +94,7 @@ class derive:
         for k in range(self.n_args):
             jk = jet([z[k], jetpoly(1, index=k, power=1)], n=self.order)
             inp.append(jk)
-        return self.func(inp)
+        return self.func(*inp, **kwargs)
     
     def get_taylor_coefficients(self, ev, **kwargs):
         '''Extract the Taylor coefficients from a given jet-evaluation (the output of self.eval).
@@ -154,7 +141,7 @@ class derive:
             
         return Df
         
-    def __call__(self, z, **kwargs):
+    def __call__(self, *z, **kwargs):
         '''Evaluate the derivatives of a (jet-)function at a specific point up to self.order.
         
         Parameters
@@ -171,7 +158,7 @@ class derive:
             Dictionary of compontens of the multivariate Taylor expansion of the given function self.func
         '''
         # perform the computation, based on the input vector
-        Df = self.get_taylor_coefficients(self.eval(z), **kwargs)
+        Df = self.get_taylor_coefficients(self.eval(*z), **kwargs)
         self._Df = Df
         return Df
     
@@ -252,7 +239,7 @@ class derive:
         converted_indices = self.convert_indices(list_of_tuples)
         return {converted_indices[k]: entries[list_of_tuples[k]] for k in range(len(list_of_tuples))}
     
-    def grad(self, z=None, **kwargs):
+    def grad(self, *z, **kwargs):
         '''
         Returns the gradient of the function.
         
@@ -270,11 +257,11 @@ class derive:
         dict
             Dictionary containing the components of the gradient.
         '''
-        if z != None:
-            _ = self(z, **kwargs)
+        if len(z) > 0:
+            _ = self(*z, **kwargs)
         return self.build_tensor(k=1, **kwargs)
     
-    def hess(self, z=None, **kwargs):
+    def hess(self, *z, **kwargs):
         '''
         Returns the Hessian of the function.
         
@@ -292,7 +279,7 @@ class derive:
         dict
             Dictionary containing the components of the Hessian.
         '''
-        if z != None:
-            _ = self(z, **kwargs)
+        if len(z) > 0:
+            _ = self(*z, **kwargs)
         return self.build_tensor(k=2, **kwargs)
         

@@ -19,13 +19,13 @@ def test_ce1():
     H_shift = lambda x, y, px, py: H(x + z[0], y + z[1], px + z[2], py + z[3])
     dH_shift = derive(H_shift, order=5)
     
-    hdict = dH(z)
-    hshiftdict = dH_shift(z0)
+    hdict = dH(*z)
+    hshiftdict = dH_shift(*z0)
     
     check1 = all([hdict[k] == hshiftdict[k] for k in hdict.keys()])
     
-    hdict2 = dH.get_taylor_coefficients(dH.eval(z))
-    hshiftdict2 = dH_shift.get_taylor_coefficients(dH_shift.eval(z0))
+    hdict2 = dH.get_taylor_coefficients(dH.eval(*z))
+    hshiftdict2 = dH_shift.get_taylor_coefficients(dH_shift.eval(*z0))
 
     check2 = all([hdict2[k] == hshiftdict2[k] for k in hdict2.keys()])
     test_failed = not (check1 and check2)
@@ -42,7 +42,7 @@ def test_ce1():
 def test_sd1():
     d2 = derive(lambda x, y: sin(-x**2 + y), order=4)
     x, y = Symbol('x'), Symbol('y')
-    K = d2([x, y])
+    K = d2(x, y)
     a = x**2 - y
     c, s = sympy.cos(a), sympy.sin(a)
     Kref = {}
@@ -76,12 +76,12 @@ def test_sd1():
 
 def test_sd2():
     d2 = derive(lambda x, y: -sin(x**2 - y), order=4)
-    df = lambda x, y: d2([x, y])[(2, 1)] # dx dx dy - component of the function above.
+    df = lambda x, y: d2(x, y)[(2, 1)] # dx dx dy - component of the function above.
     df_nested = derive(df, order=3)
     x, y = Symbol('x'), Symbol('y')
     a = x**2 - y
     c, s = sympy.cos(a), sympy.sin(a)
-    K2 = df_nested([x, y])
+    K2 = df_nested(x, y)
     Kref2 = {}
     Kref2[(0, 0)] = -4*x**2*c - 2*s
     Kref2[(1, 0)] = 8*x**3*s - 12*x*c
@@ -110,7 +110,7 @@ def test_sd3():
     xmpl2 = lambda a, b, c: sin(a**5 + b**2*c)
     dd = derive(xmpl2, order=3)
     a, b, c = Symbol('a'), Symbol('b'), Symbol('c')
-    K3 = dd([a, b, c])
+    K3 = dd(a, b, c)
     arg = a**5 + b**2*c
     si = sympy.sin(arg)
     co = sympy.cos(arg)
@@ -157,11 +157,11 @@ def test_nd1(tol=1e-12, verbose=False):
     print ('Nested derivative test 1 ...')
     zref=[0.2, 1.1]
     nested_test_failed = False
-    D = df(zref)
+    D = df(*zref)
     for a, b in [(0, 1), (1, 0), (0, 2), (1, 1), (2, 0), (0, 3), (1, 2), (2, 1), (3, 0)]:
-        dabf = lambda x, y: df([x, y])[(a, b)]
+        dabf = lambda x, y: df(x, y)[(a, b)]
         ddabf = derive(dabf, order=2)
-        D2 = ddabf(zref)
+        D2 = ddabf(*zref)
         if verbose:
             print (f'--- D{a}{b} ---')
         for key in D2.keys():
@@ -184,8 +184,8 @@ def test_nd1(tol=1e-12, verbose=False):
 def test_nd2(tol=1e-12, verbose=False):
     f = lambda x, y: sin(1/x + y)
     df = derive(f, order=3)
-    dxxf = lambda x, y: df([x, y])[(1, 1)] 
-    dxxyf = lambda x, y: df([x, y])[(2, 1)]
+    dxxf = lambda x, y: df(x, y)[(1, 1)] 
+    dxxyf = lambda x, y: df(x, y)[(2, 1)]
     g = lambda x, y: f(x, y)/(1 + dxxf(x, y)) + dxxyf(x, y)**-3
     dg = derive(g, order=12)
 
@@ -193,8 +193,8 @@ def test_nd2(tol=1e-12, verbose=False):
     lin = np.linspace(0.02, 0.32, 11)
     nested_test2_failed = False
     try:
-        res = dg([0.2, 1.1])
-        res2 = dg([lin, 1.1])
+        res = dg(0.2, 1.1)
+        res2 = dg(lin, 1.1)
     except:
         nested_test2_failed = True
         
@@ -217,7 +217,7 @@ def test_nd2(tol=1e-12, verbose=False):
 def test_nd3():
     def prime(f, k=0):
         df = derive(f, order=1)
-        return lambda x: df.grad([x])[(k,)]
+        return lambda x: df.grad(x)[(k,)]
     xmpl4 = lambda x: sin(x**2)
     x = Symbol('x')
     c, s = sympy.cos(x**2), sympy.sin(x**2)
@@ -246,40 +246,40 @@ def test_performance(tol1=5, tol2=0.0025, n_points=6000):
     # Long time tests
     start_time = time.time()
     for l in lin:
-        r = d2([2.1, l])
+        r = d2(2.1, l)
     end_time = time.time()
     time1_long = end_time - start_time
     print (f'required time 1: {time1_long}')
 
     start_time = time.time()
     for l in lin:
-        r = d2([2.1, l])
+        r = d2(2.1, l)
     end_time = time.time()
     time2_long = end_time - start_time
     print (f'required time 2: {time2_long}')
 
     start_time = time.time()
     for l in lin:
-        r = d2([2.1, l])
+        r = d2(2.1, l)
     end_time = time.time()
     time3_long = end_time - start_time
     print (f'required time 3: {time3_long}')
 
     # Short time tests
     start_time = time.time()
-    r = d2([2.1, lin])
+    r = d2(2.1, lin)
     end_time = time.time()
     time1_short = end_time - start_time
     print (f'required time 4: {time1_short}')
 
     start_time = time.time()
-    r = d2([2.1, lin])
+    r = d2(2.1, lin)
     end_time = time.time()
     time2_short = end_time - start_time
     print (f'required time 5: {time2_short}')
 
     start_time = time.time()
-    r = d2([2.1, lin])
+    r = d2(2.1, lin)
     end_time = time.time()
     time3_short = end_time - start_time
     print (f'required time 6: {time3_short}')
