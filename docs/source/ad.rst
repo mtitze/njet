@@ -18,7 +18,7 @@ AD step separately ...
     lin = np.linspace(3, 4, 4)
 
     for e in lin:
-        print( d2([2.1, e]) )
+        print( d2(2.1, e) )
         
     {(0, 0): 0.24414328315343706, (1, 0): -1.0254017892444356, (0, 1): 0.24414328315343706, (2, 0): 3.818400948519755, (1, 1): -1.0254017892444356, (0, 2): 0.24414328315343706, (2, 1): 3.8184009485197556, (0, 3): 0.24414328315343706, (3, 0): -11.935676826805235, (1, 2): -1.0254017892444356}
     {(0, 0): 0.34072939947024816, (1, 0): -1.4310634777750424, (0, 1): 0.34072939947024816, (2, 0): 5.329007807714682, (1, 1): -1.4310634777750424, (0, 2): 0.34072939947024816, (2, 1): 5.329007807714681, (0, 3): 0.34072939947024816, (3, 0): -16.657578881301497, (1, 2): -1.4310634777750422}
@@ -29,7 +29,7 @@ AD step separately ...
 
 .. code-block:: python
    
-    d2([2.1, lin])
+    d2(2.1, lin)
     
     {(0, 0): array([0.24414328, 0.3407294 , 0.47552618, 0.66365025]),
      (1, 0): array([-1.02540179, -1.43106348, -1.99720997, -2.78733105]),
@@ -47,7 +47,7 @@ It is also possible to pass SymPy symbols:
 .. code-block:: python
 
     from sympy import Symbol
-    d2([Symbol('x'), Symbol('y')])
+    d2(Symbol('x'), Symbol('y'))
     
     {(0, 0): 1.0*exp(-x**2 + y),
      (1, 0): -2.0*x*exp(-x**2 + y),
@@ -71,7 +71,7 @@ of one variable:
     def prime(f, k=0):
         # Return \partial f / \partial x_k
         df = derive(f, order=1)
-        return lambda x: df.grad([x])[(k,)]
+        return lambda x: df.grad(x)[(k,)]
      
     from njet.functions import sin     
     xmpl = lambda x: sin(x**2)
@@ -88,8 +88,8 @@ Here a more sophisticated example for two variables:
     f = lambda x, y: sin(1/x + y)
     df = derive(f, order=3)
     
-    dxxf = lambda x, y: df([x, y])[(1, 1)] 
-    dxxyf = lambda x, y: df([x, y])[(2, 1)]
+    dxxf = lambda x, y: df(x, y)[(1, 1)] 
+    dxxyf = lambda x, y: df(x, y)[(2, 1)]
     
     g = lambda x, y: f(x, y)/(1 + dxxf(x, y)) + dxxyf(x, y)**-3
     
@@ -99,7 +99,7 @@ and some of its higher-order derivatives, up to fourth order:
 .. code-block:: python
 
     dg = derive(g, order=4)
-    dg([0.2, 1.1])    
+    dg(0.2, 1.1)    
  
     {(0, 0): 0.05125472033924497,
      (1, 0): -1.2893245550004897,
@@ -121,7 +121,7 @@ Of course, this also synergizes with either NumPy arrays or SymPy symbols. E.g.:
 
 .. code-block:: python
 
-    dg([np.linspace(0.2, 0.64, 5), 1.1])
+    dg(np.linspace(0.2, 0.64, 5), 1.1)
     
     {(0, 0): array([0.05125472, 0.10722629, 0.37526799, 0.10042023, 0.39647601]), 
      (1, 0): array([-1.28932456,  0.8244532 , 10.59476301,  1.63373827, 12.93969049]),
@@ -150,7 +150,7 @@ complex conjugate counterpart. So what will *not* work is
 
     f = lambda z: z.conjugate()
     df = derive(f)  
-    df([Symbol('z')])
+    df(Symbol('z'))
   > {(0,): conjugate(z), (1,): 1.0}
 
 The correct way to deal with this anti-holomorphic function would be:
@@ -159,7 +159,7 @@ The correct way to deal with this anti-holomorphic function would be:
 
     f = lambda z, zc: zc
     df = derive(f)  
-    df([Symbol('z'), Symbol('z').conjugate()])
+    df(Symbol('z'), Symbol('z').conjugate())
   > {(0, 0): conjugate(z), (0, 1): 1.0}
 
 In the following the AD routines are explained in more detail.

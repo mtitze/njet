@@ -35,7 +35,7 @@ df = derive(f, order=3)
 
 Evaluate the derivatives at a specific point
 ```python
-df([0.4, 2.1, 1.73])
+df(0.4, 2.1, 1.73)
 
 {(0, 0, 0): 0.5255977986928584,
  (0, 0, 1): -0.2000425221825019,
