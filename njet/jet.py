@@ -274,12 +274,16 @@ class jet:
         return result
             
     def __eq__(self, other):
-        other = self.convert(other, n=self.order) # if 'other' is no jet class, convert 'other' to jet with same order as self
-        if self.order != other.order:  # jets of different order are considered different
+        if isinstance(self, type(other)):
+            if self.order != other.order:
+                return False
+            else:
+                return all([check_zero(self[k] - other[k]) for k in range(self.order + 1)])
+        elif self.order > 1:
             return False
         else:
-            return all([check_zero(self[k] - other[k]) for k in range(self.order + 1)])
-    
+            return check_zero(self[0] - other)
+            
     def convert(self, other, n=0):
         '''
         Convert an object to an instance of this class.
