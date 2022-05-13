@@ -180,9 +180,9 @@ class derive:
             The components of the k-th derivative of self.func.
         '''
         assert k <= self.order
-        D = kwargs.get('Df', self._Df)
-        if len(D) == 0:
+        if not hasattr(self, '_Df') and 'Df' not in kwargs.keys():
             raise RuntimeError('Derivative(s) need to be evaluated first.')
+        D = kwargs.get('Df', self._Df)
         return {j: D[j] for j in D.keys() if sum(j) == k}
     
     @staticmethod
