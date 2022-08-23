@@ -124,7 +124,7 @@ class derive:
             Dictionary which maps the tuples representing the indices and powers of the individual
             monomials to their coefficients, corresponding to the Taylor expansion of the given expression.
         '''
-        assert isinstance(ev, jet), f"Object of type 'jet' expected. Input of type '{ev.__class__.__name__}'."
+        assert isinstance(ev, jet), f"Object of type 'jet' expected. Input of type '{ev.__class__.__name__}'. Note that only single-valued functions are supported."
         
         Df = {}
         # add the constant (if non-zero):
@@ -180,7 +180,7 @@ class derive:
             The components of the k-th derivative of self.func.
         '''
         assert k <= self.order
-        if not hasattr(self, '_Df') and 'Df' not in kwargs.keys():
+        if len(self._Df) == 0 and 'Df' not in kwargs.keys():
             raise RuntimeError('Derivative(s) need to be evaluated first.')
         D = kwargs.get('Df', self._Df)
         return {j: D[j] for j in D.keys() if sum(j) == k}
