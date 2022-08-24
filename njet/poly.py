@@ -195,3 +195,12 @@ class jetpoly:
                 
         return taylor_coeffs
         
+    def __call__(self, *z):
+        result = 0
+        for fs, v in self.values.items():
+            f = 1
+            for index, power in fs:
+                f *= z[index]**power
+            result += f*v
+        return result
+            

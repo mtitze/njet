@@ -304,3 +304,14 @@ class jet:
     
     def imag(self):
         return (self - self.conjugate())/2/1j
+    
+    def __call__(self, *z):
+        result = 0
+        for k in range(len(self)):
+            ek = self[k]
+            if hasattr(ek, '__call__'):
+                result += ek(*z)
+            else:
+                result += ek
+        return result
+    
