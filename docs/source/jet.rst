@@ -101,7 +101,12 @@ There is also NumPy support:
     jnp**2
   > 5-jet([ 4.41 12.0409], [18.06 -8.328], [36.98 2.88], 0, 0, 0)
 
-In the following we list some of the functionality in the jet class.
+Two jets can also be composed together, to represent the derivative of a composition function. If ``F`` represents the values [f o g, f^1 o g, f^2 o g, ... ],
+where f^k denote the k-th derivative of a function f, and ``G`` represents
+the values [g, g^1, g^2, ...], then ``F@G`` will compute the values
+[f o g, (f o g)^1, (f o g)^2, ...].
+
+In the following we list some functions of the jet class.
 
 .. automodule:: njet.jet
     :members:
