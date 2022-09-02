@@ -204,6 +204,13 @@ class jetpoly:
         return taylor_coeffs
         
     def __call__(self, *z):
+        '''
+        Evaluate the current polynomial at a specific point.
+        
+        Note that a sufficient number of parameters must be given, according to the
+        indices of the variables the polynomial represents. For example, a polynomial dependent
+        on "x4" has to be provided with at least 4 parameters.
+        '''
         result = 0
         for fs, v in self.values.items():
             f = 1

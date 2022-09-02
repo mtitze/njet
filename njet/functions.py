@@ -113,7 +113,7 @@ def sin(x, **kwargs):
     result = x.__class__(s, n=x.order, graph=[(1, 'sin'), x.graph])
     # compute the derivatives
     result.array = lambda n: [s, c, -s, -c][n%4]
-    return result.compose(x)
+    return result@x
 
 @jetfunc
 def cos(x, **kwargs):
@@ -133,7 +133,7 @@ def cos(x, **kwargs):
     result = x.__class__(c, n=x.order, graph=[(1, 'cos'), x.graph])
     # compute the derivatives
     result.array = lambda n: [c, -s, -c, s][n%4]
-    return result.compose(x)
+    return result@x
 
 @jetfunc
 def exp(x, **kwargs):
@@ -152,7 +152,7 @@ def exp(x, **kwargs):
     result = x.__class__(e, n=x.order, graph=[(1, 'exp'), x.graph])
     # compute the derivatives
     result.array = lambda n: e
-    return result.compose(x)
+    return result@x
 
 @jetfunc
 def log(x, **kwargs):
@@ -193,7 +193,7 @@ def sinh(x, **kwargs):
     result = x.__class__(sh, n=x.order, graph=[(1, 'sinh'), x.graph])
     # compute the derivatives
     result.array = lambda n: [sh, ch][n%2]
-    return result.compose(x)
+    return result@x
 
 @jetfunc
 def cosh(x, **kwargs):
@@ -213,5 +213,5 @@ def cosh(x, **kwargs):
     result = x.__class__(ch, n=x.order, graph=[(1, 'cosh'), x.graph])
     # compute the derivatives
     result.array = lambda n: [ch, sh][n%2]
-    return result.compose(x)
+    return result@x
 

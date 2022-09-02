@@ -205,7 +205,7 @@ class jet:
             
         # compose the above series with the current jet
         result = self.__class__([f**(m - k)*factors[k] for k in range(nmax + 1)], n=self.order, graph=[(2, '**'), self.graph, other.graph])
-        return result.compose(self)
+        return result@self
     
     def __rpow__(self, other):
         other = self.convert(other)    
@@ -245,7 +245,7 @@ class jet:
             result.set_array(array[1:])
         return result
     
-    def compose(self, other):
+    def __matmul__(self, other):
         '''
         Compute the composition of two jets, based on Faà di Bruno's formula.
         It is assumed that the array ar with ar = self.get_array() belongs to the values
@@ -269,7 +269,7 @@ class jet:
         invf = [(-1)**n*facts[n]/f**(n + 1) for n in range(self.order + 1)]
         result = self.copy()
         result.set_array(invf)
-        result = result.compose(self)
+        result = result@self
         result.graph = [(1, '1/'), self.graph]
         return result
             
@@ -346,18 +346,17 @@ class jet:
             monomials to their coefficients, corresponding to the Taylor expansion of the given expression.
         '''
         tc = {}
+        # add the constant (if non-zero):
+        const = self[0]
+        if not check_zero(const):
+            tc[(0,)*n_args] = const
+            
         for entry in self[1:]: # iteration over the derivatives of order >= 1.
             if not isinstance(entry, jetpoly): # skip any non-polynomial entry.
                 continue
             tc.update(entry.get_taylor_coefficients(n_args=n_args, facts=facts, **kwargs))
             # Since we loop over derivatives of a specific order, it is ensured that these Taylor coefficients are always different, 
             # so the above procedure does not overwrite existing keys.
-            
-        # add the constant (if non-zero):
-        const = self[0]
-        if not check_zero(const):
-            tc[(0,)*n_args] = const
-            
         self.tc = tc
         return tc
     
