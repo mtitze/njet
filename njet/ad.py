@@ -72,6 +72,13 @@ class derive:
         self.order = order
         self._factorials = factorials(self.order)
         
+    def jet_input(self, *z):
+        inp = []
+        for k in range(self.n_args):
+            jk = jet([z[k], jetpoly(1, index=k, power=1)], n=self.order)
+            inp.append(jk)
+        return inp
+        
     def eval(self, *z, **kwargs):
         '''
         Pass a jet of order self.order, having polynomials in its higher-order entries,
@@ -91,20 +98,7 @@ class derive:
             Jet containing the value of the function in its zero-th entry and the
             jet-polynomials in the higher-order entries.
         '''
-        inp = []
-        for k in range(self.n_args):
-            jk = jet([z[k], jetpoly(1, index=k, power=1)], n=self.order)
-            inp.append(jk)
-        return self.func(*inp, **kwargs)
-    
-    def get_taylor_coefficients(self, ev, **kwargs):
-        '''Extract the Taylor coefficients from a given jet-evaluation (the output of self.eval).
-        
-        For details see njet.jet.get_taylor_coefficients routine.
-        '''
-        assert isinstance(ev, jet), f"Object of type 'jet' expected. Input of type '{ev.__class__.__name__}'. Note that only single-valued functions are supported."
-        
-        return ev.get_taylor_coefficients(n_args=self.n_args, facts=self._factorials, **kwargs)
+        return self.func(*self.jet_input(*z), **kwargs)
         
     def __call__(self, *z, **kwargs):
         '''Evaluate the derivatives of a (jet-)function at a specific point up to self.order.
@@ -115,7 +109,7 @@ class derive:
             List of values at which the function and its derivatives should be evaluated.
             
         **kwargs:
-            Optional arguments passed to self.get_taylor_coefficients routine.
+            Optional arguments passed to self._evaluation.get_taylor_coefficients routine.
 
         Returns
         -------
@@ -123,73 +117,22 @@ class derive:
             Dictionary of compontens of the multivariate Taylor expansion of the given function self.func
         '''
         # perform the computation, based on the input vector
-        Df = self.get_taylor_coefficients(self.eval(*z), **kwargs)
-        self._Df = Df
-        return Df
-    
-    def extract(self, k: int, **kwargs):
-        '''
-        Extract the components of the k-th derivative from the output of self.eval. 
-        
-        Parameters
-        ----------
-        k: int
-            The order of the derivatives to extract.
-        Df: dict, optional
-            The output of self.eval, containing the entries of the derivative. If nothing
-            specified, the last evaluation (stored in self._Df) will be used.
-            
-        Returns
-        -------
-        dict
-            The components of the k-th derivative of self.func.
-        '''
-        assert k <= self.order
-        if len(self._Df) == 0 and 'Df' not in kwargs.keys():
-            raise RuntimeError('Derivative(s) need to be evaluated first.')
-        D = kwargs.get('Df', self._Df)
-        return {j: D[j] for j in D.keys() if sum(j) == k}
+        self._evaluation = self.eval(*z)
+        return self._evaluation.get_taylor_coefficients(n_args=self.n_args, facts=self._factorials, **kwargs) # also stored in self._evaluation._tc
     
     def build_tensor(self, k: int, **kwargs):
         '''
         Convert the components of the k-th derivative into the entries of a (self.n_args)**k tensor.
-        See also self.convert_indices for details.
-        
-        Parameters
-        ----------
-        k: int
-            The degree of the derivatives to be considered.
-        
-        Returns
-        -------
-        dict
-            Dictionary representing non-zero components of the tensor which describes the multivariate 
-            Taylor map of order k.
-            Only values unequal to zero will be stored, and only one member for each set of entries
-            which can be obtained by suitable permutations of the indices.
+        See njet.jet.build_tensor for details.
         '''
-        entries = self.extract(k=k, **kwargs)
-        list_of_tuples = list(entries.keys())
-        converted_indices = convert_indices(list_of_tuples)
-        return {converted_indices[k]: entries[list_of_tuples[k]] for k in range(len(list_of_tuples))}
+        assert k <= self.order
+        assert hasattr(self, '_evaluation'), 'Derivative(s) need to be evaluated first.'
+        return self._evaluation.build_tensor(k=k, **kwargs)
     
     def grad(self, *z, **kwargs):
         '''
-        Returns the gradient of the function.
-        
-        Parameters
-        ----------
-        kwargs: dict
-            Additional arguments passed to self.build_tensor
-            
-        z: subscriptable, optional
-            Point at which to compute the gradient. If nothing specified (default),
-            then the gradient is determined from the last evaluation.
-            
-        Returns
-        -------
-        dict
-            Dictionary containing the components of the gradient.
+        Returns the gradient of the current function.
+        See njet.jet.grad for details.
         '''
         if len(z) > 0:
             _ = self(*z, **kwargs)
@@ -198,20 +141,7 @@ class derive:
     def hess(self, *z, **kwargs):
         '''
         Returns the Hessian of the function.
-        
-        Parameters
-        ----------
-        kwargs: dict
-            Additional arguments passed to self.build_tensor
-        
-        z: subscriptable, optional
-            Point at which to compute the Hessian. If nothing specified (default),
-            then the Hessian is determined from the last evaluation.
-            
-        Returns
-        -------
-        dict
-            Dictionary containing the components of the Hessian.
+        See njet.jet.hess for details.
         '''
         if len(z) > 0:
             _ = self(*z, **kwargs)

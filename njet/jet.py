@@ -1,4 +1,4 @@
-from .common import check_zero, factorials, n_over_ks
+from .common import check_zero, factorials, n_over_ks, convert_indices
 from .poly import jetpoly
 
 def sum_by_jetpoly(ls):
@@ -315,7 +315,7 @@ class jet:
                 result += ek
         return result
     
-    def get_taylor_coefficients(self, n_args: int, facts=[], **kwargs):
+    def get_taylor_coefficients(self, n_args: int=0, facts=[], **kwargs):
         '''Extract the Taylor coefficients from a given jet-evaluation (the output of self.eval).
         
         Let m be the number of arguments of self.func. Then the k-th derivative of self.func has the form
@@ -345,17 +345,95 @@ class jet:
             Dictionary which maps the tuples representing the indices and powers of the individual
             monomials to their coefficients, corresponding to the Taylor expansion of the given expression.
         '''
-        Df = {}
-        # add the constant (if non-zero):
-        const = self[0]
-        if not check_zero(const):
-            Df[(0,)*n_args] = const
-        
+        tc = {}
         for entry in self[1:]: # iteration over the derivatives of order >= 1.
             if not isinstance(entry, jetpoly): # skip any non-polynomial entry.
                 continue
-            Df.update(entry.get_taylor_coefficients(n_args=n_args, facts=facts, **kwargs))
+            tc.update(entry.get_taylor_coefficients(n_args=n_args, facts=facts, **kwargs))
             # Since we loop over derivatives of a specific order, it is ensured that these Taylor coefficients are always different, 
             # so the above procedure does not overwrite existing keys.
-        return Df
+            
+        # add the constant (if non-zero):
+        const = self[0]
+        if not check_zero(const):
+            tc[(0,)*n_args] = const
+            
+        self.tc = tc
+        return tc
+    
+    def extract(self, k: int, **kwargs):
+        '''
+        Extract the components of the k-th derivative. 
+        
+        Parameters
+        ----------
+        k: int
+            The order of the derivatives to extract.
+        tc: dict, optional
+            The output of self.get_taylor_coefficients, containing the entries of the derivative. If nothing
+            specified, the last evaluation (stored in self.tc) will be used.
+            
+        Returns
+        -------
+        dict
+            The components of the k-th derivative of self.func.
+        '''
+        if not hasattr(self, 'tc'):
+            self.tc = self.get_taylor_coefficients(**kwargs)
+        return {j: self.tc[j] for j in self.tc.keys() if sum(j) == k}
+    
+    def build_tensor(self, k: int, **kwargs):
+        '''
+        Convert the components of the k-th derivative into the entries of a (self.n_args)**k tensor.
+        See also self.convert_indices for details.
+        
+        Parameters
+        ----------
+        k: int
+            The degree of the derivatives to be considered.
+        
+        Returns
+        -------
+        dict
+            Dictionary representing non-zero components of the tensor which describes the multivariate 
+            Taylor map of order k.
+            Only values unequal to zero will be stored, and only one member for each set of entries
+            which can be obtained by suitable permutations of the indices.
+        '''
+        entries = self.extract(k=k, **kwargs)
+        list_of_tuples = list(entries.keys())
+        converted_indices = convert_indices(list_of_tuples)
+        return {converted_indices[k]: entries[list_of_tuples[k]] for k in range(len(list_of_tuples))}
+    
+    def grad(self, **kwargs):
+        '''
+        Returns the gradient of the function.
+        
+        Parameters
+        ----------
+        kwargs: dict
+            Additional arguments passed to self.build_tensor
+            
+        Returns
+        -------
+        dict
+            Dictionary containing the components of the gradient.
+        '''
+        return self.build_tensor(k=1, **kwargs)
+    
+    def hess(self, **kwargs):
+        '''
+        Returns the Hessian of the function.
+        
+        Parameters
+        ----------
+        kwargs: dict
+            Additional arguments passed to self.build_tensor
+            
+        Returns
+        -------
+        dict
+            Dictionary containing the components of the Hessian.
+        '''
+        return self.build_tensor(k=2, **kwargs)
     

@@ -24,8 +24,8 @@ def test_ce1():
     
     check1 = all([hdict[k] == hshiftdict[k] for k in hdict.keys()])
     
-    hdict2 = dH.get_taylor_coefficients(dH.eval(*z))
-    hshiftdict2 = dH_shift.get_taylor_coefficients(dH_shift.eval(*z0))
+    hdict2 = dH(*z)
+    hshiftdict2 = dH_shift(*z0)
 
     check2 = all([hdict2[k] == hshiftdict2[k] for k in hdict2.keys()])
     test_failed = not (check1 and check2)
