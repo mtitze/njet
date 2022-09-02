@@ -99,47 +99,11 @@ class derive:
     def get_taylor_coefficients(self, ev, **kwargs):
         '''Extract the Taylor coefficients from a given jet-evaluation (the output of self.eval).
         
-        Let m be the number of arguments of self.func. Then the k-th derivative of self.func has the form
-        (D^k self.func)(z1, ..., zm) = sum_{j1 + ... + jm = k} Df[j1, ... jm]/(j1! * ... * jm!) * z1**j1 * ... * zm**jm
-        = sum_{S(j1, ... jm), j1 + ... + jm = k} C(j1, ..., jm) * Df[j1, ..., jm] * z1**j1 * ... * zm**jm.
-        with S(j1, ..., jm) an index denoting the set having the elements {j1, ..., jm},
-        Df[j1, ..., jm] := \\partial^j1/\\partial_{z1}^j1 ... \\partial^jm/\\partial_{zm}^jm f (z1, ..., zm)
-        and combinatorial factor
-        C(j1, ..., jm) = (j1 + ... + jm)!/(j1! * ... * jm!) .
-        
-        Parameters
-        ----------
-        ev: jet
-            A jet having jetpoly entries in the k-th order entries for k > 0.
-            
-        **kwargs
-            Optional arguments passed to poly.get_taylor_coefficients routine.
-            
-            Note that one can control how to deal with multiplicities C(j1, ..., jm) (notation see above) by
-            passing mult_drv and mult_prm attributes to this routine.
-            
-        Returns
-        -------
-        dict
-            Dictionary which maps the tuples representing the indices and powers of the individual
-            monomials to their coefficients, corresponding to the Taylor expansion of the given expression.
+        For details see njet.jet.get_taylor_coefficients routine.
         '''
         assert isinstance(ev, jet), f"Object of type 'jet' expected. Input of type '{ev.__class__.__name__}'. Note that only single-valued functions are supported."
         
-        Df = {}
-        # add the constant (if non-zero):
-        const = ev[0]
-        if not check_zero(const):
-            Df[(0,)*self.n_args] = const
-        
-        for entry in ev[1:]: # iteration over the derivatives of order >= 1.
-            if not isinstance(entry, jetpoly): # skip any non-polynomial entry.
-                continue
-            Df.update(entry.get_taylor_coefficients(n_args=self.n_args, facts=self._factorials, **kwargs))
-            # Since we loop over derivatives of a specific order, it is ensured that these Taylor coefficients are always different, 
-            # so the above procedure does not overwrite existing keys.
-            
-        return Df
+        return ev.get_taylor_coefficients(n_args=self.n_args, facts=self._factorials, **kwargs)
         
     def __call__(self, *z, **kwargs):
         '''Evaluate the derivatives of a (jet-)function at a specific point up to self.order.

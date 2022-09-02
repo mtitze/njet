@@ -1,4 +1,4 @@
-from .common import check_zero
+from .common import check_zero, factorials
 
 class jetpoly:
     '''
@@ -148,18 +148,19 @@ class jetpoly:
     def imag(self):
         return (self - self.conjugate())/2/1j
         
-    def get_taylor_coefficients(self, n_args: int, facts, mult_prm: bool=True, mult_drv: bool=True):
+    def get_taylor_coefficients(self, n_args: int=0, facts=[], mult_prm: bool=True, mult_drv: bool=True):
         '''
         Obtain the Taylor coefficients of the current polynomial.
         
         Parameters
         ----------
-        n_args: int
-            The total number of involved parameters.
+        n_args: int, optional
+            The total number of involved parameters. If nothing specified, the number of involved variables
+            is determined from the current indices of the polynomial.
             
-        facts: list
+        facts: list, optional
             A list containing the factorial numbers up to the maximal order in the current polynomial.
-            Hereby it must hold facts[k] = k!.
+            Hereby it must hold facts[k] = k!
             
         mult_prm: bool, optional
             Whether or not to include multiplicities into the final result related to the permulation of expressions (e.g. derivatives)
@@ -171,9 +172,16 @@ class jetpoly:
         Returns
         -------
         dict
-            A dictionary of the form tuple: value, where tuple consists of series of powers, hereby the entry
+            A dictionary of the form "tuple: value", where "tuple" consists of series of powers, hereby the entry
             j denotes the power of the j-th variable.
         '''
+        if n_args == 0 or len(facts) == 0:
+            # determine the number of arguments from the maximal index of the polynomial.
+            order, indices_set = self.get_order(return_indices=True)
+            n_args = max([n_args, max(indices_set) + 1])
+            if len(facts) == 0:
+                facts = factorials(order)
+        
         taylor_coeffs = {}
         for key, value in self.values.items(): # loop over the individual polynomials of the k-th derivative
             # key corresponds to a specific frozenset, i.e. some indices and powers of a specific monomial.
@@ -203,4 +211,33 @@ class jetpoly:
                 f *= z[index]**power
             result += f*v
         return result
+          
+    def get_order(self, return_indices=False):
+        '''
+        Return the order of the current polynomial.
+        
+        Parameters
+        ----------
+        return_indices: boolean, optional
+            If true, also return the indices of the current polynomial.
             
+        Returns
+        -------
+        int
+            The order.
+            
+        set
+            A set of indices.
+        '''
+        ps = 0
+        args = set()
+        for monomial_basis in self.values.keys():
+            monomial_power = 0
+            for index, power in monomial_basis:
+                monomial_power += power
+                args.add(index)
+            ps = max([ps, monomial_power])
+        if return_indices:
+            return ps, args
+        else:
+            return ps
