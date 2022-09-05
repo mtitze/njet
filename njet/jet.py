@@ -280,7 +280,7 @@ class jet:
             else:
                 return all([check_zero(self[k] - other[k]) for k in range(self.order + 1)])
         elif self.order > 1:
-            return False
+            return check_zero([e - other == 0 for e in self.get_array()])
         else:
             return check_zero(self[0] - other)
             

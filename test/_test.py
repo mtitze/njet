@@ -1,4 +1,6 @@
-from njet import derive
+import pytest
+
+from njet import derive, jet
 from njet.functions import sin, exp
 
 import sympy
@@ -34,7 +36,37 @@ def test_ce1():
     else:
         print ('Shift test succeeded.')
     assert not test_failed
+    
+    
+@pytest.mark.parametrize("x0", (1.55, 0.42, -1.631))
+def test_composition_1d(x0, tol=5e-12):
+    '''
+    Test if the composition @ of two jets agrees with the expectation (in the 1D case).
+    '''
+    f = lambda x: x**3 + 2*x
+    f1 = lambda x: 3*x**2 + 2
+    f2 = lambda x: 6*x
+    f3 = lambda x: 6
 
+    g = lambda x: 1/x
+    g1 = lambda x: -1*x**-2
+    g2 = lambda x: 2*x**-3
+    g3 = lambda x: -6*x**-4
+
+    # the expectation
+    fg = lambda x: x**-3 + 2/x
+    fg1 = lambda x: -3*x**-4 - 2*x**-2
+    fg2 = lambda x: 12*x**-5 + 4*x**-3
+    fg3 = lambda x: -60*x**-6 - 12*x**-4
+     
+    y0 = g(x0)
+    fjet = jet([f(y0), f1(y0), f2(y0), f3(y0)])
+    gjet = jet([g(x0), g1(x0), g2(x0), g3(x0)])
+    fgjet = jet([fg(x0), fg1(x0), fg2(x0), fg3(x0)])
+    diff = fgjet - fjet@gjet
+    
+    assert all([abs(e) < tol for e in diff.get_array()])
+    
     
 ######################## 
 # Symbolic differentiation
