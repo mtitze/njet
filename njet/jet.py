@@ -306,14 +306,14 @@ class jet:
         return (self - self.conjugate())/2/1j
     
     def __call__(self, *z):
-        result = 0
+        result = []
         for k in range(len(self)):
             ek = self[k]
             if hasattr(ek, '__call__'):
-                result += ek(*z)
+                result.append(ek(*z))
             else:
-                result += ek
-        return result
+                result.append(ek)
+        return self.__class__(value=result, n=self.order, graph=[(1, '(*)'), self.graph])
     
     def get_taylor_coefficients(self, n_args: int=0, facts=[], **kwargs):
         '''Extract the Taylor coefficients from a given jet-evaluation (the output of self.eval).
