@@ -107,6 +107,7 @@ class jet:
         
     def set_order(self, n):
         self.order = n
+        self._factorials = factorials(self.order)
         
     def __len__(self):
         return self.order + 1
@@ -265,7 +266,7 @@ class jet:
         f = self.array(0)
         assert not check_zero(f), 'Division by zero at requested point.'
 
-        facts = factorials(self.order)
+        facts = self._factorials
         invf = [(-1)**n*facts[n]/f**(n + 1) for n in range(self.order + 1)]
         result = self.copy()
         result.set_array(invf)
@@ -315,17 +316,19 @@ class jet:
                 result.append(ek)
         return self.__class__(value=result, n=self.order, graph=[(1, '(*)'), self.graph])
     
-    def get_taylor_coefficients(self, n_args: int=0, facts=[], **kwargs):
+    def get_taylor_coefficients(self, n_args: int=0, **kwargs):
         '''Extract the Taylor coefficients from a given jet-evaluation (the output of self.eval).
         
-        Let m be the number of arguments of self.func. Then the k-th derivative of self.func has the form
-        (D^k self.func)(z1, ..., zm) = sum_{j1 + ... + jm = k} Df[j1, ... jm]/(j1! * ... * jm!) * z1**j1 * ... * zm**jm
+        Let m be the number of arguments of the involved poylnomials. 
+        Then the k-th derivative of f has the form
+        (D^k f)(z1, ..., zm) = sum_{j1 + ... + jm = k} Df[j1, ... jm]/(j1! * ... * jm!) * z1**j1 * ... * zm**jm
         = sum_{S(j1, ... jm), j1 + ... + jm = k} C(j1, ..., jm) * Df[j1, ..., jm] * z1**j1 * ... * zm**jm.
         with S(j1, ..., jm) an index denoting the set having the elements {j1, ..., jm},
         Df[j1, ..., jm] := \\partial^j1/\\partial_{z1}^j1 ... \\partial^jm/\\partial_{zm}^jm f (z1, ..., zm)
         and combinatorial factor
         C(j1, ..., jm) = (j1 + ... + jm)!/(j1! * ... * jm!) .
         
+        !!! Attention
         The current jet should have jetpoly entries in the k-th order, k > 0.
         
         Parameters
@@ -345,16 +348,27 @@ class jet:
             Dictionary which maps the tuples representing the indices and powers of the individual
             monomials to their coefficients, corresponding to the Taylor expansion of the given expression.
         '''
+        # Use the longer factorials list; this is required if nested derivatives of different orders are used.
+        facts = kwargs.get('facts', self._factorials)
+        if len(facts) < len(self._factorials):
+            facts = self._factorials
+        kwargs['facts'] = facts
+        
+        # Get the actual Taylor-coefficients
         tc = {}
-        # add the constant (if non-zero):
+        # Add constants; this needs to be done separately, because often it may happen that the first
+        # entry of a jet is just a float, so that these constants will be missed in the next loop.
         const = self[0]
         if not check_zero(const):
-            tc[(0,)*n_args] = const
-            
+            if not hasattr(const, 'get_taylor_coefficients'):
+                tc[(0,)*n_args] = const
+            else:
+                tc.update(const.get_taylor_coefficients(n_args=n_args, **kwargs))
+        
         for entry in self[1:]: # iteration over the derivatives of order >= 1.
-            if not isinstance(entry, jetpoly): # skip any non-polynomial entry.
+            if not hasattr(entry, 'get_taylor_coefficients'): # skip any non-polynomial entry.
                 continue
-            tc.update(entry.get_taylor_coefficients(n_args=n_args, facts=facts, **kwargs))
+            tc.update(entry.get_taylor_coefficients(n_args=n_args, **kwargs))
             # Since we loop over derivatives of a specific order, it is ensured that these Taylor coefficients are always different, 
             # so the above procedure does not overwrite existing keys.
         self.tc = tc

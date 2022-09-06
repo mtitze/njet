@@ -1,11 +1,45 @@
 import pytest
 
 from njet import derive, jet
-from njet.functions import sin, exp
+from njet.functions import sin, cos, exp
 
 import sympy
 from sympy import Symbol
 import numpy as np
+
+######################
+# Basic derivatives
+######################
+
+@pytest.mark.parametrize("point", (0, 0.32, 1.55, -1.268))
+def test_cos_sin(point, order=9, tol=1e-15):
+    dcos = derive(cos, order)
+    dsin = derive(sin, order)
+
+    tc_cos = dcos(point)
+    tc_sin = dsin(point)
+    
+    c = np.cos(point)
+    s = np.sin(point)
+    
+    for k in range(order):
+        if k%4 == 0:
+            c_expectation = c
+            s_expectation = s
+        elif k%4 == 1:
+            c_expectation = -s
+            s_expectation = c
+        elif k%4 == 2:
+            c_expectation = -c
+            s_expectation = -s
+        else:
+            c_expectation = s
+            s_expectation = -c
+        
+        if c_expectation != 0:
+            assert abs(tc_cos[(k,)] - c_expectation) < tol
+        if s_expectation != 0:
+            assert abs(tc_sin[(k,)] - s_expectation) < tol
 
 ######################
 # Chained expressions

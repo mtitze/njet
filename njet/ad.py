@@ -1,7 +1,7 @@
 from .functions import exp, log
 from .jet import jet as _jet
-from .jet import factorials, check_zero, jetpoly
-from .common import convert_indices
+from .jet import jetpoly
+from .common import check_zero, convert_indices
 
 class jet(_jet):
     '''
@@ -70,7 +70,6 @@ class derive:
         
     def set_order(self, order):
         self.order = order
-        self._factorials = factorials(self.order)
         
     def jet_input(self, *z):
         inp = []
@@ -118,7 +117,7 @@ class derive:
         '''
         # perform the computation, based on the input vector
         self._evaluation = self.eval(*z)
-        return self._evaluation.get_taylor_coefficients(n_args=self.n_args, facts=self._factorials, **kwargs) # also stored in self._evaluation._tc
+        return self._evaluation.get_taylor_coefficients(n_args=self.n_args, **kwargs) # also stored in self._evaluation._tc
     
     def build_tensor(self, k: int, **kwargs):
         '''

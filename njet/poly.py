@@ -185,14 +185,21 @@ class jetpoly:
         taylor_coeffs = {}
         for key, value in self.values.items(): # loop over the individual polynomials of the k-th derivative
             # key corresponds to a specific frozenset, i.e. some indices and powers of a specific monomial.
-            indices = [0]*n_args
+            
+            # Step 1: Construct the indices containing the powers of the variables at their respective positions.
+            # If there is no index with a power > 0, then 'indices' will not be changed. Also determine
+            # the multiplicity.
             multiplicity = 1
+            indices = [0]*n_args
             for index, power in key:
-                if power == 0: # the (k, 0)-entries correspond to the scalar 1 and will be ignored here. TODO: may need to improve this.
+                # index: the index of the variable; power: its respective power
+                if power == 0: # the (k, 0)-entries correspond to the scalar 1 and will be ignored here.
                     continue
                 indices[index] = power
                 if mult_prm or mult_drv:
                     multiplicity *= facts[power]
+                    
+            # Step 2: Update the Taylor-coefficients dictionary
             if not check_zero(value): # only add non-zero values
                 if mult_drv: # remove the factorials in the Taylor expansion, here related to the derivatives of the powers.
                     value *= multiplicity
