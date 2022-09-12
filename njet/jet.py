@@ -382,6 +382,7 @@ class jet:
         ----------
         k: int
             The order of the derivatives to extract.
+            
         tc: dict, optional
             The output of self.get_taylor_coefficients, containing the entries of the derivative. If nothing
             specified, the last evaluation (stored in self.tc) will be used.
@@ -391,6 +392,8 @@ class jet:
         dict
             The components of the k-th derivative of self.func.
         '''
+        if 'tc' in kwargs.keys():
+            self.tc = kwargs['tc']
         if not hasattr(self, 'tc'):
             self.tc = self.get_taylor_coefficients(**kwargs)
         return {j: self.tc[j] for j in self.tc.keys() if sum(j) == k}
