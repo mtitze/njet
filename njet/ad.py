@@ -124,8 +124,8 @@ class derive:
         Convert the components of the k-th derivative into the entries of a (self.n_args)**k tensor.
         See njet.jet.build_tensor for details.
         '''
-        assert k <= self.order
-        assert hasattr(self, '_evaluation'), 'Derivative(s) need to be evaluated first.'
+        assert k <= self.order, f'Order ({self.order}) insufficient for requested number ({k}) of derivatives.'
+        assert hasattr(self, '_evaluation'), 'Derivative(s) need to be evaluated first. Try passing a point.'
         return self._evaluation.build_tensor(k=k, **kwargs)
     
     def grad(self, *z, **kwargs):
