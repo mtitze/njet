@@ -2,7 +2,7 @@ Polynomials
 ===========
 
 
-The *jetpoly* class is representing a polynomial in several variables. 
+The *jetpoly* class represents a polynomial in several variables. 
 
 Example to generate two monomials ``p1 = (2 + i)*x0`` and ``p2 = -0.5*x1**2`` (where ``p1`` has
 complex coefficient):
@@ -42,8 +42,6 @@ will work:
   > 3-jet(0.21822962308086932, [(0.4293948777054664+0.2146974388527332j)*x0**1 + -0.48794872466530276*x1**2], [-0.05455740577021733*x1**4 + (-0.03168694127134222-0.0422492550284563j)*x0**2 + (-1.8557738645056285-0.9278869322528143j)*x0**1*x1**2], [(0.6446451181643271+0.859526824219103j)*x0**2*x1**2 + (-0.9767350275217077-0.48836751376085386j)*x0**1*x1**4 + (-0.020782712080944576-0.11430491644519516j)*x0**3 + 0.12198718116632569*x1**6])
 
 However, an expression of the form ``sin(j1p)`` will not work. The reason is that an elementary function applied on a class of type *jetpoly* is not defined.
-
-The class *jetpoly* can be invoked as follows:
 
 .. automodule:: njet.jet
     :members:
