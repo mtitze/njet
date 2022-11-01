@@ -117,8 +117,14 @@ class derive:
         '''
         # perform the computation, based on the input vector
         self._evaluation = self.eval(*z)
-        return self._evaluation.get_taylor_coefficients(n_args=self.n_args, **kwargs) # also stored in self._evaluation._tc
-    
+        if not hasattr(self._evaluation, 'get_taylor_coefficients'):
+            try:
+                return [self._evaluation[k].get_taylor_coefficients(n_args=self.n_args, **kwargs) for k in range(len(self._evaluation))]
+            except:
+                raise RuntimeError('Check the return structure of the input function.')
+        else:
+            return self._evaluation.get_taylor_coefficients(n_args=self.n_args, **kwargs) # also stored in self._evaluation._tc
+
     def build_tensor(self, k: int, **kwargs):
         '''
         Convert the components of the k-th derivative into the entries of a (self.n_args)**k tensor.
