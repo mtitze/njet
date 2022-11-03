@@ -14,22 +14,15 @@ def factorials(n: int):
         facts.append(k)
     return facts
 
-def falling_factorials(n: int, k: int):
-    result = 1
-    facts = [1]
-    for j in range(n, n - k, -1):
-        result *= j
-        facts.append(result)
-    return facts
-
 def n_over_ks(n: int):
-    facts = factorials(n//2)
     result = []
-    for nn in range(n + 1):
-        ffacts = falling_factorials(nn, nn//2)
-        first_half = [ffacts[k]//facts[k] for k in range(len(ffacts))]
-        second_half = first_half[::-1]
-        result.append(first_half + second_half[1 - nn%2:])
+    for nn in range(0, n + 1):
+        result.append([1])
+        product = 1
+        for i in range(1, nn//2 + 1):
+            product *= (nn + 1 - i)/i
+            result[-1].append(int(product))
+        result[-1] += result[-1][::-1][1 - nn%2:]
     return result
 
 def convert_indices(list_of_tuples):
