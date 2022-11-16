@@ -1,4 +1,4 @@
-from .common import check_zero, factorials, n_over_ks, convert_indices
+from .common import check_zero, factorials, nCr, convert_indices
 from .poly import jetpoly
 
 def sum_by_jetpoly(ls):
@@ -25,7 +25,7 @@ def general_leibniz_rule(f1, f2):
         List containing the values (f1*f2)^k for k = 0, ..., n - 1.
     '''
     nmax = len(f1) - 1 # len(f1): max number of summands
-    nok = n_over_ks(nmax)
+    nok = nCr(nmax)
     return [sum_by_jetpoly([nok[n][k]*f1[n-k]*f2[k] if isinstance(f1[n-k], jetpoly) else nok[n][k]*f2[k]*f1[n-k] for k in range(n + 1)]) for n in range(nmax + 1)]
 
 def faa_di_bruno(f, g):
@@ -77,7 +77,7 @@ def bell_polynomials(n: int, z):
     assert len(z) == n
     B = {}
     B[(0, 0)] = 1.0
-    nok = n_over_ks(n)
+    nok = nCr(n)
     for jn in range(n + 1):
         for jk in range(1, jn + 1):
             B[(jn, jk)] = sum_by_jetpoly([nok[jn - 1][m - 1]*B.get((jn - m, jk - 1), 0)*z[m - 1] for m in range(1, jn - jk + 2)])

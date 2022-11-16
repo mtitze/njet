@@ -13,17 +13,17 @@ def factorials(n: int):
         k *= j
         facts.append(k)
     return facts
-
-def n_over_ks(n: int):
-    result = []
-    for nn in range(0, n + 1):
-        result.append([1])
-        product = 1
-        for i in range(1, nn//2 + 1):
-            product *= (nn + 1 - i)/i
-            result[-1].append(int(product))
-        result[-1] += result[-1][::-1][1 - nn%2:]
-    return result
+    
+def _nCr(n, r=[]):
+    # Generator idea for n_over_k's,
+    # taken from https://stackoverflow.com/questions/24093387/pascals-triangle-for-python
+    for x in range(n + 1):
+        l = len(r)
+        r = [1 if i == 0 or i == l else r[i - 1] + r[i] for i in range(l + 1)]
+        yield r
+        
+def nCr(n: int):
+    return list(_nCr(n))
 
 def convert_indices(list_of_tuples):
     '''
