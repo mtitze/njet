@@ -11,7 +11,7 @@ Create an n-jet:
 
 .. code-block:: python
 
-    j1 = jet([3, 1], n=5)
+    j1 = jet(3, 1, n=5)
     j1
   > 5-jet(3, 1, 0, 0, 0, 0)
  
@@ -45,7 +45,7 @@ To better understand what's going on, we can use SymPy variables:
 .. code-block:: python
 
    from sympy import Symbol
-   j3 = jet([Symbol('x'), 1], n=5)
+   j3 = jet(Symbol('x'), 1, n=5)
    j3**2
  > 5-jet(x**2, 2*x, 2, 0, 0, 0)
  
@@ -54,7 +54,7 @@ to pay attention:
 
 .. code-block:: python
 
-   j4 = jet([Symbol('y'), 1], n=5)
+   j4 = jet(Symbol('y'), 1, n=5)
    j4 - j3
  > 5-jet(-x + y, 0, 0, 0, 0, 0)
    
@@ -63,8 +63,8 @@ This will just subtract the first orders and thus we end up with a basic scalar,
 
 .. code-block:: python
    
-   j3 = jet([Symbol('x'), Symbol('dx')], n=5)
-   j4 = jet([Symbol('y'), Symbol('dy')], n=5)
+   j3 = jet(Symbol('x'), Symbol('dx'), n=5)
+   j4 = jet(Symbol('y'), Symbol('dy'), n=5)
    j4 - j3
  > 5-jet(-x + y, -dx + dy, 0, 0, 0, 0)
 
@@ -81,8 +81,8 @@ In particular, we can get the higher-order derivatives at specific points by usi
 .. code-block:: python
 
    point = [2, 3]
-   j3a = jet([point[0], Symbol('dx')], n=5)
-   j4a = jet([point[1], Symbol('dy')], n=5)
+   j3a = jet(point[0], Symbol('dx'), n=5)
+   j4a = jet(point[1], Symbol('dy'), n=5)
    j3a*j4a**2
  > 5-jet(18, 9*dx + 12*dy, 12*dx*dy + 4*dy**2, 6*dx*dy**2, 0, 0)
 
@@ -95,7 +95,7 @@ There is also NumPy support:
 .. code-block:: python
 
     import numpy as np
-    jnp = jet([np.array([2.1, 3.47]), np.array([4.3, -1.2])], n=5)
+    jnp = jet(np.array([2.1, 3.47]), np.array([4.3, -1.2]), n=5)
     jnp
   > 5-jet([2.1 3.47], [ 4.3 -1.2], 0, 0, 0, 0)
     jnp**2

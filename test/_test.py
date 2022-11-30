@@ -94,9 +94,9 @@ def test_composition_1d(x0, tol=5e-12):
     fg3 = lambda x: -60*x**-6 - 12*x**-4
      
     y0 = g(x0)
-    fjet = jet([f(y0), f1(y0), f2(y0), f3(y0)])
-    gjet = jet([g(x0), g1(x0), g2(x0), g3(x0)])
-    fgjet = jet([fg(x0), fg1(x0), fg2(x0), fg3(x0)])
+    fjet = jet(f(y0), f1(y0), f2(y0), f3(y0))
+    gjet = jet(g(x0), g1(x0), g2(x0), g3(x0))
+    fgjet = jet(fg(x0), fg1(x0), fg2(x0), fg3(x0))
     diff = fgjet - fjet@gjet
     
     assert all([abs(e) < tol for e in diff.get_array()])

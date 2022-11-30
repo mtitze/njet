@@ -74,7 +74,7 @@ class derive:
     def jet_input(self, *z):
         inp = []
         for k in range(self.n_args):
-            jk = jet([z[k], jetpoly(1, index=k, power=1)], n=self.order)
+            jk = jet(z[k], jetpoly(1, index=k, power=1), n=self.order)
             inp.append(jk)
         return inp
         
