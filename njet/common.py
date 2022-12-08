@@ -27,8 +27,8 @@ def nCr(n: int):
 
 def convert_indices(list_of_tuples):
     '''
-    Convert a list of tuples denoting the indices in a multivariate Taylor expansion into a list of indices of
-    the corresponding multilinear map.
+    Convert a list of tuples denoting the indices in a multivariate Taylor expansion 
+    into a list of indices of the corresponding multilinear map.
 
     Parameters
     ----------

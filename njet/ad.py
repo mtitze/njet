@@ -76,6 +76,7 @@ class derive:
         for k in range(self.n_args):
             jk = jet(z[k], jetpoly(1, index=k, power=1), n=self.order)
             inp.append(jk)
+        self._input = inp
         return inp
         
     def eval(self, *z, **kwargs):

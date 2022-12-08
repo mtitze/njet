@@ -309,7 +309,7 @@ class jet:
         return self.__class__(*result, n=self.order, graph=[(1, '(*)'), self.graph])
     
     def get_taylor_coefficients(self, n_args: int=0, **kwargs):
-        '''Extract the Taylor coefficients from a given jet-evaluation (the output of self.eval).
+        '''Extract the Taylor coefficients from a given jet-evaluation (the output of njet.ad.derive.eval).
         
         Let m be the number of arguments of the involved poylnomials. 
         Then the k-th derivative of f has the form
@@ -348,7 +348,7 @@ class jet:
         
         # Get the actual Taylor-coefficients
         tc = {}
-        # Add constants; this needs to be done separately, because often it may happen that the first
+        # Add constants to tc; this needs to be done separately, because often it may happen that the first
         # entry of a jet is just a float, so that these constants will be missed in the next loop.
         const = self[0]
         if not check_zero(const):
