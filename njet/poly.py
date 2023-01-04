@@ -181,7 +181,7 @@ class jetpoly:
             n_args = max([n_args, max(indices_set) + 1])
             if len(facts) == 0:
                 facts = factorials(order)
-        
+                
         taylor_coeffs = {}
         for key, value in self.values.items(): # loop over the individual polynomials of the k-th derivative
             # key corresponds to a specific frozenset, i.e. some indices and powers of a specific monomial.
@@ -206,7 +206,7 @@ class jetpoly:
                 if mult_prm:
                     value /= facts[sum(indices)] # the denominator ensures to remove multiplicities emerging from permutations of derivatives.
 
-                taylor_coeffs[tuple(indices)] = value
+                taylor_coeffs[tuple(indices)] = taylor_coeffs.get(tuple(indices), 0) + value
                 
         return taylor_coeffs
         
