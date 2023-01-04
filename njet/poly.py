@@ -206,7 +206,8 @@ class jetpoly:
                 if mult_prm:
                     value /= facts[sum(indices)] # the denominator ensures to remove multiplicities emerging from permutations of derivatives.
 
-                taylor_coeffs[tuple(indices)] = taylor_coeffs.get(tuple(indices), 0) + value
+                tpl = tuple(indices)
+                taylor_coeffs[tpl] = taylor_coeffs.get(tpl, 0) + value
                 
         return taylor_coeffs
         
