@@ -27,7 +27,7 @@ from njet.functions import exp
 f = lambda x, y, z: exp(-0.23*x**2 - 0.33*x*y - 0.11*z**2)
 ```
 
-Generate a class to handle the derivatives of the given function (here up to order 3)
+Generate a class to handle the derivatives of the given function (in this example up to order 3)
 ```python
 from njet import derive
 df = derive(f, order=3)
@@ -89,7 +89,8 @@ https://njet.readthedocs.io/en/latest/index.html
 
 ## License
 
-This file is part of njet.
+njet: Automatic Differentiation Library
+Copyright (C) 2021, 2022, 2023 by Malte Titze
 
 njet is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
