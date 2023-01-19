@@ -90,6 +90,7 @@ https://njet.readthedocs.io/en/latest/index.html
 ## License
 
 njet: Automatic Differentiation Library
+
 Copyright (C) 2021, 2022, 2023 by Malte Titze
 
 njet is free software: you can redistribute it and/or modify
