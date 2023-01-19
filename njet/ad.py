@@ -116,15 +116,18 @@ class derive:
         dict
             Dictionary of compontens of the multivariate Taylor expansion of the given function self.func
         '''
+        # These two keywords are reserved for the get_taylor_coefficients routine and will be removed from the input:
+        mult_prm = kwargs.pop('mult_prm', True)
+        mult_drv = kwargs.pop('mult_drv', True)
         # perform the computation, based on the input vector
-        self._evaluation = self.eval(*z)
+        self._evaluation = self.eval(*z, **kwargs)
         if not hasattr(self._evaluation, 'get_taylor_coefficients'):
             try:
-                return [self._evaluation[k].get_taylor_coefficients(n_args=self.n_args, **kwargs) for k in range(len(self._evaluation))]
+                return [self._evaluation[k].get_taylor_coefficients(n_args=self.n_args, mult_prm=mult_prm, mult_drv=mult_drv) for k in range(len(self._evaluation))]
             except:
                 raise RuntimeError('Check the return structure of the input function.')
         else:
-            return self._evaluation.get_taylor_coefficients(n_args=self.n_args, **kwargs) # also stored in self._evaluation._tc
+            return self._evaluation.get_taylor_coefficients(n_args=self.n_args, mult_prm=mult_prm, mult_drv=mult_drv) # also stored in self._evaluation._tc
 
     def build_tensor(self, k: int, **kwargs):
         '''
