@@ -93,7 +93,11 @@ class jet:
     
     def set_array(self, *values, **kwargs):
         omax = len(values) - 1
-        self.array = lambda k: values[k] if k <= omax else 0
+        if omax > 0:
+            zero = values[0]*0
+        else:
+            zero = 0
+        self.array = lambda k: values[k] if k <= omax else zero
         self.set_order(n=kwargs.get('n', omax))
             
     def set_order(self, n):
@@ -109,17 +113,15 @@ class jet:
     
     def __getitem__(self, n):
         # called whenver a jet is subscribed in the form jet[index].
-        if isinstance(n, slice):
-            start, stop, stride = n.indices(len(self))
-            return [self.array(j) for j in range(start, stop, stride)]
-        else:
-            return self.array(n)
+        result = self.__class__(n=self.order, graph=[(1, f'[{n}]'), self.graph])
+        result.array = lambda k: self.array(k)[n]
+        return result
         
     def __setitem__(self, index, value):
         current_array = self.get_array()
         current_array[index] = value
         self.set_array(*current_array)
-        
+                
     def __str__(self):
         outstr = ''
         for e in self.get_array():
@@ -270,11 +272,11 @@ class jet:
             if self.order != other.order:
                 return False
             else:
-                return all([check_zero(self[k] - other[k]) for k in range(self.order + 1)])
+                return all([check_zero(self.array(k) - other[k]) for k in range(self.order + 1)])
         elif self.order > 1:
-            return all([check_zero(self[k] - other) for k in range(self.order + 1)])
+            return all([check_zero(self.array(k) - other) for k in range(self.order + 1)])
         else:
-            return check_zero(self[0] - other)
+            return check_zero(self.array(0) - other)
             
     def convert(self, other, n=0):
         '''
@@ -349,14 +351,15 @@ class jet:
         tc = {}
         # Add constants to tc; this needs to be done separately, because often it may happen that the first
         # entry of a jet is just a float, so that these constants will be missed in the next loop.
-        const = self[0]
+        self_array = self.get_array()
+        const = self_array[0]
         if not check_zero(const):
             if not hasattr(const, 'get_taylor_coefficients'):
                 tc[(0,)*n_args] = const
             else:
                 tc.update(const.get_taylor_coefficients(n_args=n_args, **kwargs))
         
-        for entry in self[1:]: # iteration over the derivatives of order >= 1.
+        for entry in self_array[1:]: # iteration over the derivatives of order >= 1.
             if not hasattr(entry, 'get_taylor_coefficients'): # skip any non-polynomial entry.
                 continue
             tc.update(entry.get_taylor_coefficients(n_args=n_args, **kwargs))

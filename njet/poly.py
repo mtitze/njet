@@ -120,6 +120,9 @@ class jetpoly:
         else:
             return self.values == other.values
         
+    def __getitem__(self, n):
+        return self.__class__(values={k: v[n] for k, v in self.values.items() if not check_zero(v[n])})
+        
     def conjugate(self):
         # Consider the following example:
         # Let f = u + 1j*v be a complex function in which u and v are real functions from
@@ -204,7 +207,7 @@ class jetpoly:
                 if mult_drv: # remove the factorials in the Taylor expansion, here related to the derivatives of the powers.
                     value *= multiplicity
                 if mult_prm:
-                    value /= facts[sum(indices)] # the denominator ensures to remove multiplicities emerging from permutations of derivatives.
+                    value = value/facts[sum(indices)] # the denominator ensures to remove multiplicities emerging from permutations of derivatives.
 
                 tpl = tuple(indices)
                 taylor_coeffs[tpl] = taylor_coeffs.get(tpl, 0) + value
@@ -256,4 +259,5 @@ class jetpoly:
             return ps, args
         else:
             return ps
+        
         

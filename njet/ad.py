@@ -46,7 +46,7 @@ def getNargs(f, **kwargs):
 
 def get_taylor_coefficients(*evaluation, **kwargs):
     '''
-    Return the Taylor coefficients of a evaluation.
+    Return the Taylor coefficients of a jet evaluation.
     
     Parameters
     ----------
@@ -88,7 +88,7 @@ class derive:
     def jet_input(self, *z):
         inp = []
         for k in range(self.n_args):
-            jk = jet(z[k], jetpoly(1, index=k, power=1), n=self.order)
+            jk = jet(z[k], jetpoly(z[k]*0 + 1, index=k, power=1), n=self.order) # add a zero here to produce the same shape as z[k]
             inp.append(jk)
         self._input = inp
         return inp

@@ -88,7 +88,7 @@ def jetfunc(func):
             # The next lines are always executed,
             # because the built-in functions need to be applied to the
             # 0-th component of the jet:
-            x0 = x[0]
+            x0 = x.array(0)
             code_x0 = get_package_name(x0)
             f = get_function(code_x0, name)
             fx0 = f(x0)
