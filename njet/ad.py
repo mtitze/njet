@@ -98,7 +98,21 @@ class derive:
             Jet containing the value of the function in its zero-th entry and the
             jet-polynomials in the higher-order entries.
         '''
-        return self.func(*self.jet_input(*z), **kwargs)
+        self._evaluation = self.func(*self.jet_input(*z), **kwargs)
+        return self._evaluation
+    
+    def get_taylor_coefficients(self, **kwargs):
+        '''
+        Return the Taylor coefficients of the current point evaluation.
+        '''
+        assert hasattr(self, '_evaluation'), 'Point evaluation required first.'
+        if not hasattr(self._evaluation, 'get_taylor_coefficients'):
+            try:
+                return [self._evaluation[k].get_taylor_coefficients(n_args=self.n_args, **kwargs) for k in range(len(self._evaluation))]
+            except:
+                raise RuntimeError('Check the return structure of the input function.')
+        else:
+            return self._evaluation.get_taylor_coefficients(n_args=self.n_args, **kwargs) # also stored in self._evaluation._tc
         
     def __call__(self, *z, **kwargs):
         '''Evaluate the derivatives of a (jet-)function at a specific point up to self.order.
@@ -120,15 +134,9 @@ class derive:
         mult_prm = kwargs.pop('mult_prm', True)
         mult_drv = kwargs.pop('mult_drv', True)
         # perform the computation, based on the input vector
-        self._evaluation = self.eval(*z, **kwargs)
-        if not hasattr(self._evaluation, 'get_taylor_coefficients'):
-            try:
-                return [self._evaluation[k].get_taylor_coefficients(n_args=self.n_args, mult_prm=mult_prm, mult_drv=mult_drv) for k in range(len(self._evaluation))]
-            except:
-                raise RuntimeError('Check the return structure of the input function.')
-        else:
-            return self._evaluation.get_taylor_coefficients(n_args=self.n_args, mult_prm=mult_prm, mult_drv=mult_drv) # also stored in self._evaluation._tc
-
+        _ = self.eval(*z, **kwargs)
+        return self.get_taylor_coefficients(mult_prm=mult_prm, mult_drv=mult_drv)
+        
     def build_tensor(self, k: int, **kwargs):
         '''
         Convert the components of the k-th derivative into the entries of a (self.n_args)**k tensor.
