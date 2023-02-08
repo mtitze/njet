@@ -80,7 +80,6 @@ def bell_polynomials(*z):
         for jk in range(1, jn + 1):
             B[(jn, jk)] = sum_by_jetpoly([nok[jn - 1][m - 1]*B.get((jn - m, jk - 1), 0)*z[m - 1] for m in range(1, jn - jk + 2)])
     return B
-
     
 class jet:
     def __init__(self, *values, **kwargs):
@@ -444,4 +443,3 @@ class jet:
             Dictionary containing the components of the Hessian.
         '''
         return self.build_tensor(k=2, **kwargs)
-    
