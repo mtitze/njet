@@ -27,18 +27,26 @@ class jetpoly:
     '''
     def __init__(self, value=0, index: int=0, power: int=0, **kwargs):
         self.__array_priority__ = 1000 # prevent numpy __mul__ and force self.__rmul__ instead if multiplication from left with a numpy object
-        self.values = kwargs.get('values', {frozenset([(index, power)]): value})
+        if 'values' in kwargs.keys():
+            self.values = kwargs['values']
+        elif not check_zero(value):
+            self.values = {frozenset([(index, power)]): value}
+        else:
+            self.values = {}
         
     def __str__(self):
-        outstr = '['
-        for key, value in self.values.items():
-            fac = ''
-            for e in key:
-                if e[1] == 0: # do not show z**0
-                    continue
-                fac += f'*x{e[0]}**{e[1]}'
-            outstr += f'{value}]{fac} + \n ['
-        return outstr[:-6]
+        if len(self.values) == 0:
+            return '0'
+        else:
+            outstr = '['
+            for key, value in self.values.items():
+                fac = ''
+                for e in key:
+                    if e[1] == 0: # do not show z**0
+                        continue
+                    fac += f'*x{e[0]}**{e[1]}'
+                outstr += f'{value}]{fac} + \n ['
+            return outstr[:-6]
     
     def _repr_html_(self):
         outstr = self.__str__().replace('\n', '<br>')
