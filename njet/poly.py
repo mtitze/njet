@@ -5,7 +5,7 @@ class jetpoly:
     Implementation of a polynomial with arbitrary number of variables.
     
     The information of the coefficients is stored internally as dictionary in 
-    the 'values' field.
+    the 'terms' field.
 
     A polynomial p can be initiated with a value v and (optional) its index (describing
     the variable) and power n so that overall p = v*x_i**n. A general polynomial in several
@@ -14,7 +14,7 @@ class jetpoly:
     
     Example
     -------    
-    | self.values = {
+    | self.terms = {
     | frozenset({(0, 1)}): 11,
     | frozenset({(0, 4), (1, 22), (13, 1)}): 89,
     | frozenset({(4, 9), (7, 2), (12, 33)}): -0.22
@@ -27,19 +27,28 @@ class jetpoly:
     '''
     def __init__(self, value=0, index: int=0, power: int=0, **kwargs):
         self.__array_priority__ = 1000 # prevent numpy __mul__ and force self.__rmul__ instead if multiplication from left with a numpy object
-        if 'values' in kwargs.keys():
-            self.values = kwargs['values']
+        if 'terms' in kwargs.keys():
+            self.terms = kwargs['terms']
         elif not check_zero(value):
-            self.values = {frozenset([(index, power)]): value}
+            self.terms = {frozenset([(index, power)]): value}
         else:
-            self.values = {}
+            self.terms = {}
+            
+    def truncate(self, max_power):
+        # drop all entries beyond a specific power
+        new_terms = {}
+        for k, v in self.terms.items():
+            max_power_k = sum([e[1] for e in k])
+            if max_power_k <= max_power:
+                new_terms[k] = v            
+        return self.__class__(terms=new_terms)
         
     def __str__(self):
-        if len(self.values) == 0:
+        if len(self.terms) == 0:
             return '0'
         else:
             outstr = '['
-            for key, value in self.values.items():
+            for key, value in self.terms.items():
                 fac = ''
                 for e in key:
                     if e[1] == 0: # do not show z**0
@@ -55,26 +64,26 @@ class jetpoly:
     def __add__(self, other):
         if not isinstance(self, type(other)):
             other = self.__class__(other)
-        new_values = {}
-        for k in set(self.values).union(set(other.values)):
-            new_value = self.values.get(k, 0) + other.values.get(k, 0)
-            if check_zero(new_value): # do not store 0-values; x may be float or numpy array etc.
+        new_terms = {}
+        for k in set(self.terms).union(set(other.terms)):
+            new_value = self.terms.get(k, 0) + other.terms.get(k, 0)
+            if check_zero(new_value): # do not store 0-terms; x may be float or numpy array etc.
                 continue
-            new_values[k] = new_value
-        if len(new_values) == 0:
+            new_terms[k] = new_value
+        if len(new_terms) == 0:
             return self.__class__(0)
         else:
-            return self.__class__(values=new_values)
+            return self.__class__(terms=new_terms)
     
     def __radd__(self, other):
         other = self.__class__(other)
         return other + self
     
     def __neg__(self):
-        new_values = {}
-        for key, value in self.values.items():
-            new_values[key] = -value
-        return self.__class__(values=new_values)
+        new_terms = {}
+        for key, value in self.terms.items():
+            new_terms[key] = -value
+        return self.__class__(terms=new_terms)
     
     def __sub__(self, other):
         return self + -other
@@ -87,9 +96,9 @@ class jetpoly:
         if not isinstance(self, type(other)):
             other = self.__class__(other)
         pol_prod = {}
-        for aj, value1 in self.values.items():
+        for aj, value1 in self.terms.items():
             e1 = dict(aj) # e.g. e1 = {0: 0, 1: 5, 2: 3}
-            for bk, value2 in other.values.items():
+            for bk, value2 in other.terms.items():
                 value_prod = value1*value2
                 e2 = dict(bk) # e.g. e2 = {0: 0, 1: 0, 2: 1}
                 e_prod = frozenset([(k, e1.get(k, 0) + e2.get(k, 0)) for k in set(e1).union(set(e2))]) # e.g. e_prod = frozenset([(0, 0), (1, 5), (2, 4)])
@@ -99,7 +108,7 @@ class jetpoly:
         if len(pol_prod) == 0: # in this case zero(s) are produced
             return self.__class__(0)
         else:
-            return self.__class__(values=pol_prod)
+            return self.__class__(terms=pol_prod)
 
     def __rmul__(self, other):
         other = self.__class__(other)
@@ -107,7 +116,7 @@ class jetpoly:
     
     def __truediv__(self, other):
         assert not check_zero(other)
-        return self.__class__(values={k: v/other for k, v in self.values.items()})
+        return self.__class__(terms={k: v/other for k, v in self.terms.items()})
     
     def __pow__(self, other):
         assert type(other) == int
@@ -124,12 +133,12 @@ class jetpoly:
         
     def __eq__(self, other):
         if not isinstance(self, type(other)):
-            return self.values == self.__class__(other).values
+            return self.terms == self.__class__(other).terms
         else:
-            return self.values == other.values
+            return self.terms == other.terms
         
     def __getitem__(self, n):
-        return self.__class__(values={k: v[n] for k, v in self.values.items() if not check_zero(v[n])})
+        return self.__class__(terms={k: v[n] for k, v in self.terms.items() if not check_zero(v[n])})
         
     def conjugate(self):
         # Consider the following example:
@@ -148,10 +157,10 @@ class jetpoly:
         # However, this requires that the keys (related to the variables) are prepared in advance accordingly:
         # Every variable needs his complex-conjugate partner, and in the original expression complex conjugation
         # needs to be replaced by this partner variable.
-        new_values = {}
-        for key, value in self.values.items():
-            new_values[key] = value.conjugate()
-        return self.__class__(values=new_values)
+        new_terms = {}
+        for key, value in self.terms.items():
+            new_terms[key] = value.conjugate()
+        return self.__class__(terms=new_terms)
     
     def real(self):
         return (self + self.conjugate())/2
@@ -194,7 +203,7 @@ class jetpoly:
                 facts = factorials(order)
                 
         taylor_coeffs = {}
-        for key, value in self.values.items(): # loop over the individual polynomials of the k-th derivative
+        for key, value in self.terms.items(): # loop over the individual polynomials of the k-th derivative
             # key corresponds to a specific frozenset, i.e. some indices and powers of a specific monomial.
             
             # Step 1: Construct the indices containing the powers of the variables at their respective positions.
@@ -231,7 +240,7 @@ class jetpoly:
         on "x4" has to be provided with at least 4 parameters.
         '''
         result = 0
-        for fs, v in self.values.items():
+        for fs, v in self.terms.items():
             f = 1
             for index, power in fs:
                 f *= z[index]**power
@@ -257,7 +266,7 @@ class jetpoly:
         '''
         ps = 0
         args = set()
-        for monomial_basis in self.values.keys():
+        for monomial_basis in self.terms.keys():
             monomial_power = 0
             for index, power in monomial_basis:
                 monomial_power += power

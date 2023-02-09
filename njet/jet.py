@@ -221,6 +221,16 @@ class jet:
         result.array = self.array
         return result
     
+    def truncate(self, max_power):
+        result = self.__class__(n=self.order, graph=self.graph)
+        def result_array(n):
+            try:
+                return self.array(n).truncate(max_power)
+            except:
+                return self.array(n)
+        result.array = result_array
+        return result
+    
     def derive(self, **kwargs):
         '''
         Return the derivative of this jet, determined by shifting its array to the left by 1.
