@@ -44,17 +44,21 @@ def getNargs(f, **kwargs):
     assert n_args > 0, error_msg
     return n_args
 
-def get_taylor_coefficients(*evaluation, **kwargs):
+def get_taylor_coefficients(*evaluation, output_format=0, **kwargs):
     '''
     Return the Taylor coefficients of a jet evaluation.
     
     Parameters
     ----------
+    output_format: int, optional
+        If 0 and the output would be a list of length 1, return the entry 
+        of this list instead. If != 0, disable this behavior.
+    
     **kwargs
         Parameters passed to njet.jet.get_taylor_coefficients routine.
     '''
     out = (*[ev.get_taylor_coefficients(**kwargs) for ev in evaluation],) # also stored in ev._tc
-    if len(out) == 1:
+    if len(out) == 1 and output_format == 0:
         out = out[0]
     return out
 

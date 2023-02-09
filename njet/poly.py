@@ -1,3 +1,4 @@
+import warnings
 from .common import check_zero, factorials
 
 class jetpoly:
@@ -198,7 +199,12 @@ class jetpoly:
         if n_args == 0 or len(facts) == 0:
             # determine the number of arguments from the maximal index of the polynomial.
             order, indices_set = self.get_order(return_indices=True)
-            n_args = max([n_args, max(indices_set) + 1])
+            try:
+                n_args = max([n_args, max(indices_set) + 1])
+            except:
+                # in this case indices_set was empty, so the polynomial power is 0
+                warnings.warn("'n_args' parameter recommended.")
+                return {}
             if len(facts) == 0:
                 facts = factorials(order)
                 
@@ -262,7 +268,7 @@ class jetpoly:
             The order.
             
         set
-            A set of indices.
+            A set of indices as described above.
         '''
         ps = 0
         args = set()

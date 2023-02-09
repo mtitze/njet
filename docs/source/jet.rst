@@ -26,7 +26,7 @@ corresponds to a variable, while a jet of the form
     j2
   > 5-jet(3, 0, 0, 0, 0, 0)
  
-corresponds to the scalar 3. To get the k-th entry of ``j2``, type ``j2[k]``. 
+corresponds to the scalar 3. To get the k-th entry of ``j2``, type ``j2.array(k)``. 
 A jet is defined by its order and its internal array function. If required, one can
 change both of these properties on a specific jet. In our example the array function 
 of the jet ``j2`` can be set either directly by redefining ``j2.array``, 

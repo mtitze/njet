@@ -30,7 +30,7 @@ def general_leibniz_rule(f1, f2):
 
 def faa_di_bruno(f, g):
     '''
-    Consider the composition f o g of two functions and for h in [f, g] denote by h^k its k-th derivative. Then
+    Consider the composition f o g of two functions and for h in {f, g} denote by h^k its k-th derivative. Then
     (f o g)^1 = (f^1 o g) g^1
     (f o g)^2 = (f^2 o g) (g^1)**2 + (f^1 o g) g^2
     (f o g)^3 = ... and so on.
