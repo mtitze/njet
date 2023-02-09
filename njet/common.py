@@ -2,7 +2,10 @@ def check_zero(value):
     # check if a value is zero; value may be an iterable
     check = value == 0
     if hasattr(check, '__iter__'):
-        return all(check)
+        try:
+            return check.all()
+        except:
+            return all(check)
     else:
         return check
     
