@@ -58,7 +58,7 @@ def get_function(code: str, name: str):
     else:
         return numpy_dict[name] # fall-back to numpy as default
     
-def get_package_name(x):
+def get_package_name(*x):
     '''
     Routine intended to get the package name of a specific object.
     
@@ -72,7 +72,7 @@ def get_package_name(x):
     str
         A string denoting the code to be used on the object. 
     '''
-    return str(x.__class__.__mro__[0].__module__).split('.')[0]
+    return str(x[0].__class__.__mro__[0].__module__).split('.')[0]
     
 def jetfunc(func):
     '''

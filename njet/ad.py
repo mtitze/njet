@@ -20,7 +20,7 @@ class jet(_jet):
             result.graph = [(2, '**'), self.graph, other.graph]
         return result
     
-def getNargs(f, **kwargs):
+def getNargs(f):
     '''
     Determine the number of arguments of a function. Raise an error if they can not be determined.
     
@@ -35,16 +35,14 @@ def getNargs(f, **kwargs):
         The number of arguments of the given function.
     '''
     error_msg = 'The number of function arguments could not be determined. Try passing n_args parameter.'
-    n_args = kwargs.get('n_args', 0)
-    if n_args == 0:
-        try:
-            n_args = f.__code__.co_argcount
-        except:
-            raise RuntimeError(error_msg)
+    try:
+        n_args = f.__code__.co_argcount
+    except:
+        raise RuntimeError(error_msg)
     assert n_args > 0, error_msg
     return n_args
 
-def get_taylor_coefficients(*evaluation, output_format=0, **kwargs):
+def get_taylor_coefficients(evaluation, output_format=0, **kwargs):
     '''
     Return the Taylor coefficients of a jet evaluation.
     
@@ -57,10 +55,24 @@ def get_taylor_coefficients(*evaluation, output_format=0, **kwargs):
     **kwargs
         Parameters passed to njet.jet.get_taylor_coefficients routine.
     '''
-    out = (*[ev.get_taylor_coefficients(**kwargs) for ev in evaluation],) # also stored in ev._tc
-    if len(out) == 1 and output_format == 0:
-        out = out[0]
+    if isinstance(evaluation, jet):
+        out = evaluation.get_taylor_coefficients(**kwargs)
+        if output_format != 0:
+            out = [out]
+    else:
+        out = (*[ev.get_taylor_coefficients(**kwargs) for ev in evaluation],) # also stored in ev._tc
+        if len(out) == 1 and output_format == 0:
+            out = out[0]
     return out
+
+def truncate(*func, truncate=float('inf')):
+    "Modify a given chain of functions to truncate the output between two calls -- and at the end."
+    def tchain(*z, **kwargs):
+        for f in func:
+            z = f(*z, **kwargs)
+            z = (*[ev.truncate(truncate) for ev in z],)
+        return z
+    return tchain
 
 class derive:
     '''
@@ -69,26 +81,37 @@ class derive:
     
     Parameters
     ----------
-    func: callable
-        The function to be derived. Must be expressed in terms of polynomials and functions supported by njet.functions.
+    func: callable(s)
+        The function(s) to be derived. Must be expressed in terms of functions (e.g. polynomials) supported by njet.functions. Note that the first function in the given chain will be executed first.
 
     order: int, optional
         The order up to which the function should be derived.
 
     n_args: int, optional
         The number of arguments on which func depends on; passed to getNargs routine.
+        
+    truncate: int, optional
+        If given, truncate the jets after each iteration through the given functions.
     '''
-    def __init__(self, func, order: int=1, **kwargs):
-        self.func = func
-        self.n_args = getNargs(func, **kwargs)
-        #self.func, self.n_args = standardize_function(func, n_args=n_args)
-        # Now in all cases self.func takes only a single subscriptable object as argument.
-        self.set_order(order)
-        self._Df = {}
-        
-    def set_order(self, order):
+    def __init__(self, func, order: int=1, n_args: int=0, truncate=float('inf')):
         self.order = order
+        if hasattr(func, '__iter__'):
+            if truncate < float('inf'):
+                self.func = truncate(*func, truncate=truncate)
+            else:
+                def fchain(*z, **ckwargs):
+                    for f in func:
+                        z = f(*z, **ckwargs)
+                    return z
+                self.func = fchain
+        else:
+            self.func = func
         
+        if n_args == 0:
+            self.n_args = getNargs(self.func)
+        else:
+            self.n_args = n_args
+                
     def jet_input(self, *z):
         inp = []
         for k in range(self.n_args):
