@@ -382,8 +382,16 @@ def test_projection6():
 # Differentiation of vector-valued functions
 ########################
 
-
-
+def test_2d_function():
+    f2d = lambda x, y: [x**2 + y, x*y + y**3]
+    df2d = derive(f2d, n_args=2, order=5)
+    x0, y0 = 4, 9
+    out2d = df2d(x0, y0)
+    ref2d = ({(0, 0): 25.0, (1, 0): 8.0, (0, 1): 1.0, (2, 0): 2.0},
+             {(0, 0): 765.0, (1, 0): 9.0, (0, 1): 247.0, (1, 1): 1.0, (0, 2): 54.0, (0, 3): 6.0})
+    for j in range(2):
+        for k in out2d[j].keys():
+            assert out2d[j][k] == ref2d[j][k]
 
 
 ########################
