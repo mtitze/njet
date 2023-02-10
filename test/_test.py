@@ -299,6 +299,27 @@ def test_nd3():
         
     assert not nested_test3_failed
     
+def test_projection1():
+    f1 = lambda *z: z[0] + z[1]**3
+    df1 = derive(f1, n_args=2, order=3)
+    x = Symbol('x')
+    y = Symbol('y')
+    out1 = df1(x, 2*y)
+    out1_ref = {(0, 0): x + 8*y**3, (1, 0): 1, (0, 1): 12*y**2, (0, 2): 12*y, (0, 3): 6}
+    assert out1.keys() == out1_ref.keys()
+    for k, v in out1.items():
+        assert out1_ref[k] - v == 0
+
+def test_projection2():
+    f1 = lambda *z: z[0] + z[1]**3
+    df1 = derive(f1, n_args=2, order=3)
+    out2 = df1(np.array([2, 1]), np.array([2, 8]))
+    out2_ref = {(0, 0): np.array([10., 513.]), (1, 0): np.array([1.0, 1.0]), (0, 1): np.array([12., 192.]), 
+                (0, 2): np.array([12., 48.]), (0, 3): np.array([6., 6.])}
+    for k, v in out2.items():
+        assert (out2_ref[k] == v).all()
+        assert v.shape == out2_ref[k].shape
+    
 
 ######################## 
 # Performance

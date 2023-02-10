@@ -1,4 +1,4 @@
-from .functions import exp, log
+from .functions import exp, log, zero
 from .jet import jet as _jet
 from .jet import jetpoly
 from .common import check_zero, convert_indices
@@ -20,13 +20,13 @@ class jet(_jet):
             result.graph = [(2, '**'), self.graph, other.graph]
         return result
     
-def getNargs(f):
+def getNargs(func):
     '''
     Determine the number of arguments of a function. Raise an error if they can not be determined.
     
     Parameters
     ----------
-    f: callable
+    func: callable
         The function to be examined.
         
     Returns
@@ -34,9 +34,10 @@ def getNargs(f):
     int
         The number of arguments of the given function.
     '''
-    error_msg = 'The number of function arguments could not be determined. Try passing n_args parameter.'
+    error_msg = 'The number of function arguments could not be determined.'
+    n_args = 0
     try:
-        n_args = f.__code__.co_argcount
+        n_args = func.__code__.co_argcount
     except:
         raise RuntimeError(error_msg)
     assert n_args > 0, error_msg
@@ -54,24 +55,63 @@ def get_taylor_coefficients(*evaluation, output_format=0, **kwargs):
     
     **kwargs
         Parameters passed to njet.jet.get_taylor_coefficients routine.
+        
+    Returns
+    -------
+    dict
+        One or more dictionaries, representing the Taylor-coefficients of the given
+        evaluation (see njet.poly.jetpoly.get_taylor_coefficients for details).
     '''
-    if hasattr(evaluation, 'get_taylor_coefficients'):
+    try:
         out = evaluation.get_taylor_coefficients(**kwargs)
         if output_format != 0:
             out = [out]
-    else:
+    except:
         out = (*[ev.get_taylor_coefficients(**kwargs) for ev in evaluation],) # also stored in ev._tc
         if len(out) == 1 and output_format == 0:
             out = out[0]
     return out
 
-def truncate(*func, truncate=float('inf')):
-    "Modify a given chain of functions to truncate the output between two calls -- and at the end."
-    def tchain(*z, **kwargs):
-        for f in func:
-            z = f(*z, **kwargs)
-            z = (*[ev.truncate(truncate) for ev in z],)
-        return z
+def truncateJetFunctions(*func, truncate=float('inf'), n_args: int=1):
+    '''
+    Modify a given chain of functions so that the output
+    will be truncated between two function calls -- and at the end.
+    
+    Parameters
+    ----------
+    *func: callable(s)
+        Functions which should be truncated. Note that these functions must support
+        jets as input parameters.
+    
+    truncate: int, optional
+        The power beyond which powers should be dropped.
+        
+    n_args: int, optional
+        The number of input parameters of the series of functions.
+        a) If n_args == 1, then it is assumed that those functions return
+        individual jets/values. 
+        b) If n_args > 1, it is assumed that *all* functions
+        return iterables (vectors; their lengths may vary depending on the functions). 
+        In case b) the user has to ensure that even for functions
+        which take one argument, those functions return iterables of length 1.
+        
+    Returns
+    -------
+    callable
+        A function taking n_args jet objects. 
+    '''
+    if n_args == 1: # we assume the output is not iterable here
+        def tchain(z, **kwargs):
+            for f in func:
+                z = f(z, **kwargs)
+                z = z.truncate(truncate)
+            return z
+    else:
+        def tchain(*z, **kwargs):
+            for f in func:
+                z = f(*z, **kwargs)
+                z = (*[ev.truncate(truncate) for ev in z],)
+            return z
     return tchain
 
 class derive:
@@ -90,32 +130,47 @@ class derive:
     n_args: int, optional
         The number of arguments on which func depends on; passed to getNargs routine.
         
+    n_out: int, optional
+        Define the number of output parameters of the function(s). This is required for multi-dimensional
+        output.
+        
     truncate: int, optional
         If given, truncate the jets after each iteration through the given functions.
     '''
     def __init__(self, func, order: int=1, n_args: int=0, truncate=float('inf')):
         self.order = order
-        if hasattr(func, '__iter__'):
-            if truncate < float('inf'):
-                self.func = truncate(*func, truncate=truncate)
-            else:
-                def fchain(*z, **ckwargs):
-                    for f in func:
-                        z = f(*z, **ckwargs)
-                    return z
-                self.func = fchain
-        else:
-            self.func = func
-        
         if n_args == 0:
-            self.n_args = getNargs(self.func)
+            if isinstance(func, list):
+                # the number of input parameters of any chain equals those of the first function in the chain
+                self.n_args = getNargs(func[0])
+            else:
+                self.n_args = getNargs(func)
         else:
             self.n_args = n_args
+        
+        # Prepare the chain of function(s) to be derived
+        if truncate < float('inf'):
+            self.jetfunc = truncateJetFunctions(*func, truncate=truncate, n_args=n_args)
+        else:
+            if isinstance(func, list):
+                if n_args == 1:
+                    def fchain(z, **ckwargs):
+                        for f in func:
+                            z = f(z, **ckwargs)
+                        return z
+                else:
+                    def fchain(*z, **ckwargs):
+                        for f in func:
+                            z = f(*z, **ckwargs)
+                    return z
+                self.jetfunc = fchain
+            else:
+                self.jetfunc = func
                 
     def jet_input(self, *z):
         inp = []
         for k in range(self.n_args):
-            jk = jet(z[k], jetpoly(z[k]*0 + 1, index=k, power=1), n=self.order) # add a zero here to produce the same shape as z[k]
+            jk = jet(z[k], jetpoly(zero(z[k]) + 1, index=k, power=1), n=self.order) # add a zero here to produce the same shape as z[k]
             inp.append(jk)
         self._input = inp
         return inp
@@ -139,7 +194,7 @@ class derive:
             Jet containing the value of the function in its zero-th entry and the
             jet-polynomials in the higher-order entries.
         '''
-        self._evaluation = self.func(*self.jet_input(*z), **kwargs)
+        self._evaluation = self.jetfunc(*self.jet_input(*z), **kwargs)
         return self._evaluation
             
     def __call__(self, *z, **kwargs):
@@ -156,7 +211,7 @@ class derive:
         Returns
         -------
         dict
-            Dictionary of compontens of the multivariate Taylor expansion of the given function self.func
+            Dictionary of compontens of the multivariate Taylor expansion of the given function self.jetfunc
         '''
         # These two keywords are reserved for the get_taylor_coefficients routine and will be removed from the input:
         mult_prm = kwargs.pop('mult_prm', True)

@@ -95,6 +95,19 @@ def jetfunc(func):
             return func(x, x0=x0, code_x0=code_x0, f=f, fx0=fx0)
     return inner
 
+def zero(x, **kwargs):
+    code = kwargs.get('code', get_package_name(x))
+    if code == 'numpy':
+        return numpy.zeros(x.shape)
+    elif code == 'mpmath':
+        return x*0
+    elif code == 'sympy':
+        return x*0
+    elif code == 'njet':
+        return x*0
+    else:
+        return x*0
+
 @jetfunc    
 def sin(x, **kwargs):
     '''
