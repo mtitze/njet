@@ -105,7 +105,6 @@ class derive:
         else:
             self.n_args = n_args
 
-        
     def jet_input(self, *z):
         inp = []
         for k in range(self.n_args):
@@ -156,8 +155,7 @@ class derive:
         mult_prm = kwargs.pop('mult_prm', True)
         mult_drv = kwargs.pop('mult_drv', True)
         # perform the computation, based on the input vector
-        ev = self.eval(*z, **kwargs)
-        return get_taylor_coefficients(ev, n_args=self.n_args, mult_prm=mult_prm, mult_drv=mult_drv)
+        return get_taylor_coefficients(self.eval(*z, **kwargs), n_args=self.n_args, mult_prm=mult_prm, mult_drv=mult_drv)
         
     def build_tensor(self, k: int, **kwargs):
         '''
