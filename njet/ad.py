@@ -42,7 +42,7 @@ def getNargs(f):
     assert n_args > 0, error_msg
     return n_args
 
-def get_taylor_coefficients(evaluation, output_format=0, **kwargs):
+def get_taylor_coefficients(*evaluation, output_format=0, **kwargs):
     '''
     Return the Taylor coefficients of a jet evaluation.
     
@@ -55,7 +55,7 @@ def get_taylor_coefficients(evaluation, output_format=0, **kwargs):
     **kwargs
         Parameters passed to njet.jet.get_taylor_coefficients routine.
     '''
-    if isinstance(evaluation, jet):
+    if hasattr(evaluation, 'get_taylor_coefficients'):
         out = evaluation.get_taylor_coefficients(**kwargs)
         if output_format != 0:
             out = [out]
