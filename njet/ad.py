@@ -72,48 +72,6 @@ def get_taylor_coefficients(*evaluation, output_format=0, **kwargs):
             out = out[0]
     return out
 
-def truncateJetFunctions(*func, truncate=float('inf'), n_args: int=1):
-    '''
-    Modify a given chain of functions so that the output
-    will be truncated between two function calls -- and at the end.
-    
-    Parameters
-    ----------
-    *func: callable(s)
-        Functions which should be truncated. Note that these functions must support
-        jets as input parameters.
-    
-    truncate: int, optional
-        The power beyond which powers should be dropped.
-        
-    n_args: int, optional
-        The number of input parameters of the series of functions.
-        a) If n_args == 1, then it is assumed that those functions return
-        individual jets/values. 
-        b) If n_args > 1, it is assumed that *all* functions
-        return iterables (vectors; their lengths may vary depending on the functions). 
-        In case b) the user has to ensure that even for functions
-        which take one argument, those functions return iterables of length 1.
-        
-    Returns
-    -------
-    callable
-        A function taking n_args jet objects. 
-    '''
-    if n_args == 1: # we assume the output is not iterable here
-        def tchain(z, **kwargs):
-            for f in func:
-                z = f(z, **kwargs)
-                z = z.truncate(truncate)
-            return z
-    else:
-        def tchain(*z, **kwargs):
-            for f in func:
-                z = f(*z, **kwargs)
-                z = (*[ev.truncate(truncate) for ev in z],)
-            return z
-    return tchain
-
 class derive:
     '''
     Class to handle the derivatives of a (jet-)function (i.e. a function consisting of a composition
@@ -137,36 +95,17 @@ class derive:
     truncate: int, optional
         If given, truncate the jets after each iteration through the given functions.
     '''
-    def __init__(self, func, order: int=1, n_args: int=0, truncate=float('inf')):
+    def __init__(self, func, order: int=1, n_args: int=0):
         self.order = order
+        self.jetfunc = func
+        
+        # Determine the number of input parameters
         if n_args == 0:
-            if isinstance(func, list):
-                # the number of input parameters of any chain equals those of the first function in the chain
-                self.n_args = getNargs(func[0])
-            else:
-                self.n_args = getNargs(func)
+            self.n_args = getNargs(func)
         else:
             self.n_args = n_args
+
         
-        # Prepare the chain of function(s) to be derived
-        if truncate < float('inf'):
-            self.jetfunc = truncateJetFunctions(*func, truncate=truncate, n_args=n_args)
-        else:
-            if isinstance(func, list):
-                if n_args == 1:
-                    def fchain(z, **ckwargs):
-                        for f in func:
-                            z = f(z, **ckwargs)
-                        return z
-                else:
-                    def fchain(*z, **ckwargs):
-                        for f in func:
-                            z = f(*z, **ckwargs)
-                    return z
-                self.jetfunc = fchain
-            else:
-                self.jetfunc = func
-                
     def jet_input(self, *z):
         inp = []
         for k in range(self.n_args):

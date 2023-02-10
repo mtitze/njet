@@ -57,3 +57,45 @@ def convert_indices(list_of_tuples):
     '''
     l1g = [[tpl[j]*[j] for j in range(len(tpl))] for tpl in list_of_tuples]
     return [tuple(e for subl in l1 for e in subl) for l1 in l1g] # flatten l1 and return list of converted tuples
+
+def buildTruncatedJetFunction(*func, truncate=float('inf'), n_args: int=1):
+    '''
+    Modify a given chain of functions so that the output
+    will be truncated between two function calls -- and at the end.
+    
+    Parameters
+    ----------
+    *func: callable(s)
+        Functions which should be truncated. Note that these functions must support
+        jets as input parameters.
+    
+    truncate: int, optional
+        The power beyond which powers should be dropped.
+        
+    n_args: int, optional
+        The number of input parameters of the series of functions.
+        a) If n_args == 1, then it is assumed that those functions return
+        individual jets/values. 
+        b) If n_args > 1, it is assumed that *all* functions
+        return iterables (vectors; their lengths may vary depending on the functions). 
+        In case b) the user has to ensure that even for functions
+        which take one argument, those functions return iterables of length 1.
+        
+    Returns
+    -------
+    callable
+        A function taking n_args jet objects. 
+    '''
+    if n_args == 1: # we assume the output is not iterable here
+        def tchain(z, **kwargs):
+            for f in func:
+                z = f(z, **kwargs)
+                z = z.truncate(truncate)
+            return z
+    else:
+        def tchain(*z, **kwargs):
+            for f in func:
+                z = f(*z, **kwargs)
+                z = (*[ev.truncate(truncate) for ev in z],)
+            return z
+    return tchain

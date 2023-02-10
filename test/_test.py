@@ -2,6 +2,7 @@ import pytest
 
 from njet import derive, jet
 from njet.functions import sin, cos, exp
+from njet.common import buildTruncatedJetFunction
 
 import sympy
 from sympy import Symbol
@@ -332,10 +333,18 @@ def test_truncate_1d(point, truncate, order=7):
     Test if truncation gives the low-order derivatives
     '''
     chain = [cos, sin, lambda x: sin(x)**2, lambda x: x**2 - 3]
-    dchain1 = derive(chain, order=order, n_args=1)
-    dchain2 = derive(chain, order=order, n_args=1, truncate=truncate)    
-    reference = dchain1(point)
-    result = dchain2(point)
+    
+    def reference_func(z):
+        for c in chain:
+            z = c(z)
+        return z
+    dref = derive(reference_func, order=order, n_args=1)
+    
+    truncated_chain = buildTruncatedJetFunction(*chain, truncate=truncate, n_args=1)
+    dtrunc = derive(truncated_chain, order=order, n_args=1)
+    
+    reference = dref(point)
+    result = dtrunc(point)
     for k in result.keys():
         assert (np.array(result[k] - reference[k]) == 0).all()
         
