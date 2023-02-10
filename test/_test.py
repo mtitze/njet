@@ -299,6 +299,9 @@ def test_nd3():
         
     assert not nested_test3_failed
     
+######################## 
+# Projection
+########################
 def test_projection1():
     f1 = lambda *z: z[0] + z[1]**3
     df1 = derive(f1, n_args=2, order=3)
@@ -319,8 +322,23 @@ def test_projection2():
     for k, v in out2.items():
         assert (out2_ref[k] == v).all()
         assert v.shape == out2_ref[k].shape
-    
-
+        
+########################
+# Truncation
+########################
+@pytest.mark.parametrize("point, truncate", [(0.23, 1), (0.23, 3), (np.array([0.35, 1.55]), 1), (np.array([0.35, 1.55]), 4)]) 
+def test_truncate_1d(point, truncate, order=7):
+    '''
+    Test if truncation gives the low-order derivatives
+    '''
+    chain = [cos, sin, lambda x: sin(x)**2, lambda x: x**2 - 3]
+    dchain1 = derive(chain, order=order, n_args=1)
+    dchain2 = derive(chain, order=order, n_args=1, truncate=truncate)    
+    reference = dchain1(point)
+    result = dchain2(point)
+    for k in result.keys():
+        assert (np.array(result[k] - reference[k]) == 0).all()
+        
 ######################## 
 # Performance
 ########################
