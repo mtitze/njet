@@ -323,7 +323,61 @@ def test_projection2():
     for k, v in out2.items():
         assert (out2_ref[k] == v).all()
         assert v.shape == out2_ref[k].shape
+    
+def test_projection3():
+    f3 = lambda z: z[0]*z[1]
+    df3 = derive(f3, n_args=1, order=3)
+    out3 = df3(np.array([2, 1, 5]))
+    ref3 = {(0,): 2, (1,): 3, (2,): 2}
+    for k in ref3.keys():
+        assert ref3[k] == out3[k]
+
+def test_projection4():
+    f4 = lambda z, w, y: z[0] + z[1]**3 + z[2]*z[0] + y[0]*w[2]
+    df4 = derive(f4, n_args=3, order=3)
+    
+    z0, w0, y0 = np.array([2, 1, 5]), np.array([4, 2, 1]), np.array([-1, -2, 2])
+    out3_a = df4(z0, w0, y0)
+    out3_b = df4(z0, w0, y0, mult_prm=False, mult_drv=False)
+    
+    ref_a = {(0, 0, 0): 12, 
+             (0, 0, 1): 1,
+             (1, 0, 0): 11,
+             (0, 1, 0): -1,
+             (0, 1, 1): 1,
+             (2, 0, 0): 8,
+             (3, 0, 0): 6}
+    
+    ref_b = {(0, 0, 0): 12, 
+             (0, 0, 1): 1,
+             (1, 0, 0): 11,
+             (0, 1, 0): -1,
+             (0, 1, 1): 2,
+             (2, 0, 0): 8,
+             (3, 0, 0): 6}
+    
+    for k in ref_a.keys():
+        assert ref_a[k] == out3_a[k]
+        assert ref_b[k] == out3_b[k]
         
+def test_projection5():
+    f5 = lambda z: z[0, 0] + z[0, 1]**3 + z[0, 2]*z[0, 0] + z[1, 0]*z[2, 2]
+    df5 = derive(f5, n_args=1, order=3)
+    out5 = df5(np.array([[2, 1, 5], [4, 2, 1], [-1, -2, 2]]))
+    ref5 = {(0,): 21, (1,): 17, (2,): 10, (3,): 6}
+    for k in ref5.keys():
+        assert ref5[k] == out5[k]
+        
+def test_projection6():
+    f6 = lambda z: z[0, :] + z[:, 1]**3 + z[0, :]*z[:, 0] + z[1, 0]*z[2, 2]
+    df6 = derive(f6, n_args=1, order=3)
+    out6 = df6(np.array([[2, 1, 5], [4, 2, 1], [-1, -2, 2]]))
+    ref6 = {(0,): np.array([15., 21.,  0.]), (1,): np.array([14., 24., 23.]), 
+            (2,): np.array([10., 16., -8.]), (3,): np.array([6., 6., 6.])}
+    for k in ref6.keys():
+        assert (ref6[k] == out6[k]).all()
+
+
 ########################
 # Truncation
 ########################
