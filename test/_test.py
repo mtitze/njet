@@ -375,7 +375,15 @@ def test_projection6():
     ref6 = {(0,): np.array([15., 21.,  0.]), (1,): np.array([14., 24., 23.]), 
             (2,): np.array([10., 16., -8.]), (3,): np.array([6., 6., 6.])}
     for k in ref6.keys():
+        assert len(ref6[k]) == len(out6[k])
         assert (ref6[k] == out6[k]).all()
+
+########################
+# Differentiation of vector-valued functions
+########################
+
+
+
 
 
 ########################
