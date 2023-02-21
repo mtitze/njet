@@ -108,7 +108,7 @@ class derive:
     def jet_input(self, *z):
         inp = []
         for k in range(self.n_args):
-            jk = jet(z[k], jetpoly(zero(z[k]) + 1, index=k, power=1), n=self.order) # add a zero here to produce the same shape as z[k]
+            jk = jet(z[k], jetpoly(zero(z[k]) + 1, index=k, power=1), n=self.order) # add a zero here to produce the same shape or type as z[k]
             inp.append(jk)
         self._input = inp
         return inp

@@ -95,7 +95,7 @@ class jetpoly:
     def __mul__(self, other):
         # Interpretation: (sum_j a_j)*(sum_k b_k) = sum_{j, k} a_j*b_k
         if not isinstance(self, type(other)):
-            other = self.__class__(other)
+            return self.__class__(terms={k: v*other for k, v in self.terms.items()})
         pol_prod = {}
         for aj, value1 in self.terms.items():
             e1 = dict(aj) # e.g. e1 = {0: 0, 1: 5, 2: 3}
