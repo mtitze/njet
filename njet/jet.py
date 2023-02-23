@@ -312,7 +312,7 @@ class jet:
     def __call__(self, *z):
         result = []
         for k in range(len(self)):
-            ek = self[k]
+            ek = self.array(k)
             if hasattr(ek, '__call__'):
                 result.append(ek(*z))
             else:
