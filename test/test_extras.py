@@ -1,7 +1,7 @@
 import numpy as np
 
 from njet import derive
-from njet.extra import general_faa_di_bruno, symtensor_call
+from njet.extras import general_faa_di_bruno, symtensor_call
 
 def test_symtensor_call():
     
