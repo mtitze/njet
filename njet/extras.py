@@ -164,24 +164,33 @@ class derive_chain:
         '''
         Parameters
         ----------
-        functions: callable(s)
+        functions: callable(s) or 'derive' classes
             The unique functions in the chain to be derived.
+            Alternatively, one can pass a list of 'derive' objects. 
+            In this second case it will be assumed (by default, see 'probed' parameter below)
+            that the 'derived' classes already contain the jet evaluations
+            for the run. This can be used to avoid re-calculating the derivatives
+            in circumstances where it is not required.
             
         order: int
             The maximal order of the derivatives to be computed.
             
         ordering: list
             The order defining how the unique functions are arranged in the chain.
-            
+                        
         **kwargs
             Optional keyworded arguments passed to njet.ad.derive init.
         '''
 
         if len(ordering) == 0:
-            ordering = range(len(functions))
+            ordering = list(range(len(functions)))
 
-        self.functions = functions
-        self.dfunctions = [derive(f, order=order, **kwargs) for f in functions]
+        # Determine user input for the 'functions' parameter
+        if not functions[0].__repr__()[1:15] == 'njet.ad.derive':
+            self.dfunctions = [derive(f, order=order, **kwargs) for f in functions]
+        else:
+            self.dfunctions = functions
+            
         self.n_functions = len(functions)
         self.ordering = ordering
         self.n_chain = len(ordering)
@@ -195,49 +204,67 @@ class derive_chain:
         '''
         out = [point]
         for k in range(self.n_chain):
-            f = self.functions[self.ordering[k]]
-            point = f(*point, **kwargs)
+            point = self.dfunctions[self.ordering[k]].jetfunc(*point, **kwargs)
             out.append(point)
         return out
     
-    def diff(self, *point, **kwargs):
+    def eval(self, *point, **kwargs):
         '''
-        Differentiate the unique functions in the chain.
+        Evaluate the individual (unique) functions in the chain at the requested point.
         '''
+        self._eval_kwargs = kwargs # store the run input parameters to be checked for changes (memory)
         out = self.probe(*point, **kwargs)
-        probe = [[out[l] for l in range(self.n_chain) if self.ordering[l] == k] for k in range(self.n_functions)]
+        points_at_functions = [[out[l] for l in range(self.n_chain) if self.ordering[l] == k] for k in range(self.n_functions)]
         # let Q = points_per_function[j], so Q is a list of points which needs to be computed for function j
         # Then the first element in Q is the one which needs to be applied first, etc. (for element j) by this construction.
         for k in tqdm(range(self.n_functions), disable=kwargs.get('disable_tqdm', False)):
-            function = self.functions[k]
+            function = self.dfunctions[k].jetfunc
             n_args_function = self.dfunctions[k].n_args
-            points_at_function = probe[k]
+            points_at_function = points_at_functions[k]
             components = [np.array([points_at_function[j][l] for j in range(len(points_at_function))], dtype=np.complex128) for l in range(n_args_function)]
-            self.dfunctions[k].eval(*components, order=self.order, n_args=n_args_function, **kwargs)
+            _ = self.dfunctions[k].eval(*components, order=self.order, n_args=n_args_function, **kwargs)
+        return self.compose(**kwargs)
     
-    def eval(self, *point, **kwargs):
-        # 1) Take the derivative for every unique function in the chain, using numpy arrays for each function.
-        deval = self.diff(*point, **kwargs)
-
-        # 2) Compose the derivatives for the entire chain.
-        ev0 = [e[0] for e in self.dfunctions[self.ordering[0]]._evaluation] # the start is the derivative of the first element at the point of interest
-        evr = ev0
+    def compose(self, **kwargs):
+        '''
+        Compose the given derivatives for the entire chain.        
+        '''
+        evr = [e[0] for e in self.dfunctions[self.ordering[0]]._evaluation] # the start is the derivative of the first element at the point of interest
         ele_indices = {k: 0 for k in range(self.n_functions)} # keep track of the current passage number for every element
         ele_indices[self.ordering[0]] = 1 # we already tooked the first one.
-        self._evaluation_function = [ev0]
+        self._evaluation_chain = [evr]
         for k in tqdm(range(1, self.n_chain), disable=kwargs.get('disable_tqdm', False)):
             pos = self.ordering[k]
             index_passage = ele_indices[pos]
             ev = [j[index_passage] for j in self.dfunctions[pos]._evaluation]
             evr = general_faa_di_bruno(ev, evr, run_params=(self.factorials, self.run_indices))
             ele_indices[pos] += 1
-            self._evaluation_function.append(evr)
+            self._evaluation_chain.append(evr)
         self._evaluation = evr
         return evr
     
     def __call__(self, *z, **kwargs):
+        '''
+        Compute the derivatives of the chain of functions at a given point.
+        '''
         # These two keywords are reserved for the get_taylor_coefficients routine and will be removed from the input:
         mult_prm = kwargs.pop('mult_prm', True)
         mult_drv = kwargs.pop('mult_drv', True)
-        # perform the computation, based on the input vector
-        return get_taylor_coefficients(self.eval(*z, **kwargs), n_args=self.dfunctions[0].n_args, mult_prm=mult_prm, mult_drv=mult_drv)
+        
+        # Determine if a (re-)evaluation (DA-calculation) is required
+        eval_required = False
+        if hasattr(self, '_call_kwargs'):
+            eval_required = self._call_kwargs != kwargs
+        if not all([hasattr(df, '_evaluation') for df in self.dfunctions]):
+            eval_required = True
+        elif not np.array([z[k] == self.dfunctions[self.ordering[0]]._input[k][0].array(0) for k in range(len(z))]).all():
+            eval_required = True
+        self._call_kwargs = kwargs
+        
+        # Perform the composition, if necessary
+        if eval_required:
+            _ = self.eval(*z, **kwargs) # evaluation includes 'self.compose'
+        else:
+            _ = self.compose(**kwargs)
+            
+        return get_taylor_coefficients(self._evaluation, n_args=self.dfunctions[0].n_args, mult_prm=mult_prm, mult_drv=mult_drv)
