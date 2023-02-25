@@ -154,7 +154,7 @@ def general_faa_di_bruno(f, g, run_params=()):
 
 class derive_chain:
     '''
-    Derive a chain of functions with repetitions, utilizing numpy. 
+    Derive a chain of vector-valued functions with repetitions, utilizing numpy. 
     The given functions should be unique, while their repetition in the chain
     will be given by an optional ordering. This might have better
     performance than deriving the entire chain of functions
@@ -198,27 +198,29 @@ class derive_chain:
             f = self.functions[self.ordering[k]]
             point = f(*point, **kwargs)
             out.append(point)
-            
-        result = [[out[l] for l in range(self.n_chain) if self.ordering[l] == k] for k in range(self.n_functions)]
+        return out
+    
+    def diff(self, *point, **kwargs):
+        '''
+        Differentiate the unique functions in the chain.
+        '''
+        out = self.probe(*point, **kwargs)
+        probe = [[out[l] for l in range(self.n_chain) if self.ordering[l] == k] for k in range(self.n_functions)]
         # let Q = points_per_function[j], so Q is a list of points which needs to be computed for function j
         # Then the first element in Q is the one which needs to be applied first, etc. (for element j) by this construction.
-        return out, result
-    
-    def eval(self, *point, **kwargs):
-        # 1) Probe the chain: Determine the number of points at which to take the derivative
-        self._out, self._probe = self.probe(*point, **kwargs)
-        
-        # 2) Take the derivative for every unique function in the chain, using numpy arrays for each function.
-        deval = []
         for k in tqdm(range(self.n_functions), disable=kwargs.get('disable_tqdm', False)):
             function = self.functions[k]
             n_args_function = self.dfunctions[k].n_args
-            points_at_function = self._probe[k]
+            points_at_function = probe[k]
             components = [np.array([points_at_function[j][l] for j in range(len(points_at_function))], dtype=np.complex128) for l in range(n_args_function)]
-            deval.append(self.dfunctions[k].eval(*components, order=self.order, n_args=n_args_function, **kwargs))
+            self.dfunctions[k].eval(*components, order=self.order, n_args=n_args_function, **kwargs)
+    
+    def eval(self, *point, **kwargs):
+        # 1) Take the derivative for every unique function in the chain, using numpy arrays for each function.
+        deval = self.diff(*point, **kwargs)
 
-        # 3) Compose the derivatives for the entire chain.
-        ev0 = [e[0] for e in deval[self.ordering[0]]] # the start is the derivative of the first element at the point of interest
+        # 2) Compose the derivatives for the entire chain.
+        ev0 = [e[0] for e in self.dfunctions[self.ordering[0]]._evaluation] # the start is the derivative of the first element at the point of interest
         evr = ev0
         ele_indices = {k: 0 for k in range(self.n_functions)} # keep track of the current passage number for every element
         ele_indices[self.ordering[0]] = 1 # we already tooked the first one.
@@ -226,7 +228,7 @@ class derive_chain:
         for k in tqdm(range(1, self.n_chain), disable=kwargs.get('disable_tqdm', False)):
             pos = self.ordering[k]
             index_passage = ele_indices[pos]
-            ev = [j[index_passage] for j in deval[pos]]
+            ev = [j[index_passage] for j in self.dfunctions[pos]._evaluation]
             evr = general_faa_di_bruno(ev, evr, run_params=(self.factorials, self.run_indices))
             ele_indices[pos] += 1
             self._evaluation_function.append(evr)
