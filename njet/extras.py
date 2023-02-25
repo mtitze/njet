@@ -154,7 +154,7 @@ def general_faa_di_bruno(f, g, run_params=()):
 
 class derive_chain:
     '''
-    Derive a chain of vector-valued functions with repetitions, utilizing numpy. 
+    Derive a chain of vector-valued functions with repetitions. 
     The given functions should be unique, while their repetition in the chain
     will be given by an optional ordering. This might have better
     performance than deriving the entire chain of functions
@@ -193,9 +193,15 @@ class derive_chain:
             
         self.n_functions = len(functions)
         self.ordering = ordering
-        self.n_chain = len(ordering)
+        self.chain_length = len(ordering)
         self.order = order
         self.factorials, self.run_indices = _make_run_params(order)
+        
+        # For every element in the chain, note a number at which a point
+        # passing through the given chain will pass through the element.
+        self.path = {k: [] for k in range(self.n_functions)}
+        for j in range(self.chain_length):
+            self.path[self.ordering[j]].append(j)
             
     def probe(self, *point, **kwargs):
         '''
@@ -203,18 +209,36 @@ class derive_chain:
         the derivative(s) should be calculated.
         '''
         out = [point]
-        for k in range(self.n_chain):
+        for k in range(self.chain_length):
             point = self.dfunctions[self.ordering[k]].jetfunc(*point, **kwargs)
             out.append(point)
+        self._probe_out = out
         return out
+    
+    def _probe_check(self, *point, **kwargs):
+        '''
+        Check if the points in the probe agree with the one stored in the input functions.
+        This check requires that the input functions have been evaluated and a probe run has been performed.
+        '''
+        if not all([hasattr(df, '_input') for df in self.dfunctions]):
+            # Nothing can be compared, so the check will fail
+            return False
+        elif not hasattr(self, '_probe_out'): 
+            # Probe the current chain
+            self.probe(*point, **kwargs)
+            
+        if not np.array([point[k] == self.dfunctions[self.ordering[0]]._input[k][0].array(0) for k in range(len(point))]).all():
+            # The input point disagrees with the stored input point for the first function, so return false.
+            return False
+        else:
+            return all([np.array([self.dfunctions[self.ordering[k]]._input[component_index][self.path[self.ordering[k]].index(k)].array(0) == self._probe_out[k][component_index] for component_index in range(len(self._probe_out[k]))]).all() for k in range(1, self.chain_length)])
     
     def eval(self, *point, **kwargs):
         '''
         Evaluate the individual (unique) functions in the chain at the requested point.
         '''
-        self._eval_kwargs = kwargs # store the run input parameters to be checked for changes (memory)
         out = self.probe(*point, **kwargs)
-        points_at_functions = [[out[l] for l in range(self.n_chain) if self.ordering[l] == k] for k in range(self.n_functions)]
+        points_at_functions = [[out[l] for l in range(self.chain_length) if self.ordering[l] == k] for k in range(self.n_functions)]
         # let Q = points_per_function[j], so Q is a list of points which needs to be computed for function j
         # Then the first element in Q is the one which needs to be applied first, etc. (for element j) by this construction.
         for k in tqdm(range(self.n_functions), disable=kwargs.get('disable_tqdm', False)):
@@ -227,18 +251,15 @@ class derive_chain:
     
     def compose(self, **kwargs):
         '''
-        Compose the given derivatives for the entire chain.        
+        Compose the given derivatives for the entire chain.      
         '''
         evr = [e[0] for e in self.dfunctions[self.ordering[0]]._evaluation] # the start is the derivative of the first element at the point of interest
-        ele_indices = {k: 0 for k in range(self.n_functions)} # keep track of the current passage number for every element
-        ele_indices[self.ordering[0]] = 1 # we already tooked the first one.
         self._evaluation_chain = [evr]
-        for k in tqdm(range(1, self.n_chain), disable=kwargs.get('disable_tqdm', False)):
+        for k in tqdm(range(1, self.chain_length), disable=kwargs.get('disable_tqdm', False)):
             pos = self.ordering[k]
-            index_passage = ele_indices[pos]
+            index_passage = self.path[pos].index(k)
             ev = [j[index_passage] for j in self.dfunctions[pos]._evaluation]
             evr = general_faa_di_bruno(ev, evr, run_params=(self.factorials, self.run_indices))
-            ele_indices[pos] += 1
             self._evaluation_chain.append(evr)
         self._evaluation = evr
         return evr
@@ -251,13 +272,13 @@ class derive_chain:
         mult_prm = kwargs.pop('mult_prm', True)
         mult_drv = kwargs.pop('mult_drv', True)
         
-        # Determine if a (re-)evaluation (DA-calculation) is required
+        # Determine if a (re-)evaluation is required
         eval_required = False
         if hasattr(self, '_call_kwargs'):
             eval_required = self._call_kwargs != kwargs
         if not all([hasattr(df, '_evaluation') for df in self.dfunctions]):
             eval_required = True
-        elif not np.array([z[k] == self.dfunctions[self.ordering[0]]._input[k][0].array(0) for k in range(len(z))]).all():
+        elif not self._probe_check(*z, **kwargs):
             eval_required = True
         self._call_kwargs = kwargs
         
