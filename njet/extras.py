@@ -124,6 +124,11 @@ def general_faa_di_bruno(f, g, run_params=()):
     g: list
         A list of n-jet objects, representing the derivatives of the function G at
         a given position z.
+        
+    run_params: tuple, optional
+        A tuple containing the output of njet.extras._make_run_params. These values
+        can be send to the routine to avoid internal re-calculation when the routine
+        it is called repeatedly.
     
     Returns
     -------
@@ -160,7 +165,7 @@ class derive_chain:
     performance than deriving the entire chain of functions
     with the default 'derive' method.
     '''
-    def __init__(self, functions, order: int, ordering=[], **kwargs):
+    def __init__(self, functions, order: int, ordering=[], run_params=(), **kwargs):
         '''
         Parameters
         ----------
@@ -179,6 +184,11 @@ class derive_chain:
             The order defining how the unique functions are arranged in the chain.
             Hereby the index j must refer to the function at position j in the list.
             
+        run_params: tuple, optional
+            A tuple containing the output of njet.extras._make_run_params. These values
+            can be send to the routine to avoid internal re-calculation when the routine
+            it is called repeatedly.
+            
         **kwargs
             Optional keyworded arguments passed to njet.ad.derive init.
         '''
@@ -195,8 +205,12 @@ class derive_chain:
         self.ordering = ordering
         self.chain_length = len(ordering)
         self.order = order
-        self.factorials, self.run_indices = _make_run_params(order)
         
+        if len(run_params) > 0:
+            self.factorials, self.run_indices = run_params
+        else:
+            self.factorials, self.run_indices = _make_run_params(order)
+
         # For every element in the chain, note a number at which a point
         # passing through the given chain will pass through the element.
         self.path = {k: [] for k in range(self.n_functions)}
