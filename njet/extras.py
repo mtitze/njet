@@ -177,7 +177,8 @@ class derive_chain:
             
         ordering: list
             The order defining how the unique functions are arranged in the chain.
-                        
+            Hereby the index j must refer to the function at position j in the list.
+            
         **kwargs
             Optional keyworded arguments passed to njet.ad.derive init.
         '''
@@ -186,10 +187,9 @@ class derive_chain:
             ordering = list(range(len(functions)))
 
         # Determine user input for the 'functions' parameter
-        if not functions[0].__repr__()[1:15] == 'njet.ad.derive':
-            self.dfunctions = [derive(f, order=order, **kwargs) for f in functions]
-        else:
-            self.dfunctions = functions
+        supported_objects = ['njet.ad.derive', 'njet.extras.derive_chain'] # objects of these kinds will not be instantiated with 'derive'
+        
+        self.dfunctions = [f if any([s in f.__repr__() for s in supported_objects]) else derive(f, order=order, **kwargs) for f in functions]
             
         self.n_functions = len(functions)
         self.ordering = ordering
@@ -228,9 +228,10 @@ class derive_chain:
             self.probe(*point, **kwargs)
             
         if not np.array([point[k] == self.dfunctions[self.ordering[0]]._input[k][0].array(0) for k in range(len(point))]).all():
-            # The input point disagrees with the stored input point for the first function, so return false.
+            # If the input point disagrees with the stored input point, then return false.
             return False
         else:
+            # Check the remaining points along the chain
             return all([np.array([self.dfunctions[self.ordering[k]]._input[component_index][self.path[self.ordering[k]].index(k)].array(0) == self._probe_out[k][component_index] for component_index in range(len(self._probe_out[k]))]).all() for k in range(1, self.chain_length)])
     
     def eval(self, *point, **kwargs):
