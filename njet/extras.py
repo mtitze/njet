@@ -157,6 +157,7 @@ def general_faa_di_bruno(f, g, run_params=()):
             out[order][k] += symtensor_call([[jg.array(nj)/facts[nj] for jg in g] for nj in e], jfk.array(r).terms)/facts[r]*facts[order]
     return [jet(*[out[k][j] for k in range(max_order + 1)], n=max_order) for j in range(n_dim)]
 
+
 class dchain:
     '''
     Derive a chain of vector-valued functions with repetitions. 
@@ -199,7 +200,7 @@ class dchain:
         # Check input consistency
         uord = np.unique(ordering) # np.unique already sorting
         assert len(uord) == len(functions), 'Number of functions not consistent with the unique items in the ordering.'
-        assert ((uord - np.arange(len(functions))) == 0).all(), 'Ordering malformed.'
+        assert (uord - np.arange(len(functions)) == 0).all(), 'Ordering malformed.'
 
         # Determine user input for the 'functions' parameter
         supported_objects = ['njet.ad.derive', 'njet.extras.derive_chain'] # objects of these kinds will not be instantiated with 'derive'
@@ -220,12 +221,9 @@ class dchain:
         # So for example, self.path[k] = [j1, j2, j3, ...] means that
         # the first passage through element k occurs at global position j1,
         # the second passage through element k occurs at global position j2 etc.
-        if 'path' in kwargs.keys():
-            self.path = kwargs['path']
-        else:
-            self.path = {k: [] for k in range(self.n_functions)}
-            for j in range(self.chain_length):
-                self.path[self.ordering[j]].append(j)
+        self.path = {k: [] for k in range(self.n_functions)}
+        for j in range(self.chain_length):
+            self.path[self.ordering[j]].append(j)
             
     def probe(self, *point, **kwargs):
         '''
@@ -351,10 +349,12 @@ class dchain:
             A dchain object which contains a sequence of 'derive' classes, representing a new chain
             of functions in which the selected pattern(s) have been merged.
         '''
+        # Input handling and consistency checks
+        #######################################
         if len(pattern) == 0:
             pattern = tuple(self.ordering)
-            
         size = len(pattern)
+        assert 2 <= size and size <= self.chain_length
         if len(positions) == 0:
             pos = 0
             for window in windowed(self.ordering, size):
@@ -364,15 +364,12 @@ class dchain:
                 pos += 1
             if pos == self.chain_length - size + 1:
                 raise RuntimeError('Pattern not found in sequence.')
-            
-        # Input consistency checks
-        ##########################
         # Sections must not overlap & can be found in the ordering. Evaluation(s) must exist.            
         n_patterns = len(positions)
         assert 0 <= min(positions) and max(positions) < self.chain_length - size + 1, 'Pattern positions out of bounds.'
         for k in range(n_patterns - 1):
             assert positions[k + 1] - positions[k] >= size, 'Overlapping pattern.'
-            assert all(tuple(self.ordering[pos: pos + size]) == pattern for pos in positions), 'Not all patterns found in sequence.'
+        assert all(tuple(self.ordering[pos: pos + size]) == pattern for pos in positions), 'Not all patterns found in sequence.'
         assert all(hasattr(self.dfunctions[k], '_evaluation') for k in pattern), 'Merging requires function evaluations in advance.'
 
         # Merge the members of the pattern
@@ -397,59 +394,94 @@ class dchain:
                 f = self.dfunctions[pattern[k]].jetfunc
                 z = f(*z, **pkwargs)
             return z
-
+                
         pattern_positions = [r for pos in positions for r in range(pos, pos + size)]
-        mod_original_ordering = [j for j in self.ordering]
+        placeholder = -1
+        new_ordering = [self.ordering[j] if j not in pattern_positions else placeholder for j in range(self.chain_length)]
         k = 0
-        new_ordering, new_functions = [], []
-        new_path = {}
-        path_index = 0
-        while k < len(self.ordering):
-            if k in pattern_positions:
+        new_functions = []
+        while k < self.chain_length:
+            no = new_ordering[k]
+            if no == placeholder:
                 if k == pattern_positions[0]:
                     # first occurence
-                    if len(self.ordering[:k]) == 0:
-                        merge_index = 0
-                    else:
-                        merge_index = max(self.ordering[:k]) + 1
-                    mod_original_ordering = self.ordering[:k + size] + [j + 1 if j not in self.ordering[:k + size] else j for j in self.ordering[k + size:]]
-                    new_path[merge_index] = []
                     # (++) build an object which will store the result in form of a ._evaluation field:
                     dp = derive(pattern_function, order=self.order, n_args=getattr(self.dfunctions[self.ordering[k]], 'n_args', kwargs.get('n_args', 0)))            
                     dp._evaluation = evr # Note that 'evr' contains only those points which are passing through the pattern, which is guaranteed at step (**) above.
                     new_functions.append(dp)
-
-                new_path[merge_index].append(path_index)
-                new_ordering.append(merge_index)
                 k += size
             else:
-                func_index = mod_original_ordering[k]
-                new_ordering.append(func_index)
-                _ = new_path.setdefault(func_index, [])
-                new_path[func_index].append(path_index)
+                func_index = new_ordering[k]
 
-                if func_index < len(new_functions):
+                if k > pattern_positions[0]:
+                    # 
+                    function_in_list = func_index < len(new_functions) - 1
+                else:
+                    function_in_list = func_index < len(new_functions)
+                    
+                if function_in_list:
                     # Then the function was already added to our list and we proceed with the next function
                     k += 1
-                    path_index += 1
                     continue
 
-                original_func_index = self.ordering[k]
-                original_func = self.dfunctions[original_func_index]
-
-                if original_func_index in pattern:
+                func = self.dfunctions[func_index]
+                if func_index in pattern:
                     # (+) The function 'original_func' is in the pattern, but has not been merged (because it is not covered by a pattern within the sequence).
                     # In this case we have to remove those points in the function evaluation(s) which belong to passages through the (now merged) pattern(s).
-                    original_func_path = self.path[original_func_index]
-                    evaluation = [e[[j not in pattern_positions for j in original_func_path]] for e in original_func._evaluation]
-                    new_function = original_func.__class__(original_func.jetfunc, n_args=original_func.n_args, order=original_func.order) # initiate (copy) the original function in order to not overwrite its "._evaluation" field.
-                    new_function._evaluation = evaluation
+                    func_path = self.path[func_index]
+                    evaluation = [e[[j not in pattern_positions for j in func_path]] for e in func._evaluation]
+                    new_func = func.__class__(func.jetfunc, n_args=func.n_args, order=func.order) # initiate (copy) the original function in order to not overwrite its "._evaluation" field.
+                    new_func._evaluation = evaluation
                 else:
-                    new_function = original_func
+                    new_func = func
 
-                new_functions.append(original_func)
+                new_functions.append(new_func)
                 k += 1
-            path_index += 1
-
-        return self.__class__(functions=new_functions, order=self.order, ordering=new_ordering, run_params=(self.factorials, self.run_indices), path=new_path) # we can also avoid passing path, it will not matter.
+                
+        # remove the chain of placeholders in the new_ordering & recalculate the ordering
+        new_ordering2 = []
+        j = 0
+        while j < self.chain_length:
+            if new_ordering[j] == placeholder:
+                new_ordering2.append(placeholder)
+                j += size
+            else:
+                new_ordering2.append(new_ordering[j])
+                j += 1
+        new_ordering = _get_ordering(new_ordering2)
+        
+        return self.__class__(functions=new_functions, order=self.order, ordering=new_ordering, run_params=(self.factorials, self.run_indices))
     
+    
+def _get_ordering(sequence, start=0):
+    '''
+    For a given sequence of integers, find a unique ordering. E.g.
+    ordering = [3, 4, 4, 7, 1]
+    result = [0, 1, 1, 2, 3]
+    
+    Parameters
+    ----------
+    ordering: list
+        The list of whose ordering we seek.
+        
+    start: int, optional
+        An integer to control the start of the ordering.
+        
+    Returns
+    -------
+    list
+        A list of integers describing the ordering of the given sequence.
+    '''
+    assert len(sequence) > 0
+    new_ordering = []
+    stash = []
+    k = start
+    for e in sequence:
+        if e not in stash:
+            new_ordering.append(k)
+            k += 1
+            stash.append(e)
+        else:
+            e_index = stash.index(e)
+            new_ordering.append(e_index + start)
+    return new_ordering
