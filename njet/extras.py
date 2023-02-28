@@ -198,9 +198,8 @@ class derive_chain:
 
         # Determine user input for the 'functions' parameter
         supported_objects = ['njet.ad.derive', 'njet.extras.derive_chain'] # objects of these kinds will not be instantiated with 'derive'
-        
         self.dfunctions = [f if any([s in f.__repr__() for s in supported_objects]) else derive(f, order=order, **kwargs) for f in functions]
-            
+        
         self.n_functions = len(functions)
         self.ordering = ordering
         self.chain_length = len(ordering)
@@ -213,6 +212,9 @@ class derive_chain:
 
         # For every element in the chain, note a number at which a point
         # passing through the given chain will pass through the element.
+        # So for example, self.path[k] = [j1, j2, j3, ...] means that
+        # the first passage through element k occurs at global position j1,
+        # the second passage through element k occurs at global position j2 etc.
         self.path = {k: [] for k in range(self.n_functions)}
         for j in range(self.chain_length):
             self.path[self.ordering[j]].append(j)
@@ -247,7 +249,7 @@ class derive_chain:
         else:
             # Check the remaining points along the chain
             return all([np.array([self.dfunctions[self.ordering[k]]._input[component_index][self.path[self.ordering[k]].index(k)].array(0) == self._probe_out[k][component_index] for component_index in range(len(self._probe_out[k]))]).all() for k in range(1, self.chain_length)])
-    
+            
     def eval(self, *point, **kwargs):
         '''
         Evaluate the individual (unique) functions in the chain at the requested point.
@@ -271,9 +273,9 @@ class derive_chain:
         evr = [e[0] for e in self.dfunctions[self.ordering[0]]._evaluation] # the start is the derivative of the first element at the point of interest
         self._evaluation_chain = [evr]
         for k in tqdm(range(1, self.chain_length), disable=kwargs.get('disable_tqdm', False)):
-            pos = self.ordering[k]
-            index_passage = self.path[pos].index(k)
-            ev = [j[index_passage] for j in self.dfunctions[pos]._evaluation]
+            func_index = self.ordering[k]
+            index_passage = self.path[func_index].index(k)
+            ev = [j[index_passage] for j in self.dfunctions[func_index]._evaluation]
             evr = general_faa_di_bruno(ev, evr, run_params=(self.factorials, self.run_indices))
             self._evaluation_chain.append(evr)
         self._evaluation = evr
@@ -283,24 +285,31 @@ class derive_chain:
         '''
         Compute the derivatives of the chain of functions at a given point.
         '''
+        # Determine if the keyworded arguments have been changed
+        kwargs_changed = True
+        if hasattr(self, '_call_kwargs'):
+            kwargs_changed = not all(self._call_kwargs.get(key, None) == val for key, val in kwargs.items())
+        if kwargs_changed or not hasattr(self, '_call_kwargs'):
+            self._call_kwargs = kwargs
+            
         # These two keywords are reserved for the get_taylor_coefficients routine and will be removed from the input:
         mult_prm = kwargs.pop('mult_prm', True)
         mult_drv = kwargs.pop('mult_drv', True)
-        
+            
         # Determine if a (re-)evaluation is required
         eval_required = False
-        if hasattr(self, '_call_kwargs'):
-            eval_required = self._call_kwargs != kwargs
-        if not all([hasattr(df, '_evaluation') for df in self.dfunctions]):
-            eval_required = True
-        elif not self._probe_check(*z, **kwargs):
-            eval_required = True
-        self._call_kwargs = kwargs
+        if len(z) > 0:
+            if kwargs_changed:
+                eval_required = True
+            if not all([hasattr(df, '_evaluation') for df in self.dfunctions]):
+                eval_required = True
+            elif not self._probe_check(*z, **kwargs):
+                eval_required = True
         
         # Perform the composition, if necessary
         if eval_required:
             _ = self.eval(*z, **kwargs) # evaluation includes 'self.compose'
-        else:
+        elif not hasattr(self, '_evaluation') or kwargs_changed:
             _ = self.compose(**kwargs)
-            
+
         return get_taylor_coefficients(self._evaluation, n_args=self.dfunctions[0].n_args, mult_prm=mult_prm, mult_drv=mult_drv)
