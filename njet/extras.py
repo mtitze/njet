@@ -1,5 +1,5 @@
 import numpy as np
-from more_itertools import distinct_permutations
+from more_itertools import distinct_permutations, windowed
 from tqdm import tqdm
 
 from . import jet, derive, get_taylor_coefficients
@@ -157,7 +157,7 @@ def general_faa_di_bruno(f, g, run_params=()):
             out[order][k] += symtensor_call([[jg.array(nj)/facts[nj] for jg in g] for nj in e], jfk.array(r).terms)/facts[r]*facts[order]
     return [jet(*[out[k][j] for k in range(max_order + 1)], n=max_order) for j in range(n_dim)]
 
-class derive_chain:
+class dchain:
     '''
     Derive a chain of vector-valued functions with repetitions. 
     The given functions should be unique, while their repetition in the chain
@@ -195,6 +195,11 @@ class derive_chain:
 
         if len(ordering) == 0:
             ordering = list(range(len(functions)))
+            
+        # Check input consistency
+        uord = np.unique(ordering) # np.unique already sorting
+        assert len(uord) == len(functions), 'Number of functions not consistent with the unique items in the ordering.'
+        assert ((uord - np.arange(len(functions))) == 0).all(), 'Ordering malformed.'
 
         # Determine user input for the 'functions' parameter
         supported_objects = ['njet.ad.derive', 'njet.extras.derive_chain'] # objects of these kinds will not be instantiated with 'derive'
@@ -215,9 +220,12 @@ class derive_chain:
         # So for example, self.path[k] = [j1, j2, j3, ...] means that
         # the first passage through element k occurs at global position j1,
         # the second passage through element k occurs at global position j2 etc.
-        self.path = {k: [] for k in range(self.n_functions)}
-        for j in range(self.chain_length):
-            self.path[self.ordering[j]].append(j)
+        if 'path' in kwargs.keys():
+            self.path = kwargs['path']
+        else:
+            self.path = {k: [] for k in range(self.n_functions)}
+            for j in range(self.chain_length):
+                self.path[self.ordering[j]].append(j)
             
     def probe(self, *point, **kwargs):
         '''
@@ -285,17 +293,17 @@ class derive_chain:
         '''
         Compute the derivatives of the chain of functions at a given point.
         '''
+        # These two keywords are reserved for the get_taylor_coefficients routine and will be removed from the input:
+        mult_prm = kwargs.pop('mult_prm', True)
+        mult_drv = kwargs.pop('mult_drv', True)
+        
         # Determine if the keyworded arguments have been changed
         kwargs_changed = True
         if hasattr(self, '_call_kwargs'):
             kwargs_changed = not all(self._call_kwargs.get(key, None) == val for key, val in kwargs.items())
         if kwargs_changed or not hasattr(self, '_call_kwargs'):
             self._call_kwargs = kwargs
-            
-        # These two keywords are reserved for the get_taylor_coefficients routine and will be removed from the input:
-        mult_prm = kwargs.pop('mult_prm', True)
-        mult_drv = kwargs.pop('mult_drv', True)
-            
+                        
         # Determine if a (re-)evaluation is required
         eval_required = False
         if len(z) > 0:
@@ -313,3 +321,135 @@ class derive_chain:
             _ = self.compose(**kwargs)
 
         return get_taylor_coefficients(self._evaluation, n_args=self.dfunctions[0].n_args, mult_prm=mult_prm, mult_drv=mult_drv)
+
+    def merge(self, pattern=(), positions=[], **kwargs):
+        '''
+        Merge one or more sections in the current chain simultaneously.
+
+        If a pattern may occur on several places, an
+        additional parameter 'positions' has to be provided, so that
+        all patterns are non-overlapping.
+        
+        Parameters
+        ----------
+        pattern: tuple, optional
+            Tuple of integers which defines a subsequence in self.ordering.
+            If nothings specified, the entire sequence will be used, and so
+            this routine becomes very similar to self.compose (with the difference that
+            a dchain object will be returned here, instead).
+            
+        positions: list, optional
+            List of integers which defines the start indices of the above pattern in self.ordering.
+            If nothing specified, the first occurence of 'pattern' in self.ordering will be used.
+            
+        **kwargs
+            Optional keyworded arguments passed to the individual derive class(es).
+            
+        Returns
+        -------
+        dchain
+            A dchain object which contains a sequence of 'derive' classes, representing a new chain
+            of functions in which the selected pattern(s) have been merged.
+        '''
+        if len(pattern) == 0:
+            pattern = tuple(self.ordering)
+            
+        size = len(pattern)
+        if len(positions) == 0:
+            pos = 0
+            for window in windowed(self.ordering, size):
+                if window == pattern:
+                    positions = [pos]
+                    break
+                pos += 1
+            if pos == self.chain_length - size + 1:
+                raise RuntimeError('Pattern not found in sequence.')
+            
+        # Input consistency checks
+        ##########################
+        # Sections must not overlap & can be found in the ordering. Evaluation(s) must exist.            
+        n_patterns = len(positions)
+        assert 0 <= min(positions) and max(positions) < self.chain_length - size + 1, 'Pattern positions out of bounds.'
+        for k in range(n_patterns - 1):
+            assert positions[k + 1] - positions[k] >= size, 'Overlapping pattern.'
+            assert all(tuple(self.ordering[pos: pos + size]) == pattern for pos in positions), 'Not all patterns found in sequence.'
+        assert all(hasattr(self.dfunctions[k], '_evaluation') for k in pattern), 'Merging requires function evaluations in advance.'
+
+        # Merge the members of the pattern
+        ##################################
+        passage_indices = [[self.ordering[:pos + k].count(pattern[k]) for k in range(size)] for pos in positions] # The number of passages the functions already had in the chain, before the respective pattern(s).
+        evr = [e[[passage_indices[k][0] for k in range(n_patterns)]] for e in self.dfunctions[pattern[0]]._evaluation] # The start values of the merged element consists of all start values at the various positions of the pattern
+        for k in tqdm(range(1, size), disable=kwargs.get('disable_tqdm', False)):
+            ev = [e[[passage_indices[j][k] for j in range(n_patterns)]] for e in self.dfunctions[pattern[k]]._evaluation] # (**)
+            evr = general_faa_di_bruno(ev, evr, run_params=(self.factorials, self.run_indices))
+
+        # Determine the new ordering & path
+        ###################################
+        # We also need to modify the evaluation results of the other elements in the chain (at (+) below).
+        # This is required, because having merged some of its elements, some evaluations are not valid/required anymore.
+        # For example, if we merge element Z=XYX in a chain of the form AXBXYX, then the element X originally occured 3 times. So any point will pass 3 times through that
+        # chain. However, after merging, that element X will be present only once in the new lattice AXBZ, so only one entry remains.
+
+        # Define a composition function representing the pattern. This is just to be able to construct a 'derive' object from it at (++) (in order to return a derive_chain object overall).
+        # It is not necessary that these dfunctions have a .jetfunc, but if they do, then it should work.
+        def pattern_function(*z, **pkwargs):
+            for k in range(size):
+                f = self.dfunctions[pattern[k]].jetfunc
+                z = f(*z, **pkwargs)
+            return z
+
+        pattern_positions = [r for pos in positions for r in range(pos, pos + size)]
+        mod_original_ordering = [j for j in self.ordering]
+        k = 0
+        new_ordering, new_functions = [], []
+        new_path = {}
+        path_index = 0
+        while k < len(self.ordering):
+            if k in pattern_positions:
+                if k == pattern_positions[0]:
+                    # first occurence
+                    if len(self.ordering[:k]) == 0:
+                        merge_index = 0
+                    else:
+                        merge_index = max(self.ordering[:k]) + 1
+                    mod_original_ordering = self.ordering[:k + size] + [j + 1 if j not in self.ordering[:k + size] else j for j in self.ordering[k + size:]]
+                    new_path[merge_index] = []
+                    # (++) build an object which will store the result in form of a ._evaluation field:
+                    dp = derive(pattern_function, order=self.order, n_args=getattr(self.dfunctions[self.ordering[k]], 'n_args', kwargs.get('n_args', 0)))            
+                    dp._evaluation = evr # Note that 'evr' contains only those points which are passing through the pattern, which is guaranteed at step (**) above.
+                    new_functions.append(dp)
+
+                new_path[merge_index].append(path_index)
+                new_ordering.append(merge_index)
+                k += size
+            else:
+                func_index = mod_original_ordering[k]
+                new_ordering.append(func_index)
+                _ = new_path.setdefault(func_index, [])
+                new_path[func_index].append(path_index)
+
+                if func_index < len(new_functions):
+                    # Then the function was already added to our list and we proceed with the next function
+                    k += 1
+                    path_index += 1
+                    continue
+
+                original_func_index = self.ordering[k]
+                original_func = self.dfunctions[original_func_index]
+
+                if original_func_index in pattern:
+                    # (+) The function 'original_func' is in the pattern, but has not been merged (because it is not covered by a pattern within the sequence).
+                    # In this case we have to remove those points in the function evaluation(s) which belong to passages through the (now merged) pattern(s).
+                    original_func_path = self.path[original_func_index]
+                    evaluation = [e[[j not in pattern_positions for j in original_func_path]] for e in original_func._evaluation]
+                    new_function = original_func.__class__(original_func.jetfunc, n_args=original_func.n_args, order=original_func.order) # initiate (copy) the original function in order to not overwrite its "._evaluation" field.
+                    new_function._evaluation = evaluation
+                else:
+                    new_function = original_func
+
+                new_functions.append(original_func)
+                k += 1
+            path_index += 1
+
+        return self.__class__(functions=new_functions, order=self.order, ordering=new_ordering, run_params=(self.factorials, self.run_indices), path=new_path) # we can also avoid passing path, it will not matter.
+    
