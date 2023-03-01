@@ -171,12 +171,14 @@ class cderive:
         Parameters
         ----------
         functions: callable(s) or 'derive' classes
-            The unique functions in the chain to be derived.
-            Alternatively, one can pass a list of 'derive' objects. 
-            In this second case it will be assumed (by default, see 'probed' parameter below)
-            that the 'derived' classes already contain the jet evaluations
-            for the run. This can be used to avoid re-calculating the derivatives
+            The unique vector-valued*) functions in the chain to be derived.
+            
+            Alternatively, one can pass a list of 'derive' objects, containing
+            vector-valued jet evaluation output. 
+            This second case can be used to avoid re-calculating the derivatives
             in circumstances where it is not required.
+            
+            *) This means that the functions must return iterables in any case.
             
         order: int
             The maximal order of the derivatives to be computed.
@@ -203,7 +205,7 @@ class cderive:
         assert (uord - np.arange(len(functions)) == 0).all(), 'Ordering malformed.'
 
         # Determine user input for the 'functions' parameter
-        supported_objects = ['njet.ad.derive', 'njet.extras.derive_chain'] # objects of these kinds will not be instantiated with 'derive'
+        supported_objects = ['njet.ad.derive', 'njet.extras.cderive'] # objects of these kinds will not be instantiated with 'derive'
         self.dfunctions = [f if any([s in f.__repr__() for s in supported_objects]) else derive(f, order=order, **kwargs) for f in functions]
         
         self.n_functions = len(functions)
@@ -236,7 +238,7 @@ class cderive:
             point = self.dfunctions[self.ordering[k]].jetfunc(*point, **kwargs)
             out.append(point)
         self._output = out
-        return out
+        return point
     
     def _probe(self, *point, **kwargs):
         '''
@@ -248,7 +250,7 @@ class cderive:
             return False
         elif not hasattr(self, '_output'): 
             # Probe the current chain
-            self.jetfunc(*point, **kwargs)
+            _ = self.jetfunc(*point, **kwargs)
             
         if not np.array([point[k] == self.dfunctions[self.ordering[0]]._input[k][0].array(0) for k in range(len(point))]).all():
             # If the input point disagrees with the stored input point, then return false.
@@ -261,8 +263,8 @@ class cderive:
         '''
         Evaluate the individual (unique) functions in the chain at the requested point.
         '''
-        out = self.jetfunc(*point, **kwargs)
-        points_at_functions = [[out[l] for l in range(self.chain_length) if self.ordering[l] == k] for k in range(self.n_functions)]
+        _ = self.jetfunc(*point, **kwargs)
+        points_at_functions = [[self._output[l] for l in range(self.chain_length) if self.ordering[l] == k] for k in range(self.n_functions)]
         # let Q = points_per_function[j], so Q is a list of points which needs to be computed for function j
         # Then the first element in Q is the one which needs to be applied first, etc. (for element j) by this construction.
         for k in tqdm(range(self.n_functions), disable=kwargs.get('disable_tqdm', False)):
@@ -357,14 +359,16 @@ class cderive:
         size = len(pattern)
         assert 2 <= size and size <= self.chain_length
         if len(positions) == 0:
-            pos = 0
+            last_pos = -size
+            k = 0
             for window in windowed(self.ordering, size):
-                if window == pattern:
-                    positions.append(pos)
-                pos += 1
+                if window == pattern and last_pos + size <= k: # second condition ensures non-overlapping
+                    positions.append(k)
+                    last_pos = k
+                k += 1
             if len(positions) == 0:
                 raise RuntimeError('Pattern not found in sequence.')
-        # Sections must not overlap & can be found in the ordering. Evaluation(s) must exist.            
+        # Sections must not overlap & can be found in the ordering. Evaluation(s) must exist.
         n_patterns = len(positions)
         assert 0 <= min(positions) and max(positions) < self.chain_length - size + 1, 'Pattern positions out of bounds.'
         for k in range(n_patterns - 1):
