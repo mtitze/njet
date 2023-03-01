@@ -166,7 +166,7 @@ class cderive:
     performance than deriving the entire chain of functions
     with the default 'derive' method.
     '''
-    def __init__(self, functions, order: int, ordering=[], run_params=(), **kwargs):
+    def __init__(self, functions, order: int, ordering=None, run_params=(), **kwargs):
         '''
         Parameters
         ----------
@@ -196,7 +196,7 @@ class cderive:
             Optional keyworded arguments passed to njet.ad.derive init.
         '''
 
-        if len(ordering) == 0:
+        if ordering is None:
             ordering = list(range(len(functions)))
             
         # Check input consistency
@@ -279,6 +279,7 @@ class cderive:
         '''
         Compose the given derivatives for the entire chain.      
         '''
+        assert all(hasattr(f, '_evaluation') for f in self.dfunctions), 'Composition requires function evaluations in advance.'
         evr = [e[0] for e in self.dfunctions[self.ordering[0]]._evaluation] # the start is the derivative of the first element at the point of interest
         self._evaluation_chain = [evr]
         for k in tqdm(range(1, self.chain_length), disable=kwargs.get('disable_tqdm', False)):
@@ -323,7 +324,7 @@ class cderive:
 
         return get_taylor_coefficients(self._evaluation, n_args=self.dfunctions[0].n_args, mult_prm=mult_prm, mult_drv=mult_drv)
 
-    def merge(self, pattern=(), positions=[], **kwargs):
+    def merge(self, pattern=(), positions=None, **kwargs):
         '''
         Merge one or more sections in the current chain simultaneously.
 
@@ -343,6 +344,9 @@ class cderive:
             List of integers which defines the start indices of the above pattern in self.ordering.
             If nothing specified, every occurence of 'pattern' in self.ordering will be used.
             
+            In any case, only the members of 'pattern' are merged internally, so the number
+            of occurences of that pattern should not affect the computational cost.
+            
         **kwargs
             Optional keyworded arguments passed to the individual derive class(es).
             
@@ -358,7 +362,8 @@ class cderive:
             pattern = tuple(self.ordering)
         size = len(pattern)
         assert 2 <= size and size <= self.chain_length
-        if len(positions) == 0:
+        if positions is None:
+            positions = []
             last_pos = -size
             k = 0
             for window in windowed(self.ordering, size):
@@ -375,6 +380,8 @@ class cderive:
             assert positions[k + 1] - positions[k] >= size, 'Overlapping pattern.'
         assert all(tuple(self.ordering[pos: pos + size]) == pattern for pos in positions), 'Not all patterns found in sequence.'
         assert all(hasattr(self.dfunctions[k], '_evaluation') for k in pattern), 'Merging requires function evaluations in advance.'
+        self._merge_pattern = pattern
+        self._merge_positions = positions
 
         # Merge the members of the pattern
         ##################################
