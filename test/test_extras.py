@@ -108,11 +108,11 @@ def test_cderive(pattern, ordering, point=point, tolerances=tolerances, order=3)
     gl = [g1, g2, g3, g4, g5]
     hl = [h1, h2, h3, h4, h5]
 
-    def opk(*z, f=[], g=[], h=[], **kwargs):
+    def opk(*z, f=[], g=[], h=[]):
         return [f[0]*z[0]**3 + f[1]*z[0]**2 + f[2]*z[0] + g[0]*z[1]**3 + \
                 g[1]*z[1]**2 + g[2]*z[1], h[0]*z[0] + h[1]*z[1]]
     
-    opchain = [lambda *z, k=k, **kwargs: opk(*z, f=fl[k], g=gl[k], h=hl[k]) for k in range(5)] # k=k because of Python's late bindings, see https://stackoverflow.com/questions/49617380/list-comprehension-with-lambda-function
+    opchain = [lambda *z, k=k: opk(*z, f=fl[k], g=gl[k], h=hl[k]) for k in range(5)] # k=k because of Python's late bindings, see https://stackoverflow.com/questions/49617380/list-comprehension-with-lambda-function
     
     dopchain = cderive(functions=opchain, ordering=ordering, order=order, n_args=2)
     

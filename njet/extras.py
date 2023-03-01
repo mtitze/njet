@@ -170,8 +170,9 @@ class cderive:
         '''
         Parameters
         ----------
-        functions: callable(s) or 'derive' classes
-            The unique vector-valued*) functions in the chain to be derived.
+        functions: list
+            A list of callable(s) or 'derive' classes related to the
+            unique vector-valued*) functions in the chain to be derived.
             
             Alternatively, one can pass a list of 'derive' objects, containing
             vector-valued jet evaluation output. 
@@ -272,7 +273,7 @@ class cderive:
             n_args_function = self.dfunctions[k].n_args
             points_at_function = points_at_functions[k]
             components = [np.array([points_at_function[j][l] for j in range(len(points_at_function))], dtype=np.complex128) for l in range(n_args_function)]
-            _ = self.dfunctions[k].eval(*components, order=self.order, n_args=n_args_function, **kwargs)
+            _ = self.dfunctions[k].eval(*components, **kwargs)
         return self.compose(**kwargs)
     
     def compose(self, **kwargs):
