@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from njet import derive
+from njet.functions import cos, sin
 from njet.extras import general_faa_di_bruno, symtensor_call, cderive
 
 def test_symtensor_call():
@@ -61,6 +62,50 @@ def test_general_faa_di_bruno():
             assert check < tolerances[k][j]
             j += 1
     
+@pytest.mark.parametrize("x, y", [(0, 0), (0.56, 0.67)])
+def test_cderive1(x, y, phi=0.224*np.pi, n_reps: int=5, tol=1e-15):
+    '''
+    Test the derivatives of the 'n_reps'-times composition of a rotation,
+    where the rotation takes an additional parameter (the rotation angle).
+    '''
+    assert n_reps >= 2
+    ordering = [0]*n_reps
+    rot = lambda *z, alpha=0: [cos(alpha)*z[0] - sin(alpha)*z[1], sin(alpha)*z[0] + cos(alpha)*z[1]]
+    
+    dcrot = cderive(functions=[rot], ordering=ordering, order=1, n_args=2)
+    dref = derive(dcrot.jetfunc, order=1, n_args=2)
+    ref = dref(x, y, alpha=phi/len(ordering))
+    
+    drot_phi = dcrot(x, y, alpha=phi/len(ordering))
+    ref0 = rot(x, y, alpha=phi)
+    refx = rot(1, 0, alpha=phi)
+    refy = rot(0, 1, alpha=phi)
+    
+    # consistency checks
+    if (0, 0) in drot_phi[0].keys():
+        assert abs(drot_phi[0][0, 0] - ref0[0]) < tol
+    if (0, 0) in drot_phi[1].keys():
+        assert abs(drot_phi[1][0, 0] - ref0[1]) < tol
+        
+    assert abs(drot_phi[0][1, 0] - refx[0]) < tol # the derivative of the first component of rot in x-direction (== rotation x-component [0] in x-direction)
+    assert abs(drot_phi[0][0, 1] - refy[0]) < tol # the derivative of the first component of rot in y-direction (== rotation x-component [0] in y-direction)
+
+    assert abs(drot_phi[1][1, 0] - refx[1]) < tol # the derivative of the second component of rot in x-direction (== rotation y-component [1] in x-direction)
+    assert abs(drot_phi[1][0, 1] - refy[1]) < tol # the derivative of the second component of rot in y-direction (== rotation y-component [1] in y-direction)
+    
+    dcrotm = dcrot.merge((0, 0), positions=[0, 3])
+    result1 = dcrotm(x, y, alpha=phi/len(ordering))
+    
+    dcrotm_all = dcrot.merge()
+    result2 = dcrotm_all(x, y, alpha=phi/len(ordering))
+    
+    dcrotm2 = dcrotm.merge()
+    result3 = dcrotm2(x, y, alpha=phi/len(ordering))
+    
+    for result in [drot_phi, result1, result2, result3]:
+        for k in range(2):
+            assert all([abs(ref[k][key] - result[k][key]) < tol for key in ref[k].keys()])
+
     
 ordering1 = [0, 1, 2, 3, 2, 1, 2, 4, 2, 1, 2, 4, 2, 1, 0]
 pattern1_1 = (0, 1)
@@ -81,7 +126,7 @@ tolerances = {(0, 0): 1e-15, (1, 0): 5e-15, (0, 1): 1e-15, (0, 2): 5e-15, (2, 0)
 @pytest.mark.parametrize("pattern, ordering", [(pattern1_1, ordering1), (pattern1_2, ordering1), (pattern1_3, ordering1), 
                                                (pattern1_4, ordering1), (pattern2_1, ordering2), (pattern2_2, ordering2),
                                                (pattern2_3, ordering2)])
-def test_cderive(pattern, ordering, point=point, tolerances=tolerances, order=3):
+def test_cderive2(pattern, ordering, point=point, tolerances=tolerances, order=3):
         
     # Define a chain of vector-valued functions
     f1 = [-0.41210319-0.93736294*1j, -0.12546181+0.99583435*1j, -0.05060304+0.72636541*1j, -0.57277969+0.7030248*1j]

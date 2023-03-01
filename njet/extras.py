@@ -166,7 +166,7 @@ class cderive:
     performance than deriving the entire chain of functions
     with the default 'derive' method.
     '''
-    def __init__(self, functions, order: int, ordering=None, run_params=(), **kwargs):
+    def __init__(self, functions, order: int=1, ordering=None, run_params=(), **kwargs):
         '''
         Parameters
         ----------
