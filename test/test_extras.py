@@ -62,7 +62,7 @@ def test_general_faa_di_bruno():
             assert check < tolerances[k][j]
             j += 1
     
-@pytest.mark.parametrize("x, y", [(0, 0), (0.56, 0.67)])
+@pytest.mark.parametrize("x, y", [(0, 0), (0.56, 0.67), (np.array([0.1, -0.2]), np.array([0.526, 1.84]))])
 def test_cderive1(x, y, phi=0.224*np.pi, n_reps: int=5, tol=1e-15):
     '''
     Test the derivatives of the 'n_reps'-times composition of a rotation,
@@ -83,15 +83,15 @@ def test_cderive1(x, y, phi=0.224*np.pi, n_reps: int=5, tol=1e-15):
     
     # consistency checks
     if (0, 0) in drot_phi[0].keys():
-        assert abs(drot_phi[0][0, 0] - ref0[0]) < tol
+        assert (np.abs(drot_phi[0][0, 0] - ref0[0]) < tol).all()
     if (0, 0) in drot_phi[1].keys():
-        assert abs(drot_phi[1][0, 0] - ref0[1]) < tol
+        assert (np.abs(drot_phi[1][0, 0] - ref0[1]) < tol).all()
         
-    assert abs(drot_phi[0][1, 0] - refx[0]) < tol # the derivative of the first component of rot in x-direction (== rotation x-component [0] in x-direction)
-    assert abs(drot_phi[0][0, 1] - refy[0]) < tol # the derivative of the first component of rot in y-direction (== rotation x-component [0] in y-direction)
+    assert (np.abs(drot_phi[0][1, 0] - refx[0]) < tol).all() # the derivative of the first component of rot in x-direction (== rotation x-component [0] in x-direction)
+    assert (np.abs(drot_phi[0][0, 1] - refy[0]) < tol).all() # the derivative of the first component of rot in y-direction (== rotation x-component [0] in y-direction)
 
-    assert abs(drot_phi[1][1, 0] - refx[1]) < tol # the derivative of the second component of rot in x-direction (== rotation y-component [1] in x-direction)
-    assert abs(drot_phi[1][0, 1] - refy[1]) < tol # the derivative of the second component of rot in y-direction (== rotation y-component [1] in y-direction)
+    assert (np.abs(drot_phi[1][1, 0] - refx[1]) < tol).all() # the derivative of the second component of rot in x-direction (== rotation y-component [1] in x-direction)
+    assert (np.abs(drot_phi[1][0, 1] - refy[1]) < tol).all() # the derivative of the second component of rot in y-direction (== rotation y-component [1] in y-direction)
     
     dcrotm = dcrot.merge((0, 0), positions=[0, 3])
     result1 = dcrotm(x, y, alpha=phi/len(ordering))
@@ -104,7 +104,7 @@ def test_cderive1(x, y, phi=0.224*np.pi, n_reps: int=5, tol=1e-15):
     
     for result in [drot_phi, result1, result2, result3]:
         for k in range(2):
-            assert all([abs(ref[k][key] - result[k][key]) < tol for key in ref[k].keys()])
+            assert all([(np.abs(ref[k][key] - result[k][key]) < tol).all() for key in ref[k].keys()])
 
     
 ordering1 = [0, 1, 2, 3, 2, 1, 2, 4, 2, 1, 2, 4, 2, 1, 0]
