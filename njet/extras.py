@@ -158,7 +158,7 @@ def general_faa_di_bruno(f, g, run_params=()):
     return [jet(*[out[k][j] for k in range(max_order + 1)], n=max_order) for j in range(n_dim)]
 
 
-class dchain:
+class cderive:
     '''
     Derive a chain of vector-valued functions with repetitions. 
     The given functions should be unique, while their repetition in the chain
@@ -335,7 +335,7 @@ class dchain:
             Tuple of integers which defines a subsequence in self.ordering.
             If nothings specified, the entire sequence will be used, and so
             this routine becomes very similar to self.compose (with the difference that
-            a dchain object will be returned here, instead).
+            a cderive object will be returned here, instead).
             
         positions: list, optional
             List of integers which defines the start indices of the above pattern in self.ordering.
@@ -346,8 +346,8 @@ class dchain:
             
         Returns
         -------
-        dchain
-            A dchain object which contains a sequence of 'derive' classes, representing a new chain
+        cderive
+            A cderive object which contains a sequence of 'derive' classes, representing a new chain
             of functions in which the selected pattern(s) have been merged.
         '''
         # Input handling and consistency checks
