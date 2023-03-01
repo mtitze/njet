@@ -402,24 +402,18 @@ class cderive:
         ordering_w_placeholder = [self.ordering[j] if j not in pattern_positions else placeholder for j in range(self.chain_length)]
         k = 0
         new_functions = []
+        unique_function_indices = [] # to ensure that we pic only the unique functions in the chain
         while k < self.chain_length:
             no = ordering_w_placeholder[k]
             if no == placeholder:
                 if k == positions[0]: # first occurence of the pattern
                     new_functions.append(dp)
+                    unique_function_indices.append(placeholder)
                 k += size
             else:
                 func_index = ordering_w_placeholder[k]
                 
-                if k > pattern_positions[0]:
-                    # The function representing the pattern has been added to new_functions,
-                    # but func_index comes from the original ordering so we have to subtract 1.
-                    function_in_list = func_index < len(new_functions) - 1
-                else:
-                    function_in_list = func_index < len(new_functions)
-                    
-                if function_in_list:
-                    # Then the function was already added to our list and we proceed with the next function
+                if func_index in unique_function_indices:
                     k += 1
                     continue
 
@@ -435,6 +429,7 @@ class cderive:
                     new_func = func
 
                 new_functions.append(new_func)
+                unique_function_indices.append(func_index)
                 k += 1
                 
         # remove the chain of placeholders in the new_ordering & recalculate the ordering
