@@ -339,7 +339,7 @@ class cderive:
             
         positions: list, optional
             List of integers which defines the start indices of the above pattern in self.ordering.
-            If nothing specified, the first occurence of 'pattern' in self.ordering will be used.
+            If nothing specified, every occurence of 'pattern' in self.ordering will be used.
             
         **kwargs
             Optional keyworded arguments passed to the individual derive class(es).
@@ -360,10 +360,9 @@ class cderive:
             pos = 0
             for window in windowed(self.ordering, size):
                 if window == pattern:
-                    positions = [pos]
-                    break
+                    positions.append(pos)
                 pos += 1
-            if pos == self.chain_length - size + 1:
+            if len(positions) == 0:
                 raise RuntimeError('Pattern not found in sequence.')
         # Sections must not overlap & can be found in the ordering. Evaluation(s) must exist.            
         n_patterns = len(positions)
