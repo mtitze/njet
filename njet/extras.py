@@ -388,34 +388,32 @@ class cderive:
         # For example, if we merge element Z=XYX in a chain of the form AXBXYX, then the element X originally occured 3 times. So any point will pass 3 times through that
         # chain. However, after merging, that element X will be present only once in the new lattice AXBZ, so only one entry remains.
 
-        # Define a composition function representing the pattern. This is just to be able to construct a 'derive' object from it at (++) (in order to return a derive_chain object overall).
-        # It is not necessary that these dfunctions have a .jetfunc, but if they do, then it should work.
+        # Define a composition function representing the pattern.
         def pattern_function(*z, **pkwargs):
             for k in range(size):
                 f = self.dfunctions[pattern[k]].jetfunc
                 z = f(*z, **pkwargs)
             return z
+        dp = derive(pattern_function, order=self.order, n_args=getattr(self.dfunctions[self.ordering[k]], 'n_args', kwargs.get('n_args', 0)))            
+        dp._evaluation = evr # Note that 'evr' contains only those points which are passing through the pattern, which is guaranteed at step (**) above.
                 
         pattern_positions = [r for pos in positions for r in range(pos, pos + size)]
         placeholder = -1
-        new_ordering = [self.ordering[j] if j not in pattern_positions else placeholder for j in range(self.chain_length)]
+        ordering_w_placeholder = [self.ordering[j] if j not in pattern_positions else placeholder for j in range(self.chain_length)]
         k = 0
         new_functions = []
         while k < self.chain_length:
-            no = new_ordering[k]
+            no = ordering_w_placeholder[k]
             if no == placeholder:
-                if k == pattern_positions[0]:
-                    # first occurence
-                    # (++) build an object which will store the result in form of a ._evaluation field:
-                    dp = derive(pattern_function, order=self.order, n_args=getattr(self.dfunctions[self.ordering[k]], 'n_args', kwargs.get('n_args', 0)))            
-                    dp._evaluation = evr # Note that 'evr' contains only those points which are passing through the pattern, which is guaranteed at step (**) above.
+                if k == positions[0]: # first occurence of the pattern
                     new_functions.append(dp)
                 k += size
             else:
-                func_index = new_ordering[k]
-
+                func_index = ordering_w_placeholder[k]
+                
                 if k > pattern_positions[0]:
-                    # 
+                    # The function representing the pattern has been added to new_functions,
+                    # but func_index comes from the original ordering so we have to subtract 1.
                     function_in_list = func_index < len(new_functions) - 1
                 else:
                     function_in_list = func_index < len(new_functions)
@@ -440,16 +438,16 @@ class cderive:
                 k += 1
                 
         # remove the chain of placeholders in the new_ordering & recalculate the ordering
-        new_ordering2 = []
+        new_ordering = []
         j = 0
         while j < self.chain_length:
-            if new_ordering[j] == placeholder:
-                new_ordering2.append(placeholder)
+            if ordering_w_placeholder[j] == placeholder:
+                new_ordering.append(placeholder)
                 j += size
             else:
-                new_ordering2.append(new_ordering[j])
+                new_ordering.append(ordering_w_placeholder[j])
                 j += 1
-        new_ordering = _get_ordering(new_ordering2)
+        new_ordering = _get_ordering(new_ordering)
         
         return self.__class__(functions=new_functions, order=self.order, ordering=new_ordering, run_params=(self.factorials, self.run_indices))
     
