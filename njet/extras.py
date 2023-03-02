@@ -194,34 +194,40 @@ class cderive:
             Optional keyworded arguments passed to njet.ad.derive init.
         '''
 
-        if ordering is None:
-            ordering = list(range(len(functions)))
-            
-        # Check input consistency
-        uord = np.unique(ordering) # np.unique already sorting
-        assert len(uord) == len(functions), 'Number of functions not consistent with the unique items in the ordering.'
-        assert (uord - np.arange(len(functions)) == 0).all(), 'Ordering malformed.'
-
         # Determine user input for the 'functions' parameter
         supported_objects = ['njet.ad.derive', 'njet.extras.cderive'] # objects of these kinds will not be instantiated with 'derive'
         self.dfunctions = [f if any([s in f.__repr__() for s in supported_objects]) else derive(f, order=order, **kwargs) for f in functions]
         
-        self.n_functions = len(functions)
-        self.ordering = [k for k in ordering] # copy to prevent modification of input somewhere else
-        self.chain_length = len(ordering)
+        self.n_functions = len(self.dfunctions)
         self.order = order
         
         if len(run_params) == 0:
             run_params = _make_run_params(order)
         self.run_params = run_params
+        
+        self.set_ordering(ordering=ordering)
 
+    def set_ordering(self, ordering=None):
+        '''
+        Set the ordering of the current chain. Also compute the number of passages expected through
+        each element according to the ordering.
+        '''
+        if ordering is None:
+            ordering = list(range(self.n_functions))
+            
+        # Check input consistency
+        uord = np.unique(ordering) # np.unique already sorting
+        assert len(uord) == self.n_functions, 'Number of functions not consistent with the unique items in the ordering.'
+        assert (uord - np.arange(self.n_functions) == 0).all(), 'Ordering malformed.'
+
+        self.ordering = [k for k in ordering] # copy to prevent modification of input somewhere else
         # For every element in the chain, note a number at which a point
         # passing through the given chain will pass through the element.
         # So for example, self.path[k] = [j1, j2, j3, ...] means that
         # the first passage through element k occurs at global position j1,
         # the second passage through element k occurs at global position j2 etc.
         self.path = {k: [] for k in range(self.n_functions)}
-        for j in range(self.chain_length):
+        for j in range(len(self)):
             self.path[self.ordering[j]].append(j)
             
     def jetfunc(self, *point, **kwargs):
@@ -231,7 +237,7 @@ class cderive:
         '''
         self._input = point
         out = [point]
-        for k in range(self.chain_length):
+        for k in range(len(self)):
             point = self.dfunctions[self.ordering[k]].jetfunc(*point, **kwargs)
             out.append(point)
         self._output = out
@@ -254,14 +260,14 @@ class cderive:
             return False
         else:
             # Check the remaining points along the chain
-            return all([np.array([self.dfunctions[self.ordering[k]]._input[component_index][self.path[self.ordering[k]].index(k)].array(0) == self._output[k][component_index] for component_index in range(len(self._output[k]))]).all() for k in range(1, self.chain_length)])
+            return all([np.array([self.dfunctions[self.ordering[k]]._input[component_index][self.path[self.ordering[k]].index(k)].array(0) == self._output[k][component_index] for component_index in range(len(self._output[k]))]).all() for k in range(1, len(self))])
             
     def eval(self, *point, **kwargs):
         '''
         Evaluate the individual (unique) functions in the chain at the requested point.
         '''
         _ = self.jetfunc(*point, **kwargs)
-        points_at_functions = [[self._output[l] for l in range(self.chain_length) if self.ordering[l] == k] for k in range(self.n_functions)]
+        points_at_functions = [[self._output[l] for l in range(len(self)) if self.ordering[l] == k] for k in range(self.n_functions)]
         # let Q = points_per_function[j], so Q is a list of points which needs to be computed for function j
         # Then the first element in Q is the one which needs to be applied first, etc. (for element j) by this construction.
         
@@ -280,7 +286,7 @@ class cderive:
         assert all(hasattr(f, '_evaluation') for f in self.dfunctions), 'Composition requires function evaluations in advance.'
         evr = [e[0] for e in self.dfunctions[self.ordering[0]]._evaluation] # the start is the derivative of the first element at the point of interest
         self._evaluation_chain = [evr]
-        for k in tqdm(range(1, self.chain_length), disable=kwargs.get('disable_tqdm', False)):
+        for k in tqdm(range(1, len(self)), disable=kwargs.get('disable_tqdm', False)):
             func_index = self.ordering[k]
             index_passage = self.path[func_index].index(k)
             ev = [j[index_passage] for j in self.dfunctions[func_index]._evaluation]
@@ -359,7 +365,7 @@ class cderive:
         if len(pattern) == 0:
             pattern = tuple(self.ordering)
         size = len(pattern)
-        assert 2 <= size and size <= self.chain_length
+        assert 2 <= size and size <= len(self)
         if positions is None:
             positions = []
             last_pos = -size
@@ -373,7 +379,7 @@ class cderive:
                 raise RuntimeError('Pattern not found in sequence.')
         # Sections must not overlap & can be found in the ordering. Evaluation(s) must exist.
         n_patterns = len(positions)
-        assert 0 <= min(positions) and max(positions) < self.chain_length - size + 1, 'Pattern positions out of bounds.'
+        assert 0 <= min(positions) and max(positions) < len(self) - size + 1, 'Pattern positions out of bounds.'
         for k in range(n_patterns - 1):
             assert positions[k + 1] - positions[k] >= size, 'Overlapping pattern.'
         assert all(tuple(self.ordering[pos: pos + size]) == pattern for pos in positions), 'Not all patterns found in sequence.'
@@ -407,11 +413,11 @@ class cderive:
                 
         pattern_positions = [r for pos in positions for r in range(pos, pos + size)]
         placeholder = -1
-        ordering_w_placeholder = [self.ordering[j] if j not in pattern_positions else placeholder for j in range(self.chain_length)]
+        ordering_w_placeholder = [self.ordering[j] if j not in pattern_positions else placeholder for j in range(len(self))]
         k = 0
         new_functions = []
         unique_function_indices = [] # to ensure that we pic only the unique functions in the chain
-        while k < self.chain_length:
+        while k < len(self):
             no = ordering_w_placeholder[k]
             if no == placeholder:
                 if k == positions[0]: # first occurence of the pattern
@@ -443,7 +449,7 @@ class cderive:
         # remove the chain of placeholders in the new_ordering & recalculate the ordering
         new_ordering = []
         j = 0
-        while j < self.chain_length:
+        while j < len(self):
             if ordering_w_placeholder[j] == placeholder:
                 new_ordering.append(placeholder)
                 j += size
@@ -463,18 +469,18 @@ class cderive:
         Otherwise, return the sequence of elements in the given chain.
         '''
         if type(key) == list:
-            requested_ele_indices = [self.ordering[e] for e in key]
+            requested_func_indices = [self.ordering[e] for e in key]
         else:
-            requested_ele_indices = self.ordering[key]
+            requested_func_indices = self.ordering[key]
             
-        if type(requested_ele_indices) != list:
-            return self.dfunctions[requested_ele_indices]
+        if type(requested_func_indices) != list:
+            return self.dfunctions[requested_func_indices]
         else:
-            requested_unique_ele_indices = list(np.unique(requested_ele_indices))
+            requested_unique_ele_indices = list(np.unique(requested_func_indices))
             requested_eles = [self.dfunctions[e] for e in requested_unique_ele_indices]
-            new_ordering = [requested_unique_ele_indices.index(e) for e in requested_ele_indices] # starts from zero up to length of the unique (new) elements
+            new_ordering = [requested_unique_ele_indices.index(e) for e in requested_func_indices] # starts from zero up to length of the unique (new) elements
             return self.__class__(*requested_eles, ordering=new_ordering, order=self.order, run_params=self.run_params)
-    
+            
     def __iter__(self):
         self._k = 0
         return self
