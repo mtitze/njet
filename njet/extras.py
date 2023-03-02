@@ -473,10 +473,22 @@ class cderive:
         '''
         If a list is provided, return an object of type(self).
         Otherwise, return the individual derive/cderive object.
+        
+        Attention: There is only support for strict monotoneous increasing lists, as
+                   the individual jet-evaluations may become invalid
+                   if the order is permuted.
         '''
-        # N.B. attention: No arbitrary orderings can be returned, that's why
-        # there is no support for lists etc.
-        requested_func_indices = self.ordering[key]
+        if type(key) == list:
+            requested_func_indices = [self.ordering[e] for e in key]
+            requested_positions = key
+            if len(key) > 1:
+                # If the order has been changed, this may lead to wrong evaluations (they do not 'commute')
+                # in this case we shall raise a warning. We shall check this here:
+                if not all(i + 1 == j for i, j in zip(key, key[1:])):
+                    raise RuntimeError('Requested slice needs to be strictly increasing without any gaps.')        
+        else:
+            requested_func_indices = self.ordering[key]
+            requested_positions = range(len(self))[key]
             
         if type(requested_func_indices) != list:
             return self.dfunctions[requested_func_indices]
@@ -486,7 +498,6 @@ class cderive:
             
             # Since we are going to return a cderive object, we remove any evaluation
             # points which belong to elements which are not present in the new chain
-            requested_positions = range(len(self))[key]
             for k in range(len(requested_funcs)):
                 rf = requested_funcs[k]
                 if not hasattr(rf, '_evaluation'):
