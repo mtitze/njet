@@ -1,6 +1,7 @@
 import numpy as np
 from more_itertools import distinct_permutations, windowed
 from tqdm import tqdm
+from copy import copy
 
 from . import jet, derive, get_taylor_coefficients
 from .common import factorials
@@ -176,6 +177,11 @@ class cderive:
             This second case can be used to avoid re-calculating the derivatives
             in circumstances where it is not required.
             
+            Attention:
+            By default, the first function is assumed to be executed first, in contrast
+            to the mathematical notation. This can be changed by passing
+            an 'ordering' argument (see below).
+            
             *) This means that the functions must return iterables in any case.
             
         order: int
@@ -183,7 +189,8 @@ class cderive:
             
         ordering: list
             The order defining how the unique functions are arranged in the chain.
-            Hereby the index j must refer to the function at position j in the list.
+            Hereby the index j must refer to the function at position j in the sequence
+            of functions. The first object 
             
         run_params: dict, optional
             A dictionary containing the output of njet.extras._make_run_params. These parameters
@@ -217,8 +224,7 @@ class cderive:
             
         # Check input consistency
         uord = np.unique(ordering) # np.unique already sorting
-        assert len(uord) == self.n_functions, 'Number of functions not consistent with the unique items in the ordering.'
-        assert (uord - np.arange(self.n_functions) == 0).all(), 'Ordering malformed.'
+        assert len(uord) == self.n_functions and uord[0] == 0, 'Number of functions not consistent with the unique items in the ordering.'
 
         self.ordering = [k for k in ordering] # copy to prevent modification of input somewhere else
         # For every element in the chain, note a number at which a point
@@ -226,7 +232,7 @@ class cderive:
         # So for example, self.path[k] = [j1, j2, j3, ...] means that
         # the first passage through element k occurs at global position j1,
         # the second passage through element k occurs at global position j2 etc.
-        self.path = {k: [] for k in range(self.n_functions)}
+        self.path = {k: [] for k in uord}
         for j in range(len(self)):
             self.path[self.ordering[j]].append(j)
             
@@ -476,19 +482,31 @@ class cderive:
         if type(requested_func_indices) != list:
             return self.dfunctions[requested_func_indices]
         else:
-            requested_unique_ele_indices = list(np.unique(requested_func_indices))
-            requested_eles = [self.dfunctions[e] for e in requested_unique_ele_indices]
-            new_ordering = [requested_unique_ele_indices.index(e) for e in requested_func_indices] # starts from zero up to length of the unique (new) elements
-            return self.__class__(*requested_eles, ordering=new_ordering, order=self.order, run_params=self.run_params)
+            requested_unique_func_indices = list(np.unique(requested_func_indices))
+            requested_funcs = [copy(self.dfunctions[e]) for e in requested_unique_func_indices]
+            
+            # Since we are going to return a cderive object, we remove any evaluation
+            # points which belong to elements which are not present in the new chain
+            for k in range(len(requested_funcs)):
+                rf = requested_funcs[k]
+                if not hasattr(rf, '_evaluation'):
+                    continue
+                findex = requested_unique_func_indices[k]
+                func_path = self.path[findex]
+                evaluation = [e[[j in requested_func_indices for j in func_path]] for e in rf._evaluation]
+                rf._evaluation = evaluation # n.b. object was copied, so no danger to overwrite one of its fields
+            
+            new_ordering = [requested_unique_func_indices.index(e) for e in requested_func_indices] # starts from zero up to length of the unique (new) elements
+            return self.__class__(*requested_funcs, ordering=new_ordering, order=self.order, run_params=self.run_params)
             
     def __iter__(self):
-        self._k = 0
+        self._iterpointer = 0
         return self
             
     def __next__(self):
-        if self._k < len(self):
-            self._k += 1
-            return self.dfunctions[self.ordering[self._k - 1]]
+        if self._iterpointer < len(self):
+            self._iterpointer += 1
+            return self.dfunctions[self.ordering[self._iterpointer - 1]]
         else:
             raise StopIteration
             

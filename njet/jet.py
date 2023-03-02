@@ -215,7 +215,7 @@ class jet:
     
     def copy(self):
         '''
-        Return a copy of this jet.
+        Return a (shallow) copy of this jet.
         '''
         result = self.__class__(n=self.order, graph=self.graph)
         result.array = self.array
