@@ -14,6 +14,7 @@ Latest version: |release|
 
    ad.rst
    jet.rst
+   extras.rst
    functions.rst
    poly.rst
    common.rst

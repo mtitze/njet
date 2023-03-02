@@ -104,7 +104,7 @@ There is also NumPy support:
 Two jets can also be composed together, to represent the derivative of a composition function. If ``F`` represents the values [f o g, f^1 o g, f^2 o g, ... ],
 where f^k denote the k-th derivative of a function f, and ``G`` represents
 the values [g, g^1, g^2, ...], then ``F@G`` will compute the values
-[f o g, (f o g)^1, (f o g)^2, ...].
+[f o g, (f o g)^1, (f o g)^2, ...] according to Faa di Bruno's formula (here for single-valued functions).
 
 In the following we list some functions of the jet class.
 

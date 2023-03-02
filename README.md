@@ -9,6 +9,7 @@ higher-order derivatives of a given function in several variables.
 - Support for NumPy, SymPy and mpmath.
 - Differentiation of expressions containing nested higher-order derivatives.
 - Complex differentiation (Wirtinger calculus) possible.
+- Faa di Bruno's formula for vector-valued functions implemented.
 - Lightweight and easy to use.
 
 ## Installation
