@@ -72,7 +72,7 @@ def test_cderive1(x, y, phi=0.224*np.pi, n_reps: int=5, tol=1e-15):
     ordering = [0]*n_reps
     rot = lambda *z, alpha=0: [cos(alpha)*z[0] - sin(alpha)*z[1], sin(alpha)*z[0] + cos(alpha)*z[1]]
     
-    dcrot = cderive(functions=[rot], ordering=ordering, order=1, n_args=2)
+    dcrot = cderive(rot, ordering=ordering, order=1, n_args=2)
     dref = derive(dcrot.jetfunc, order=1, n_args=2)
     ref = dref(x, y, alpha=phi/len(ordering))
     
@@ -159,7 +159,7 @@ def test_cderive2(pattern, ordering, point=point, tolerances=tolerances, order=3
     
     opchain = [lambda *z, k=k: opk(*z, f=fl[k], g=gl[k], h=hl[k]) for k in range(5)] # k=k because of Python's late bindings, see https://stackoverflow.com/questions/49617380/list-comprehension-with-lambda-function
     
-    dopchain = cderive(functions=opchain, ordering=ordering, order=order, n_args=2)
+    dopchain = cderive(*opchain, ordering=ordering, order=order, n_args=2)
     
     cref = derive(dopchain.jetfunc, order=order, n_args=2)
     ref = cref(*point)#, disable_tqdm=disable_tqdm)

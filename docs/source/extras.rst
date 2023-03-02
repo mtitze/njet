@@ -59,11 +59,8 @@ Define two vector-valued functions and compute their jet evaluation at a specifi
 
 .. code-block:: python
 
-    def f(*x):
-        return [x[0]**2 - (x[1] + 10 - 0.5*1j)**(-1) + x[2]*x[0], 1 + x[0]**2*x[1] + x[1]**3, x[2]]
-
-    def g(*x):
-        return [(x[0] + x[1]*x[2]*(0.9*1j + 0.56) + 1)**(-3), 2*x[1]*4j + 5, x[0]*x[1]**6]
+    f = lambda *x: [x[0]**2 - (x[1] + 10 - 0.5*1j)**(-1) + x[2]*x[0], 1 + x[0]**2*x[1] + x[1]**3, x[2]]
+    g = lambda *x: [(x[0] + x[1]*x[2]*(0.9*1j + 0.56) + 1)**(-3), 2*x[1]*4j + 5, x[0]*x[1]**6]
         
     from njet import derive
     
@@ -109,7 +106,7 @@ conventional approach we would have to derive the composition function:
 
 .. code-block:: python
 
-    dfg = derive(lambda *z: f(*g(*z)), order=3, n_args=3)
+    dfg = derive(lambda *x: f(*g(*x)), order=3, n_args=3)
     ref = dfg(*z)
     ref[0]
   > {(0, 0, 0): (-0.032316721543419864+0.07248263230025642j),

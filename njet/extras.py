@@ -101,9 +101,9 @@ def _make_run_params(max_order: int):
     '''
     facts = factorials(max_order)
     summation_indices = [(order, len(j), dp) for order in range(1, max_order + 1) for j in accel_asc(order) for dp in distinct_permutations(j)]
-    return facts, summation_indices
+    return {'factorials': facts, 'indices': summation_indices}
 
-def general_faa_di_bruno(f, g, run_params=()):
+def general_faa_di_bruno(f, g, run_params={}):
     '''
     Faa di Bruno for vector-valued functions.
     
@@ -125,8 +125,8 @@ def general_faa_di_bruno(f, g, run_params=()):
         A list of n-jet objects, representing the derivatives of the function G at
         a given position z.
         
-    run_params: tuple, optional
-        A tuple containing the output of njet.extras._make_run_params. These values
+    run_params: dict, optional
+        A dictionary containing the output of njet.extras._make_run_params. These parameters
         can be send to the routine to avoid internal re-calculation when the routine
         it is called repeatedly.
     
@@ -142,10 +142,9 @@ def general_faa_di_bruno(f, g, run_params=()):
     max_order = f[0].order # number of requested derivatives
     assert all([jf.order == max_order for jf in f] + [jg.order == max_order for jg in g])
     
-    if len(run_params) > 0:
-        facts, indices = run_params
-    else:
-        facts, indices = _make_run_params(max_order)
+    if len(run_params) == 0:
+        run_params = _make_run_params(max_order)
+    facts, indices = run_params['factorials'], run_params['indices']
     
     out = [[fk.array(0) for fk in f]] + [[0 for k in range(n_dim)] for l in range(max_order)]
     for order, r, e in indices:
@@ -160,13 +159,11 @@ def general_faa_di_bruno(f, g, run_params=()):
 
 class cderive:
     '''
-    Derive a chain of vector-valued functions with repetitions. 
+    Class to handle the derivatives of a chain of vector-valued functions with repetitions. 
     The given functions should be unique, while their repetition in the chain
-    will be given by an optional ordering. This might have better
-    performance than deriving the entire chain of functions
-    with the default 'derive' method.
+    will be given by an optional ordering.
     '''
-    def __init__(self, functions, order: int=1, ordering=None, run_params=(), **kwargs):
+    def __init__(self, *functions, order: int=1, ordering=None, run_params={}, **kwargs):
         '''
         Parameters
         ----------
@@ -188,8 +185,8 @@ class cderive:
             The order defining how the unique functions are arranged in the chain.
             Hereby the index j must refer to the function at position j in the list.
             
-        run_params: tuple, optional
-            A tuple containing the output of njet.extras._make_run_params. These values
+        run_params: dict, optional
+            A dictionary containing the output of njet.extras._make_run_params. These parameters
             can be send to the routine to avoid internal re-calculation when the routine
             it is called repeatedly.
             
@@ -210,14 +207,13 @@ class cderive:
         self.dfunctions = [f if any([s in f.__repr__() for s in supported_objects]) else derive(f, order=order, **kwargs) for f in functions]
         
         self.n_functions = len(functions)
-        self.ordering = ordering
+        self.ordering = [k for k in ordering] # copy to prevent modification of input somewhere else
         self.chain_length = len(ordering)
         self.order = order
         
-        if len(run_params) > 0:
-            self.factorials, self.run_indices = run_params
-        else:
-            self.factorials, self.run_indices = _make_run_params(order)
+        if len(run_params) == 0:
+            run_params = _make_run_params(order)
+        self.run_params = run_params
 
         # For every element in the chain, note a number at which a point
         # passing through the given chain will pass through the element.
@@ -268,6 +264,7 @@ class cderive:
         points_at_functions = [[self._output[l] for l in range(self.chain_length) if self.ordering[l] == k] for k in range(self.n_functions)]
         # let Q = points_per_function[j], so Q is a list of points which needs to be computed for function j
         # Then the first element in Q is the one which needs to be applied first, etc. (for element j) by this construction.
+        
         for k in tqdm(range(self.n_functions), disable=kwargs.get('disable_tqdm', False)):
             function = self.dfunctions[k].jetfunc
             n_args_function = self.dfunctions[k].n_args
@@ -287,7 +284,7 @@ class cderive:
             func_index = self.ordering[k]
             index_passage = self.path[func_index].index(k)
             ev = [j[index_passage] for j in self.dfunctions[func_index]._evaluation]
-            evr = general_faa_di_bruno(ev, evr, run_params=(self.factorials, self.run_indices))
+            evr = general_faa_di_bruno(ev, evr, run_params=self.run_params)
             self._evaluation_chain.append(evr)
         self._evaluation = evr
         return evr
@@ -390,7 +387,7 @@ class cderive:
         evr = [e[[passage_indices[k][0] for k in range(n_patterns)]] for e in self.dfunctions[pattern[0]]._evaluation] # The start values of the merged element consists of all start values at the various positions of the pattern
         for k in tqdm(range(1, size), disable=kwargs.get('disable_tqdm', False)):
             ev = [e[[passage_indices[j][k] for j in range(n_patterns)]] for e in self.dfunctions[pattern[k]]._evaluation] # (**)
-            evr = general_faa_di_bruno(ev, evr, run_params=(self.factorials, self.run_indices))
+            evr = general_faa_di_bruno(ev, evr, run_params=self.run_params)
 
         # Determine the new ordering & path
         ###################################
@@ -455,7 +452,45 @@ class cderive:
                 j += 1
         new_ordering = _get_ordering(new_ordering)
         
-        return self.__class__(functions=new_functions, order=self.order, ordering=new_ordering, run_params=(self.factorials, self.run_indices))
+        return self.__class__(*new_functions, order=self.order, ordering=new_ordering, run_params=self.run_params)
+    
+    def __len__(self):
+        return len(self.ordering)
+    
+    def __getitem__(self, key):
+        '''
+        If a list is provided, return an object of type(self).
+        Otherwise, return the sequence of elements in the given chain.
+        '''
+        if type(key) == list:
+            requested_ele_indices = [self.ordering[e] for e in key]
+        else:
+            requested_ele_indices = self.ordering[key]
+            
+        if type(requested_ele_indices) != list:
+            return self.dfunctions[requested_ele_indices]
+        else:
+            requested_unique_ele_indices = list(np.unique(requested_ele_indices))
+            requested_eles = [self.dfunctions[e] for e in requested_unique_ele_indices]
+            new_ordering = [requested_unique_ele_indices.index(e) for e in requested_ele_indices] # starts from zero up to length of the unique (new) elements
+            return self.__class__(*requested_eles, ordering=new_ordering, order=self.order, run_params=self.run_params)
+    
+    def __iter__(self):
+        self._k = 0
+        return self
+            
+    def __next__(self):
+        if self._k < len(self):
+            self._k += 1
+            return self.dfunctions[self.ordering[self._k - 1]]
+        else:
+            raise StopIteration
+            
+    def index(self, value):
+        '''
+        Return the element number at a given position in the beamline chain (similar as .index for lists)
+        '''
+        return self.dfunctions.index(value)
     
     
 def _get_ordering(sequence, start=0):
