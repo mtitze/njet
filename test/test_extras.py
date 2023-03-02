@@ -105,7 +105,6 @@ def test_cderive1(x, y, phi=0.224*np.pi, n_reps: int=5, tol=1e-15):
     for result in [drot_phi, result1, result2, result3]:
         for k in range(2):
             assert all([(np.abs(ref[k][key] - result[k][key]) < tol).all() for key in ref[k].keys()])
-
     
 ordering1 = [0, 1, 2, 3, 2, 1, 2, 4, 2, 1, 2, 4, 2, 1, 0]
 pattern1_1 = (0, 1)
@@ -123,43 +122,43 @@ point = [0.2, 0.14]
 tolerances = {(0, 0): 1e-15, (1, 0): 5e-15, (0, 1): 1e-15, (0, 2): 5e-15, (2, 0): 1e-14, 
               (1, 1): 1e-14, (2, 1): 5e-13, (0, 3): 1e-13, (3, 0): 1e-12, (1, 2): 5e-13}
 
+# Define a chain of vector-valued functions
+f1 = [-0.41210319-0.93736294*1j, -0.12546181+0.99583435*1j, -0.05060304+0.72636541*1j, -0.57277969+0.7030248*1j]
+g1 = [ 0.55362006+0.09802837*1j, -0.8305559 +0.49600788*1j,  0.03343595+0.58669087*1j, 0.94227846-0.58840718*1j]
+h1 = [ 0.68077738+0.24660968*1j,  0.73098886+0.87092588*1j, -0.86900825-0.97546189*1j, -0.21817777+0.71363444*1j]
+
+f2 = [-0.20674188-0.04716913*1j, -0.60197835-0.65897942*1j,  0.79173922-0.20115845*1j, -0.39323279-0.47489544*1j]
+g2 = [ 0.25888809+0.74213104*1j, -0.46120294-0.45297721*1j, -0.68132361+0.36020504*1j, 0.36831401+0.8925468*1j ]
+h2 = [ 0.67546745-0.25333062*1j, -0.24332418+0.01746218*1j, -0.1762223 +0.70213807*1j,-0.26571277-0.59505904*1j]
+
+f3 = [ 0.76785636-0.27781605*1j,  0.46282915+0.27441113*1j, -0.49791468-0.57996221*1j, -0.48946897+0.62037892*1j]
+g3 = [ 0.28804634-0.98764309*1j, -0.87406307+0.52595492*1j,  0.46174138+0.29365197*1j, -0.00551896-0.47692102*1j]
+h3 = [-0.48132238-0.5247383*1j , -0.62638017+0.26876055*1j, -0.31827884+0.06467531*1j, 0.13965988-0.20589607*1j]
+
+f4 = [-0.8096255 +0.96735152*1j,  0.06001575-0.31173884*1j, -0.69704779+0.33130702*1j, -0.1666179 +0.98778434*1j]
+g4 = [-0.66590557+0.74032939*1j,  0.76306924+0.50447005*1j, -0.29480535+0.81453141*1j, -0.38647232+0.60297993*1j]
+h4 = [-0.205739  +0.94352981*1j, -0.66742403+0.68390301*1j,  0.23363041-0.50400264*1j, 0.47711142-0.51922051*1j]
+
+f5 = [-0.8096255 +0.96735152*1j,  0.06001575-0.31173884*1j, -0.69704779+0.33130702*1j, -0.1666179 +0.98778434*1j]
+g5 = [-0.66590557+0.74032939*1j,  0.76306924+0.50447005*1j, -0.29480535+0.81453141*1j, -0.38647232+0.60297993*1j]
+h5 = [-0.205739  +0.94352981*1j, -0.66742403+0.68390301*1j,  0.23363041-0.50400264*1j, 0.47711142-0.51922051*1j]
+
+fl = [f1, f2, f3, f4, f5]
+gl = [g1, g2, g3, g4, g5]
+hl = [h1, h2, h3, h4, h5]
+
+def opk(*z, f=[], g=[], h=[]):
+    return [f[0]*z[0]**3 + f[1]*z[0]**2 + f[2]*z[0] + g[0]*z[1]**3 + \
+            g[1]*z[1]**2 + g[2]*z[1], h[0]*z[0] + h[1]*z[1]]
+
+opchain1 = [lambda *z, k=k: opk(*z, f=fl[k], g=gl[k], h=hl[k]) for k in range(5)] # k=k because of Python's late bindings, see https://stackoverflow.com/questions/49617380/list-comprehension-with-lambda-function
+
 @pytest.mark.parametrize("pattern, ordering", [(pattern1_1, ordering1), (pattern1_2, ordering1), (pattern1_3, ordering1), 
                                                (pattern1_4, ordering1), (pattern2_1, ordering2), (pattern2_2, ordering2),
                                                (pattern2_3, ordering2)])
 def test_cderive2(pattern, ordering, point=point, tolerances=tolerances, order=3):
-        
-    # Define a chain of vector-valued functions
-    f1 = [-0.41210319-0.93736294*1j, -0.12546181+0.99583435*1j, -0.05060304+0.72636541*1j, -0.57277969+0.7030248*1j]
-    g1 = [ 0.55362006+0.09802837*1j, -0.8305559 +0.49600788*1j,  0.03343595+0.58669087*1j, 0.94227846-0.58840718*1j]
-    h1 = [ 0.68077738+0.24660968*1j,  0.73098886+0.87092588*1j, -0.86900825-0.97546189*1j, -0.21817777+0.71363444*1j]
-
-    f2 = [-0.20674188-0.04716913*1j, -0.60197835-0.65897942*1j,  0.79173922-0.20115845*1j, -0.39323279-0.47489544*1j]
-    g2 = [ 0.25888809+0.74213104*1j, -0.46120294-0.45297721*1j, -0.68132361+0.36020504*1j, 0.36831401+0.8925468*1j ]
-    h2 = [ 0.67546745-0.25333062*1j, -0.24332418+0.01746218*1j, -0.1762223 +0.70213807*1j,-0.26571277-0.59505904*1j]
-
-    f3 = [ 0.76785636-0.27781605*1j,  0.46282915+0.27441113*1j, -0.49791468-0.57996221*1j, -0.48946897+0.62037892*1j]
-    g3 = [ 0.28804634-0.98764309*1j, -0.87406307+0.52595492*1j,  0.46174138+0.29365197*1j, -0.00551896-0.47692102*1j]
-    h3 = [-0.48132238-0.5247383*1j , -0.62638017+0.26876055*1j, -0.31827884+0.06467531*1j, 0.13965988-0.20589607*1j]
     
-    f4 = [-0.8096255 +0.96735152*1j,  0.06001575-0.31173884*1j, -0.69704779+0.33130702*1j, -0.1666179 +0.98778434*1j]
-    g4 = [-0.66590557+0.74032939*1j,  0.76306924+0.50447005*1j, -0.29480535+0.81453141*1j, -0.38647232+0.60297993*1j]
-    h4 = [-0.205739  +0.94352981*1j, -0.66742403+0.68390301*1j,  0.23363041-0.50400264*1j, 0.47711142-0.51922051*1j]
-
-    f5 = [-0.8096255 +0.96735152*1j,  0.06001575-0.31173884*1j, -0.69704779+0.33130702*1j, -0.1666179 +0.98778434*1j]
-    g5 = [-0.66590557+0.74032939*1j,  0.76306924+0.50447005*1j, -0.29480535+0.81453141*1j, -0.38647232+0.60297993*1j]
-    h5 = [-0.205739  +0.94352981*1j, -0.66742403+0.68390301*1j,  0.23363041-0.50400264*1j, 0.47711142-0.51922051*1j]
- 
-    fl = [f1, f2, f3, f4, f5]
-    gl = [g1, g2, g3, g4, g5]
-    hl = [h1, h2, h3, h4, h5]
-
-    def opk(*z, f=[], g=[], h=[]):
-        return [f[0]*z[0]**3 + f[1]*z[0]**2 + f[2]*z[0] + g[0]*z[1]**3 + \
-                g[1]*z[1]**2 + g[2]*z[1], h[0]*z[0] + h[1]*z[1]]
-    
-    opchain = [lambda *z, k=k: opk(*z, f=fl[k], g=gl[k], h=hl[k]) for k in range(5)] # k=k because of Python's late bindings, see https://stackoverflow.com/questions/49617380/list-comprehension-with-lambda-function
-    
-    dopchain = cderive(*opchain, ordering=ordering, order=order, n_args=2)
+    dopchain = cderive(*opchain1, ordering=ordering, order=order, n_args=2)
     
     cref = derive(dopchain.jetfunc, order=order, n_args=2)
     ref = cref(*point)#, disable_tqdm=disable_tqdm)
@@ -175,3 +174,55 @@ def test_cderive2(pattern, ordering, point=point, tolerances=tolerances, order=3
     for r in [r0, r1, r2]:
         for k in range(2):
             assert all([abs(ref[k][key] - r[k][key]) < tolerances[key] for key in ref[k].keys()])
+
+def test_cderive3(point=[0.01, -0.053], order=3):
+    '''
+    Test if extracting two chains and putting their results together will give the same result
+    as if we would derive (or compose) the entire chain directly.
+    '''
+    
+    dopchain = cderive(*opchain1, ordering=ordering2, order=order, n_args=2)
+    
+    dr = derive(dopchain.jetfunc, order=order, n_args=2)
+    
+    _ = dopchain.eval(*point)
+    
+    part1 = dopchain[:10]
+    part2 = dopchain[10:]
+    
+    part3 = part1.merge((2, 1))
+    
+    part4 = part2.merge((2, 1))
+    part5 = part2.merge((4, 4))
+    part6 = part2.merge((1, 2, 3))
+    
+    dr1 = part1.compose()
+    dr2 = part2.compose()
+    
+    dr3 = part3.compose()
+    
+    dr4 = part4.compose()
+    dr5 = part5.compose()
+    dr6 = part6.compose()
+    
+    dr12 = general_faa_di_bruno(dr2, dr1)
+    dr14 = general_faa_di_bruno(dr4, dr1)
+    dr15 = general_faa_di_bruno(dr5, dr1)
+    dr16 = general_faa_di_bruno(dr6, dr1)
+    
+    dr32 = general_faa_di_bruno(dr2, dr3)
+    dr34 = general_faa_di_bruno(dr4, dr3)
+    dr35 = general_faa_di_bruno(dr5, dr3)
+    dr36 = general_faa_di_bruno(dr6, dr3)
+    
+    ref = dr.eval(*point)
+    
+    tolerances1 = [1e-15, 1e-15, 1e-14, 5e-14]
+    tolerances2 = [1e-15, 1e-15, 1e-14, 2e-13]
+    tolerances12 = [tolerances1, tolerances2]
+
+    for r in [dr12, dr14, dr15, dr16, dr32, dr34, dr35, dr36]:
+        for k in range(2):
+            assert abs((ref[k] - r[k]).array(0)) < tolerances12[k][0] 
+            for j in range(1, 4):
+                assert  max(np.abs(list((ref[k] - r[k]).array(j).terms.values()))) < tolerances12[k][j]    

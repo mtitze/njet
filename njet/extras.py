@@ -223,7 +223,7 @@ class cderive:
             ordering = list(range(self.n_functions))
             
         # Check input consistency
-        uord = np.unique(ordering) # np.unique already sorting
+        uord = np.unique(ordering).tolist() # np.unique already sorting
         assert len(uord) == self.n_functions and uord[0] == 0, 'Number of functions not consistent with the unique items in the ordering.'
 
         self.ordering = [k for k in ordering] # copy to prevent modification of input somewhere else
@@ -472,12 +472,11 @@ class cderive:
     def __getitem__(self, key):
         '''
         If a list is provided, return an object of type(self).
-        Otherwise, return the sequence of elements in the given chain.
+        Otherwise, return the individual derive/cderive object.
         '''
-        if type(key) == list:
-            requested_func_indices = [self.ordering[e] for e in key]
-        else:
-            requested_func_indices = self.ordering[key]
+        # N.B. attention: No arbitrary orderings can be returned, that's why
+        # there is no support for lists etc.
+        requested_func_indices = self.ordering[key]
             
         if type(requested_func_indices) != list:
             return self.dfunctions[requested_func_indices]
@@ -487,13 +486,14 @@ class cderive:
             
             # Since we are going to return a cderive object, we remove any evaluation
             # points which belong to elements which are not present in the new chain
+            requested_positions = range(len(self))[key]
             for k in range(len(requested_funcs)):
                 rf = requested_funcs[k]
                 if not hasattr(rf, '_evaluation'):
                     continue
                 findex = requested_unique_func_indices[k]
                 func_path = self.path[findex]
-                evaluation = [e[[j in requested_func_indices for j in func_path]] for e in rf._evaluation]
+                evaluation = [e[[j in requested_positions for j in func_path]] for e in rf._evaluation]
                 rf._evaluation = evaluation # n.b. object was copied, so no danger to overwrite one of its fields
             
             new_ordering = [requested_unique_func_indices.index(e) for e in requested_func_indices] # starts from zero up to length of the unique (new) elements
