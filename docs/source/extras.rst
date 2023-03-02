@@ -4,8 +4,8 @@ Vector-valued functions
 In the case of a vector-valued function (i.e. functions which return an iterable object), the
 ``derive`` class will automatically return a list of jet objects upon evaluation, one for each component. Although ``derive`` can handle any composition of (vector-valued) functions in this way, it may be of use to combine multi-dimensional jet output in case they were produced in different processes. Support of handling such output is addressed in the dedicated ``njet.extras`` module. In particular there exist a ``general_fa_di_bruno`` routine and the ``cderive`` class which we shall describe in this section.
 
-Background
-----------
+Faa di Bruno's formula
+----------------------
 
 Faa di Bruno's formula describes the relation between the higher-order derivatives
 of a composition function and those of its constituents. In the one-dimensional
@@ -23,31 +23,31 @@ of a generating function as
 
     \exp \left(u \sum_{j = 1}^\infty x_j \frac{t^j}{j!} \right) =: \sum_{n \geq k \geq 0} B_{n, k} (x_1, ..., x_{n - k + 1}) \frac{t^n}{n!} u^k .
 
-These polynomials obey a recurrence relation by which internally ``njet`` computes the composition of two jets:
+These polynomials obey a recurrence relation by which internally ``njet`` computes the composition of two jets (by means of the ``@``-operator):
 
 .. math::
 
     B_{n, k} = \sum_{i = 1}^{n - k + 1} \left(\begin{array}{c} n - 1 \\ i - 1 \end{array}\right) x_i B_{n - i, k - 1} .
 
 A similar -- but more complicated -- expression can be derived in the multi-dimensional case, i.e. where
-f takes more than one argument and g is vector-valued. [2]_ Without loss of generality let :math:`f` be single-valued, so let :math:`f \colon \mathbb{K}^m \to \mathbb{K}` and
+:math:`f` takes more than one argument and :math:`g` is vector-valued. [2]_ Without loss of generality let :math:`f` be single-valued, so let :math:`f \colon \mathbb{K}^m \to \mathbb{K}` and
 :math:`g \colon \mathbb{K}^l \to \mathbb{K}^m` be two (sufficiently often) differentiable functions.
-Since the higher-order partial derivatives of the map :math:`(f \circ g) \colon \mathbb{K}^l \to \mathbb{K}` commute, the respective symmetric multilinear map :math:`(f \circ g)^{(n)} \colon (\mathbb{K}^l)^{\otimes n} \to \mathbb{K}` is characterized by its action on the 'diagonal' :math:`z^{\otimes n}`, :math:`z \in \mathbb{K}^l` as
+Since the higher-order partial derivatives of the map :math:`f \circ g \; \colon \mathbb{K}^l \to \mathbb{K}` commute, the respective symmetric multilinear map :math:`(f \circ g)^{(n)} \colon (\mathbb{K}^l)^{\otimes n} \to \mathbb{K}` is characterized by its action on the 'diagonal' :math:`z^{\otimes n}`, :math:`z \in \mathbb{K}^l` as
 
 .. math::
 
-    \frac{(f \circ g)^{(n)}(z^{\otimes n})}{n!} = \sum_{\substack{n_1 + ... + n_r = n\\r \geq 1, n_j \geq 1}} \frac{(f^{(r)} \circ g)}{r!} \left(\frac{g^{(n_1)} z^{\otimes n_1}}{n_1!}, ..., \frac{g^{(n_r)} z^{\otimes n_r}}{n_r!} \right) ,
+    \frac{(f \circ g)^{(n)}(z^{\otimes n})}{n!} = \sum_{\substack{n_1 + ... + n_r = n\\r \geq 1, n_j \geq 1}} \frac{(f^{(r)} \circ g)}{r!} \left(\frac{g^{(n_1)} (z^{\otimes n_1})}{n_1!} \otimes ... \otimes \frac{g^{(n_r)} (z^{\otimes n_r})}{n_r!} \right) ,
 
-by means of the polarization formula
+by means of the polarization formula [3]_
 
 .. math::
 
-    z_1 \otimes z_2 \otimes ... \otimes z_k = \frac{1}{2^k k!} \sum_{\epsilon_j = \pm 1} \epsilon_1 \cdot ... \cdot \epsilon_k (\epsilon_1 z_1 + ... + \epsilon_k z_k)^k .
+    z_1 \otimes z_2 \otimes ... \otimes z_k = \frac{1}{2^k k!} \sum_{\epsilon_j = \pm 1} \epsilon_1 \cdot ... \cdot \epsilon_k (\epsilon_1 z_1 + ... + \epsilon_k z_k)^{\otimes k} .
 
-Regarding the polynomials in the ``njet`` module, this 'general' Faa di Bruno formula can thus be implemented by summing up over those jet-components which correspond to a partition of the integer :math:`n`.
+Regarding the polynomials in the ``njet`` module, this generalized Faa di Bruno formula can therefore be implemented by summing up those jet-components which correspond to a partition of the integer :math:`n` according to the above equation.
 
-Faa di Bruno's formula
-----------------------
+Implementation
+--------------
 
 The generalized Faa di Bruno formula can be imported with
 
@@ -166,7 +166,7 @@ In this way it is possible to calculate and combine intermediate steps of a chai
 Function chains
 ---------------
 
-In the case that a chain of functions :math:`C := f_1 \circ f_2 ... \circ f_N` needs to be differentiated, and there are repetitions of :math:`f_k`'s in the chain :math:`C`, the generalized Faa di Bruno formula may help in reducing the amount of calculations required.
+In the case that a chain of functions :math:`f_1 \circ f_2 ... \circ f_N` needs to be differentiated, and there are repetitions of :math:`f_k`'s in the chain, the generalized Faa di Bruno formula may help in reducing the amount of calculations required.
 
 The main idea behind this goes as follows (docs will be updated soon)
  
@@ -174,3 +174,5 @@ The main idea behind this goes as follows (docs will be updated soon)
 .. [1] https://en.wikipedia.org/wiki/Fa%C3%A0_di_Bruno%27s_formula
 
 .. [2] https://mathoverflow.net/questions/106323/faa-di-brunos-formula-for-vector-valued-functions
+
+.. [3] Note that the operator ':math:`\otimes`' can be considered as a commutative when used in an argument of a symmetric tensor.
