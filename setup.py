@@ -33,7 +33,8 @@ setup(
     package_dir={"": "."},
     package_data={},
     install_requires=[
-        'numpy==1.*,>=1.21.2', 'sympy==1.*,>=1.8.0', 'more_itertools==9.*,>=9.0.0'
+        'numpy==1.*,>=1.21.2', 'sympy==1.*,>=1.8.0',
+        'more_itertools==9.*,>=9.0.0', 'tqdm==4.*,>=4.64.0'
     ],
     extras_require={"dev": ["ipykernel==6.*,>=6.4.1"]},
 )

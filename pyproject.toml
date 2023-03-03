@@ -17,6 +17,7 @@ python = ">=3.8,<3.11"
 numpy = ">=1.22"
 sympy = "^1.8"
 more_itertools = ">=9.0.0"
+tqdm = ">=4.64.0"
 
 [tool.poetry.dev-dependencies]
 ipykernel = "^6.4.1"
