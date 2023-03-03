@@ -108,12 +108,11 @@ def general_faa_di_bruno(f, g, run_params={}):
     '''
     Faa di Bruno for vector-valued functions.
     
-    Let G: K^l -> K^n and F: K^n -> K^m be two vector-valued functions. The
+    Let G: K^l -> K^m and F: K^m -> K^w be two vector-valued functions. The
     goal is to compute the higher-order derivatives of the composition F o G.
     
-    Assume that f = [f1, ..., fn] and g = [g1, ..., gn] represent the 
-    n-jet-collections of F and G, i.e.
-    fk = n-jet(fk_1, ..., fk_n)
+    Assume that f = [f1, ..., fw] and g = [g1, ..., gm] represent the 
+    n-jet-collections of F and G, i.e. fk = n-jet(fk_1, ..., fk_n)
     where fk_j represents the j-th derivative of the k-th component of F etc.
     
     Parameters
@@ -184,13 +183,14 @@ class cderive:
             
             *) This means that the functions must return iterables in any case.
             
-        order: int
-            The maximal order of the derivatives to be computed.
+        order: int, optional
+            The maximal order of the derivatives to be computed. If nothing specified,
+            the first derivative(s) will be computed.
             
-        ordering: list
+        ordering: list, optional
             The order defining how the unique functions are arranged in the chain.
             Hereby the index j must refer to the function at position j in the sequence
-            of functions. The first object 
+            of functions.
             
         run_params: dict, optional
             A dictionary containing the output of njet.extras._make_run_params. These parameters
@@ -218,6 +218,13 @@ class cderive:
         '''
         Set the ordering of the current chain. Also compute the number of passages expected through
         each element according to the ordering.
+        
+        Parameters
+        ----------
+        ordering: list, optional
+            The order defining how the unique functions are arranged in the chain.
+            Hereby the index j must refer to the function at position j in the sequence
+            of functions.
         '''
         if ordering is None:
             ordering = list(range(self.n_functions))
@@ -240,6 +247,19 @@ class cderive:
         '''
         Run a point through the chain once, to determine the point(s) at which
         the derivative(s) should be calculated.
+        
+        Parameters
+        ----------
+        *point: single value or array-like
+            The point at which the chain should be evaluated.
+            
+        **kwargs: dict, optional
+            Keyworded arguments passed to the underlying jet-functions.
+            
+        Returns
+        -------
+        single value or array-like
+            The final value after the chain of functions has been traversed.
         '''
         self._input = point
         out = [point]
@@ -253,6 +273,20 @@ class cderive:
         '''
         Check if the points in the current output are in agreement with the one stored in the input functions.
         This check requires that the input functions have been evaluated and a probe run has been performed.
+        
+        Parameters
+        ----------
+        *point: single value or array-like
+            The point at which the chain should be probed.
+            
+        **kwargs: dict, optional
+            Keyworded arguments passed to the underlying jet-functions.
+            
+        Returns
+        -------
+        boolean
+            If True, the currently stored data along the chain will be produced
+            by collecting the transverse points starting with the given point through the chain.
         '''
         if not all([hasattr(df, '_input') for df in self.dfunctions]):
             # Nothing can be compared, so the check will fail
@@ -271,6 +305,22 @@ class cderive:
     def eval(self, *point, **kwargs):
         '''
         Evaluate the individual (unique) functions in the chain at the requested point.
+        
+        Parameters
+        ----------
+        *point: single value or array-like
+            The point at which the evaluation should be performed.
+            
+        **kwargs: dict, optional
+            Keyworded arguments passed to the underlying jet-functions.
+            
+            One can pass the boolean parameter disable_tqdm to disable the display 
+            of the progress bar.
+            
+        Returns
+        -------
+        list
+            The outcome of self.compose routine (containing the jet-evaluations for each component).
         '''
         _ = self.jetfunc(*point, **kwargs)
         points_at_functions = [[self._output[l] for l in range(len(self)) if self.ordering[l] == k] for k in range(self.n_functions)]
@@ -287,7 +337,19 @@ class cderive:
     
     def compose(self, **kwargs):
         '''
-        Compose the given derivatives for the entire chain.      
+        Compose the given derivatives for the entire chain.
+        
+        Parameters
+        ----------
+        **kwargs: dict, optional
+            One can pass the boolean parameter disable_tqdm to disable the display 
+            of the progress bar.
+            
+        Returns
+        -------
+        list
+            A list of jet evaluations for each vector component of the chain, representing
+            the Taylor-expansion of the chain.
         '''
         assert all(hasattr(f, '_evaluation') for f in self.dfunctions), 'Composition requires function evaluations in advance.'
         evr = [e[0] for e in self.dfunctions[self.ordering[0]]._evaluation] # the start is the derivative of the first element at the point of interest
@@ -304,6 +366,19 @@ class cderive:
     def __call__(self, *z, **kwargs):
         '''
         Compute the derivatives of the chain of functions at a given point.
+        
+        Parameters
+        ----------
+        *z: single value or array-like
+            The point at which the derivative(s) should be evaluated.
+            
+        **kwargs: dict, optional
+            Keyworded arguments passed to the underlying jet functions.
+            
+        Returns
+        -------
+        dict
+            The Taylor-coefficients of the chain at the point of interest.
         '''
         # These two keywords are reserved for the get_taylor_coefficients routine and will be removed from the input:
         mult_prm = kwargs.pop('mult_prm', True)
@@ -474,9 +549,9 @@ class cderive:
         If a list is provided, return an object of type(self).
         Otherwise, return the individual derive/cderive object.
         
-        Attention: There is only support for strict monotoneous increasing lists, as
-                   the individual jet-evaluations may become invalid
-                   if the order is permuted.
+        Attention: There is only support for strictly monotonous increasing lists
+                   without gaps, as the individual jet-evaluations may become invalid
+                   otherwise.
         '''
         if type(key) == list:
             requested_func_indices = [self.ordering[e] for e in key]

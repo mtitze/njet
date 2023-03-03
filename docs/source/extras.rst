@@ -16,8 +16,8 @@ reads: [1]_
 
     \frac{d^n}{dt^n} f(g(t)) = \sum_{k = 1}^n f^{(k)}(g(t)) \cdot B_{n, k} (g'(t), g''(t), ..., g^{(n - k + 1)}(t)) ,
 
-where :math:`B_{n, k}` denotes the exponential incomplete Bell-polynomials, which can be defined by means
-of a generating function as
+where :math:`B_{n, k}` denotes the exponential incomplete Bell-polynomials, which can be defined with
+a generating function:
 
 .. math::
 
@@ -66,8 +66,8 @@ Define two vector-valued functions and compute their jet evaluation at a specifi
     
     z = [0.4, 1.67 + 0.01*1j, -3.5 + 2.1*1j]
         
-    dg = derive(g, order=3, n_args=3)
-    df = derive(f, order=3, n_args=3)
+    dg = derive(g, order=2, n_args=3)
+    df = derive(f, order=2, n_args=3)
 
     evg = dg.eval(*z)
     evf = df.eval(*g(*z))
@@ -84,8 +84,7 @@ we can get the Taylor-coefficients of ``f`` at ``g(*z)`` for the first component
      (0, 1, 0): (0.00038016081672203066-0.002549222116121679j),
      (1, 0, 1): (1+0j),
      (2, 0, 0): (2+0j),
-     (0, 2, 0): (0.00013975244997413352+0.00022126191190187668j),
-     (0, 3, 0): (-3.812406690451878e-05-1.1629372340048169e-05j)}
+     (0, 2, 0): (0.00013975244997413352+0.00022126191190187668j)}
     
 Of course, we could have obtained this result directly by calling ``df`` at ``g(*z)``:
 
@@ -98,15 +97,14 @@ Of course, we could have obtained this result directly by calling ``df`` at ``g(
      (0, 1, 0): (0.00038016081672203066-0.002549222116121679j),
      (1, 0, 1): (1+0j),
      (2, 0, 0): (2+0j),
-     (0, 2, 0): (0.00013975244997413352+0.00022126191190187668j),
-     (0, 3, 0): (-3.812406690451878e-05-1.1629372340048169e-05j)}
+     (0, 2, 0): (0.00013975244997413352+0.00022126191190187668j)}
 
 Here we are interested in the Taylor-coefficients of the composition function :math:`f \circ g`. In the
 conventional approach we would have to derive the composition function:
 
 .. code-block:: python
 
-    dfg = derive(lambda *x: f(*g(*x)), order=3, n_args=3)
+    dfg = derive(lambda *x: f(*g(*x)), order=2, n_args=3)
     ref = dfg(*z)
     ref[0]
   > {(0, 0, 0): (-0.032316721543419864+0.07248263230025642j),
@@ -118,17 +116,7 @@ conventional approach we would have to derive the composition function:
      (0, 0, 2): (-0.02701945022246847+0.031297336355818564j),
      (0, 2, 0): (-0.01332575692398203+0.04362074226492914j),
      (0, 1, 1): (-0.022839564957718664+0.04217330624559906j),
-     (2, 0, 0): (0.07990334788570935+0.07626091978109452j),
-     (2, 1, 0): (0.026157193796522264+0.07905790062294853j),
-     (1, 1, 1): (-0.06141922486075783+0.12183805526819907j),
-     (0, 1, 2): (-0.044387555537168666+0.028103692172068484j),
-     (0, 2, 1): (-0.024739262212972474+0.03699831536003705j),
-     (0, 0, 3): (-0.055420714785168794+0.025062593767745747j),
-     (1, 2, 0): (-0.006176730345186394+0.14902665971458978j),
-     (1, 0, 2): (-0.07169409252671222+0.11241965597172777j),
-     (0, 3, 0): (-0.009606971742834805+0.04834992719064144j),
-     (3, 0, 0): (0.1063846737609027+0.01989470820185046j),
-     (2, 0, 1): (0.05072513398243774+0.12332960939244737j)}
+     (2, 0, 0): (0.07990334788570935+0.07626091978109452j)}
      
 However, making use of the general Faa di Bruno formula, we can deduce the same result by combining
 the previously computed multi-dimensional jet-evaluations ``evg`` and ``evf``:
@@ -136,8 +124,8 @@ the previously computed multi-dimensional jet-evaluations ``evg`` and ``evf``:
 .. code-block:: python
 
     gfb = general_faa_di_bruno(evf, evg)
-  > gfb[0].get_taylor_coefficients(n_args=3)
-    {(0, 0, 0): (-0.032316721543419864+0.07248263230025642j),
+    gfb[0].get_taylor_coefficients(n_args=3)
+  > {(0, 0, 0): (-0.032316721543419864+0.07248263230025642j),
      (0, 0, 1): (-0.009661433404866623+0.033781618523554095j),
      (1, 0, 0): (0.02880173173559441+0.11295869722633461j),
      (0, 1, 0): (0.02063565141651755+0.06139363375476808j),
@@ -146,17 +134,7 @@ the previously computed multi-dimensional jet-evaluations ``evg`` and ``evf``:
      (0, 2, 0): (-0.013325756923981996+0.04362074226492907j),
      (0, 0, 2): (-0.02701945022246847+0.031297336355818564j),
      (0, 1, 1): (-0.02283956495771866+0.04217330624559905j),
-     (2, 0, 0): (0.07990334788570935+0.07626091978109452j),
-     (2, 1, 0): (0.026157193796522343+0.0790579006229485j),
-     (1, 1, 1): (-0.06141922486075783+0.12183805526819907j),
-     (0, 1, 2): (-0.044387555537168666+0.028103692172068467j),
-     (0, 2, 1): (-0.024739262212972454+0.03699831536003698j),
-     (0, 0, 3): (-0.0554207147851688+0.025062593767745747j),
-     (1, 2, 0): (-0.006176730345186361+0.1490266597145896j),
-     (1, 0, 2): (-0.0716940925267122+0.11241965597172776j),
-     (0, 3, 0): (-0.00960697174283448+0.048349927190641684j),
-     (3, 0, 0): (0.10638467376090271+0.01989470820185046j),
-     (2, 0, 1): (0.05072513398243774+0.12332960939244737j)}
+     (2, 0, 0): (0.07990334788570935+0.07626091978109452j)}
      
 In this way it is possible to calculate and combine intermediate steps of a chain of functions, without taking the derivative of the entire chain in one go.
 
@@ -167,9 +145,16 @@ In the case that a chain of functions :math:`f_1 \circ f_2 ... \circ f_N` needs 
 
 The main idea behind this goes as follows (docs will be updated soon)
  
+Module synopsis
+---------------
+
+.. automodule:: njet.extras
+    :members:
+    :undoc-members:
+    :exclude-members: accel_asc, symtensor_call, _get_ordering
 
 .. [1] https://en.wikipedia.org/wiki/Fa%C3%A0_di_Bruno%27s_formula
 
 .. [2] https://mathoverflow.net/questions/106323/faa-di-brunos-formula-for-vector-valued-functions
 
-.. [3] Note that the operator ':math:`\otimes`' can be considered as a commutative when used in an argument of a symmetric tensor.
+.. [3] Note that the operator ':math:`\otimes`' can be considered as being commutative when used in an argument of a symmetric tensor.
