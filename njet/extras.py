@@ -448,16 +448,9 @@ class cderive:
         size = len(pattern)
         assert 2 <= size and size <= len(self)
         if positions is None:
-            positions = []
-            last_pos = -size
-            k = 0
-            for window in windowed(self.ordering, size):
-                if window == pattern and last_pos + size <= k: # second condition ensures non-overlapping
-                    positions.append(k)
-                    last_pos = k
-                k += 1
+            positions = _get_pattern_positions(self.ordering, pattern)
             if len(positions) == 0:
-                raise RuntimeError('Pattern not found in sequence.')
+                raise RuntimeError('Pattern not found in the sequence.')
         # Sections must not overlap & can be found in the ordering. Evaluation(s) must exist.
         n_patterns = len(positions)
         assert 0 <= min(positions) and max(positions) < len(self) - size + 1, 'Pattern positions out of bounds.'
@@ -635,3 +628,29 @@ def _get_ordering(sequence, start=0):
             e_index = stash.index(e)
             new_ordering.append(e_index + start)
     return new_ordering
+
+def _get_pattern_positions(sequence, pattern):
+    '''
+    For a given sequence and a given pattern, determine the positions at
+    which the pattern occurs in the sequence -- non-overlapping -- starting
+    from the first occurence in the sequence.
+    
+    Parameters
+    ----------
+    sequence: list
+        A list of integers, representing the sequence.
+        
+    pattern: tuple or list
+        A tuple or list of integers, representing the pattern.
+    '''
+    size = len(pattern)
+    assert 1 <= size and size <= len(sequence)
+    positions = []
+    last_pos = -size
+    k = 0
+    for window in windowed(sequence, size):
+        if window == pattern and last_pos + size <= k: # second condition ensures non-overlapping
+            positions.append(k)
+            last_pos = k
+        k += 1
+    return positions

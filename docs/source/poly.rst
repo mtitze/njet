@@ -43,7 +43,7 @@ will work:
 
 However, an expression of the form ``sin(j1p)`` will not work. The reason is that an elementary function applied on a class of type *jetpoly* is not defined.
 
-.. automodule:: njet.jet
+.. automodule:: njet.poly
     :members:
-    :exclude-members: convert, jet, bell_polynomials, general_leibniz_rule, faa_di_bruno
+    :exclude-members:
 

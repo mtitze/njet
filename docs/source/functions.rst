@@ -1,10 +1,10 @@
-Implemented functions
-=====================
+Supported functions
+===================
 
-In the following we list the elementary functions currently implemented in the code.
+In the following we list the elementary functions currently supported for use with jets.
 
-These functions are characterized by the fact that their derivatives are known and can
-be easily computed up to any order.
+These functions are characterized by the fact that their derivatives are known exactly
+and can be easily computed up to any order.
 
 .. automodule:: njet.functions
     :members:
