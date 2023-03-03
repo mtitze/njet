@@ -1,3 +1,5 @@
+[![Documentation Status](https://readthedocs.org/projects/njet/badge/?version=latest)](https://njet.readthedocs.io/en/latest/?badge=latest)
+
 # njet: Lightweight automatic differentiation
 
 A lightweight AD package, using forward-mode automatic differentiation, in order to determine the
