@@ -162,44 +162,44 @@ class cderive:
     Class to handle the derivatives of a chain of vector-valued functions with repetitions. 
     The given functions should be unique, while their repetition in the chain
     will be given by an optional ordering.
+
+    Parameters
+    ----------
+    functions: list
+        A list of callable(s) or 'derive' classes related to the
+        unique vector-valued*) functions in the chain to be derived.
+
+        Alternatively, one can pass a list of 'derive' objects, containing
+        vector-valued jet evaluation output. 
+        This second case can be used to avoid re-calculating the derivatives
+        in circumstances where it is not required.
+
+        Attention:
+        By default, the first function is assumed to be executed first, in contrast
+        to the mathematical notation. This can be changed by passing
+        an 'ordering' argument (see below).
+
+        *) This means that the functions must return iterables in any case.
+
+    order: int, optional
+        The maximal order of the derivatives to be computed. If nothing specified,
+        the first derivative(s) will be computed.
+
+    ordering: list, optional
+        The order defining how the unique functions are arranged in the chain.
+        Hereby the index j must refer to the function at position j in the sequence
+        of functions.
+
+    run_params: dict, optional
+        A dictionary containing the output of njet.extras._make_run_params. These parameters
+        can be send to the routine to avoid internal re-calculation when the routine
+        it is called repeatedly.
+
+    **kwargs
+        Optional keyworded arguments passed to njet.ad.derive init.
     '''
+
     def __init__(self, *functions, order: int=1, ordering=None, run_params={}, **kwargs):
-        '''
-        Parameters
-        ----------
-        functions: list
-            A list of callable(s) or 'derive' classes related to the
-            unique vector-valued*) functions in the chain to be derived.
-            
-            Alternatively, one can pass a list of 'derive' objects, containing
-            vector-valued jet evaluation output. 
-            This second case can be used to avoid re-calculating the derivatives
-            in circumstances where it is not required.
-            
-            Attention:
-            By default, the first function is assumed to be executed first, in contrast
-            to the mathematical notation. This can be changed by passing
-            an 'ordering' argument (see below).
-            
-            *) This means that the functions must return iterables in any case.
-            
-        order: int, optional
-            The maximal order of the derivatives to be computed. If nothing specified,
-            the first derivative(s) will be computed.
-            
-        ordering: list, optional
-            The order defining how the unique functions are arranged in the chain.
-            Hereby the index j must refer to the function at position j in the sequence
-            of functions.
-            
-        run_params: dict, optional
-            A dictionary containing the output of njet.extras._make_run_params. These parameters
-            can be send to the routine to avoid internal re-calculation when the routine
-            it is called repeatedly.
-            
-        **kwargs
-            Optional keyworded arguments passed to njet.ad.derive init.
-        '''
 
         # Determine user input for the 'functions' parameter
         supported_objects = ['njet.ad.derive', 'njet.extras.cderive'] # objects of these kinds will not be instantiated with 'derive'
