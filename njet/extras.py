@@ -228,9 +228,10 @@ class cderive:
         '''
         if ordering is None:
             ordering = list(range(self.n_functions))
+        assert len(ordering) > 0, 'Ordering list empty.'
             
         # Check input consistency
-        uord = np.unique(ordering).tolist() # np.unique already sorting
+        uord = np.unique(ordering).tolist()
         assert len(uord) == self.n_functions and uord[0] == 0, 'Number of functions not consistent with the unique items in the ordering.'
 
         self.ordering = [k for k in ordering] # copy to prevent modification of input somewhere else
@@ -314,8 +315,7 @@ class cderive:
         **kwargs: dict, optional
             Keyworded arguments passed to the underlying jet-functions.
             
-            One can pass the boolean parameter disable_tqdm to disable the display 
-            of the progress bar.
+            One can pass the boolean parameter disable_tqdm to enable (if False) a progress bar.
             
         Returns
         -------
@@ -327,7 +327,7 @@ class cderive:
         # let Q = points_per_function[j], so Q is a list of points which needs to be computed for function j
         # Then the first element in Q is the one which needs to be applied first, etc. (for element j) by this construction.
         
-        for k in tqdm(range(self.n_functions), disable=kwargs.get('disable_tqdm', False)):
+        for k in tqdm(range(self.n_functions), disable=kwargs.get('disable_tqdm', True)):
             function = self.dfunctions[k].jetfunc
             n_args_function = self.dfunctions[k].n_args
             points_at_function = points_at_functions[k]
@@ -335,15 +335,26 @@ class cderive:
             _ = self.dfunctions[k].eval(*components, **kwargs)
         return self.compose(**kwargs)
     
-    def compose(self, **kwargs):
+    def compose(self, frame=None, **kwargs):
         '''
         Compose the given derivatives for the entire chain.
         
         Parameters
         ----------
+        frame: callable, optional
+            An optional function which will take the current position number
+            and must return either an integer or a slice.
+            
+            By using this function, one can control the data passed through the Faa di Bruno
+            formula in case the evaluation(s) contain multidimensional data.
+            
+            If nothing specified, 'frame' will be
+            frame = lambda k: self.path[self.ordering[k]].index(k),
+            so it will assign the current position number to the index at which a single point passed
+            through the respective (unique) element.
+        
         **kwargs: dict, optional
-            One can pass the boolean parameter disable_tqdm to disable the display 
-            of the progress bar.
+            One can pass the boolean parameter disable_tqdm to enable (if False) a progress bar.
             
         Returns
         -------
@@ -351,13 +362,14 @@ class cderive:
             A list of jet evaluations for each vector component of the chain, representing
             the Taylor-expansion of the chain.
         '''
+        if frame == None:
+            frame = lambda k: self.path[self.ordering[k]].index(k)
+        
         assert all(hasattr(f, '_evaluation') for f in self.dfunctions), 'Composition requires function evaluations in advance.'
-        evr = [e[0] for e in self.dfunctions[self.ordering[0]]._evaluation] # the start is the derivative of the first element at the point of interest
+        evr = [e[frame(0)] for e in self[0]._evaluation] # the start is the derivative of the first element at the point(s) of interest
         self._evaluation_chain = [evr]
-        for k in tqdm(range(1, len(self)), disable=kwargs.get('disable_tqdm', False)):
-            func_index = self.ordering[k]
-            index_passage = self.path[func_index].index(k)
-            ev = [j[index_passage] for j in self.dfunctions[func_index]._evaluation]
+        for k in tqdm(range(1, len(self)), disable=kwargs.get('disable_tqdm', True)):
+            ev = [j[frame(k)] for j in self[k]._evaluation]
             evr = general_faa_di_bruno(ev, evr, run_params=self.run_params)
             self._evaluation_chain.append(evr)
         self._evaluation = evr
@@ -465,7 +477,7 @@ class cderive:
         ##################################
         passage_indices = [[self.ordering[:pos + k].count(pattern[k]) for k in range(size)] for pos in positions] # The number of passages the functions already had in the chain, before the respective pattern(s).
         evr = [e[[passage_indices[k][0] for k in range(n_patterns)]] for e in self.dfunctions[pattern[0]]._evaluation] # The start values of the merged element consists of all start values at the various positions of the pattern
-        for k in tqdm(range(1, size), disable=kwargs.get('disable_tqdm', False)):
+        for k in tqdm(range(1, size), disable=kwargs.get('disable_tqdm', True)):
             ev = [e[[passage_indices[j][k] for j in range(n_patterns)]] for e in self.dfunctions[pattern[k]]._evaluation] # (**)
             evr = general_faa_di_bruno(ev, evr, run_params=self.run_params)
 
@@ -561,6 +573,9 @@ class cderive:
         if type(requested_func_indices) != list:
             return self.dfunctions[requested_func_indices]
         else:
+            if len(requested_func_indices) == 0:
+                return []
+            
             requested_unique_func_indices = list(np.unique(requested_func_indices))
             requested_funcs = [copy(self.dfunctions[e]) for e in requested_unique_func_indices]
             
