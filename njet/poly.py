@@ -104,9 +104,15 @@ class jetpoly:
             for bk, value2 in other.terms.items():
                 value_prod = value1*value2
                 e2 = dict(bk) # e.g. e2 = {0: 0, 1: 0, 2: 1}
-                e_prod = frozenset({(k, e1.get(k, 0) + e2.get(k, 0)) for k in se1.union(set(e2)) if e1.get(k, 0) + e2.get(k, 0) > 0})
+                e_prod = []
+                for k in se1.union(set(e2)):
+                    power = e1.get(k, 0) + e2.get(k, 0)
+                    if power > 0:
+                        e_prod.append((k, power))
                 if len(e_prod) == 0:
                     e_prod = frozenset({(0, 0)})
+                else:
+                    e_prod = frozenset(e_prod)
                 pol_prod[e_prod] = value_prod + pol_prod.get(e_prod, 0) # account for multiplicity
         pol_prod = {k: v for k, v in pol_prod.items() if not check_zero(v)} # remove zero values
         if len(pol_prod) == 0: # in this case zero(s) are produced
