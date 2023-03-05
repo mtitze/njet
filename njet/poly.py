@@ -106,8 +106,7 @@ class jetpoly:
                 e2 = dict(bk) # e.g. e2 = {0: 0, 1: 0, 2: 1}
                 e_prod = frozenset({(k, e1.get(k, 0) + e2.get(k, 0)) for k in se1.union(set(e2)) if e1.get(k, 0) + e2.get(k, 0) > 0})
                 if len(e_prod) == 0:
-                    e_prod = frozenset((1, 1))
-                #e_prod = frozenset({(k, e1.get(k, 0) + e2.get(k, 0)) for k in se1.union(set(e2))}) # e.g. e_prod = frozenset([(0, 0), (1, 5), (2, 4)])
+                    e_prod = frozenset({(0, 0)})
                 pol_prod[e_prod] = value_prod + pol_prod.get(e_prod, 0) # account for multiplicity
         pol_prod = {k: v for k, v in pol_prod.items() if not check_zero(v)} # remove zero values
         if len(pol_prod) == 0: # in this case zero(s) are produced
