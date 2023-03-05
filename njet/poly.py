@@ -6,7 +6,8 @@ class jetpoly:
     Implementation of a polynomial with arbitrary number of variables.
     
     The information of the coefficients is stored internally as dictionary in 
-    the 'terms' field.
+    the 'terms' field. One can use the 'terms' field as keyworded argument in order
+    to construct a custom polynomial.
 
     A polynomial p can be initiated with a value v and (optional) its index (describing
     the variable) and power n so that overall p = v*x_i**n. A general polynomial in several
@@ -99,10 +100,14 @@ class jetpoly:
         pol_prod = {}
         for aj, value1 in self.terms.items():
             e1 = dict(aj) # e.g. e1 = {0: 0, 1: 5, 2: 3}
+            se1 = set(e1)
             for bk, value2 in other.terms.items():
                 value_prod = value1*value2
                 e2 = dict(bk) # e.g. e2 = {0: 0, 1: 0, 2: 1}
-                e_prod = frozenset([(k, e1.get(k, 0) + e2.get(k, 0)) for k in set(e1).union(set(e2))]) # e.g. e_prod = frozenset([(0, 0), (1, 5), (2, 4)])
+                e_prod = frozenset({(k, e1.get(k, 0) + e2.get(k, 0)) for k in se1.union(set(e2)) if e1.get(k, 0) + e2.get(k, 0) > 0})
+                if len(e_prod) == 0:
+                    e_prod = frozenset((1, 1))
+                #e_prod = frozenset({(k, e1.get(k, 0) + e2.get(k, 0)) for k in se1.union(set(e2))}) # e.g. e_prod = frozenset([(0, 0), (1, 5), (2, 4)])
                 pol_prod[e_prod] = value_prod + pol_prod.get(e_prod, 0) # account for multiplicity
         pol_prod = {k: v for k, v in pol_prod.items() if not check_zero(v)} # remove zero values
         if len(pol_prod) == 0: # in this case zero(s) are produced

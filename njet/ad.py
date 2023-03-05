@@ -43,6 +43,26 @@ def getNargs(func):
     assert n_args > 0, error_msg
     return n_args
 
+def identity(*z, order: int):
+    '''
+    Create a set of jets representing the components of the identity operator.
+    
+    Parameters
+    ----------
+    *z
+        The point at which the identitity is evaluated.
+        
+    order: int, optional
+        The order of the desired jets.
+        
+    Returns
+    -------
+    list
+        A list of jets, representing the components of the identity.
+    '''
+    # add a zero to jetpoly values to produce the same shape or type as z[k]
+    return [jet(z[k], jetpoly(zero(z[k]) + 1, index=k, power=1), n=order) for k in range(len(z))]
+
 def get_taylor_coefficients(evaluation, output_format=0, **kwargs):
     '''
     Return the Taylor coefficients of a jet evaluation.
@@ -106,10 +126,7 @@ class derive:
             self.n_args = n_args
 
     def jet_input(self, *z):
-        inp = []
-        for k in range(self.n_args):
-            jk = jet(z[k], jetpoly(zero(z[k]) + 1, index=k, power=1), n=self.order) # add a zero here to produce the same shape or type as z[k]
-            inp.append(jk)
+        inp = identity(*z, order=self.order)
         self._input = inp
         return inp
         

@@ -342,7 +342,7 @@ class cderive:
         Parameters
         ----------
         frame: callable, optional
-            An optional function which will take the current position number
+            An optional function which will take the current position number in the chain
             and must return either an integer or a slice.
             
             By using this function, one can control the data passed through the Faa di Bruno
