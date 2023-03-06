@@ -252,7 +252,7 @@ class cderive:
         
         self.set_ordering(ordering=ordering, **kwargs)
                 
-    def set_ordering(self, ordering=None, reset=True, warn=True, **kwargs):
+    def set_ordering(self, ordering=None, reset=True, **kwargs):
         '''
         Set the ordering of the current chain. Also compute the number of passages expected through
         each element according to the ordering.
@@ -282,9 +282,9 @@ class cderive:
         for j in range(len(self)):
             self.path[self.ordering[j]].append(j)
 
-        if not reset and warn:
+        if not reset:
             # check at least if the (new) path is consistent with the given data:
-            self._check_path_consistency()
+            _ = self._check_path_consistency()
         else:
             self.reset()
         
@@ -292,14 +292,19 @@ class cderive:
         '''
         Check if the number of entries for each evaluation (if they exist) is consistent with the internal path enumeration.
         '''
+        result = True
         for k in range(len(self)):
             f = self.dfunctions[self.ordering[k]]
             if not hasattr(f, '_evaluation'):
                 continue
             index = self.path[self.ordering[k]].index(k)
-            if not all([index < len(e.array(0)) for e in f._evaluation]):
-                warnings.warn(f'Path inconsistent with given function evaluations at index >= {k}. Reset or re-evaluation required.')
+            if index == 0: # Single passages or possible scalar values will be ignored
+                continue
+            if not all([index < len(e.array(0)) for e in f._evaluation]): # More data than required will also be ignored.
+                warnings.warn(f'Insufficient jet-evaluation entries at position >= {k}. Reset or re-evaluation required.')
+                result = False
                 break
+        return result
                 
     def reset(self):
         '''
@@ -308,7 +313,7 @@ class cderive:
         for f in self.dfunctions:
             if hasattr(f, '_evaluation'):
                 delattr(f, '_evaluation')
-            
+                            
     def jetfunc(self, *point, **kwargs):
         '''
         Run a point through the chain once, to determine the point(s) at which
@@ -361,12 +366,12 @@ class cderive:
             # Probe the current chain
             _ = self.jetfunc(*point, **kwargs)
             
-        if not np.array([point[k] == self.dfunctions[self.ordering[0]]._input[k][0].array(0) for k in range(len(point))]).all():
-            # If the input point disagrees with the stored input point, then return false.
+        # Check the points along the chain
+        try:
+            return all([np.array([self.dfunctions[self.ordering[k]]._input[component_index][self.path[self.ordering[k]].index(k)].array(0) == self._output[k][component_index] for component_index in range(len(self._output[k]))]).all() for k in range(len(self))])
+        except:
+            warnings.warn('Probe check aborted with error(s).')
             return False
-        else:
-            # Check the remaining points along the chain
-            return all([np.array([self.dfunctions[self.ordering[k]]._input[component_index][self.path[self.ordering[k]].index(k)].array(0) == self._output[k][component_index] for component_index in range(len(self._output[k]))]).all() for k in range(1, len(self))])
             
     def eval(self, *point, **kwargs):
         '''
