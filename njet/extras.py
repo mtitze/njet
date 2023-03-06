@@ -2,6 +2,7 @@ import numpy as np
 from more_itertools import distinct_permutations, windowed
 from tqdm import tqdm
 from copy import copy
+import warnings
 
 from . import jet, derive, get_taylor_coefficients
 from .common import factorials
@@ -240,7 +241,7 @@ class cderive:
 
         # Determine user input for the 'functions' parameter
         supported_objects = ['njet.ad.derive', 'njet.extras.cderive'] # objects of these kinds will not be instantiated with 'derive'
-        self.dfunctions = [f if any([s in f.__repr__() for s in supported_objects]) else derive(f, order=order, **kwargs) for f in functions]
+        self.dfunctions = [copy(f) if any([s in f.__repr__() for s in supported_objects]) else derive(copy(f), order=order, **kwargs) for f in functions]
         
         self.n_functions = len(self.dfunctions)
         self.order = order
@@ -249,9 +250,9 @@ class cderive:
             run_params = _make_run_params(order)
         self.run_params = run_params
         
-        self.set_ordering(ordering=ordering)
-
-    def set_ordering(self, ordering=None):
+        self.set_ordering(ordering=ordering, **kwargs)
+                
+    def set_ordering(self, ordering=None, reset=True, warn=True, **kwargs):
         '''
         Set the ordering of the current chain. Also compute the number of passages expected through
         each element according to the ordering.
@@ -280,6 +281,33 @@ class cderive:
         self.path = {k: [] for k in uord}
         for j in range(len(self)):
             self.path[self.ordering[j]].append(j)
+
+        if not reset and warn:
+            # check at least if the (new) path is consistent with the given data:
+            self._check_path_consistency()
+        else:
+            self.reset()
+        
+    def _check_path_consistency(self):
+        '''
+        Check if the number of entries for each evaluation (if they exist) is consistent with the internal path enumeration.
+        '''
+        for k in range(len(self)):
+            f = self.dfunctions[self.ordering[k]]
+            if not hasattr(f, '_evaluation'):
+                continue
+            index = self.path[self.ordering[k]].index(k)
+            if not all([index < len(e.array(0)) for e in f._evaluation]):
+                warnings.warn(f'Path inconsistent with given function evaluations at index >= {k}. Reset or re-evaluation required.')
+                break
+                
+    def reset(self):
+        '''
+        Remove all jet evaluations (if they exist).
+        '''
+        for f in self.dfunctions:
+            if hasattr(f, '_evaluation'):
+                delattr(f, '_evaluation')
             
     def jetfunc(self, *point, **kwargs):
         '''
@@ -374,8 +402,7 @@ class cderive:
     
     def compose(self, **kwargs):
         assert all(hasattr(f, '_evaluation') for f in self.dfunctions), 'Composition requires function evaluations in advance.'
-        # the path through the chain will require the selection of the point at which the trajectory
-        # passes at the respective position:
+        # the path through the chain will require the selection of the point through which the trajectory passes at the respective position:
         evals = [[e[self.path[self.ordering[pos]].index(pos)] for e in self[pos]._evaluation] for pos in range(len(self))]
         self._evaluation_chain = compose(*evals, run_params=self.run_params, **kwargs)
         self._evaluation = self._evaluation_chain[-1]
@@ -550,7 +577,7 @@ class cderive:
                 j += 1
         new_ordering = _get_ordering(new_ordering)
         
-        return self.__class__(*new_functions, order=self.order, ordering=new_ordering, run_params=self.run_params)
+        return self.__class__(*new_functions, order=self.order, ordering=new_ordering, run_params=self.run_params, reset=False)
     
     def __len__(self):
         return len(self.ordering)
@@ -597,7 +624,7 @@ class cderive:
                 rf._evaluation = evaluation # n.b. object was copied, so no danger to overwrite one of its fields
             
             new_ordering = [requested_unique_func_indices.index(e) for e in requested_func_indices] # starts from zero up to length of the unique (new) elements
-            return self.__class__(*requested_funcs, ordering=new_ordering, order=self.order, run_params=self.run_params)
+            return self.__class__(*requested_funcs, ordering=new_ordering, order=self.order, run_params=self.run_params, reset=False)
             
     def __iter__(self):
         self._iterpointer = 0
