@@ -115,6 +115,13 @@ def general_faa_di_bruno(f, g, run_params={}):
     n-jet-collections of F and G, i.e. fk = n-jet(fk_1, ..., fk_n)
     where fk_j represents the j-th derivative of the k-th component of F etc.
     
+    Note that this routine requires that both f and g are represented by jetpoly
+    objects in their higher-order array entries (they store the various partial derivatives
+    for the given orders).
+    In particular, the ordinary derive.eval routine will produce such objects. 
+    This is the major difference to the one-dimensional Faa di Bruno formula 
+    in njet.jet.faa_di_bruno, which has no such requirement.
+    
     Parameters
     ----------
     f: list
@@ -155,6 +162,36 @@ def general_faa_di_bruno(f, g, run_params={}):
                 continue
             out[order][k] += symtensor_call([[jg.array(nj)/facts[nj] for jg in g] for nj in e], jfk.array(r).terms)/facts[r]*facts[order]
     return [jet(*[out[k][j] for k in range(max_order + 1)], n=max_order) for j in range(n_dim)]
+
+def compose(*evals, run_params={}, **kwargs):
+    '''
+    Compose derivatives of a chain of vector-valued jet-evaluations.
+
+    Parameters
+    ----------
+    evals: 
+        A series of (multi-dimensional) jet-evaluations. Hereby every jet-evaluation 
+        is represented by a list of n-jets, one for each individual component.
+
+    **kwargs: dict, optional
+        One can pass the boolean parameter disable_tqdm to enable (if False) a progress bar.
+
+    Returns
+    -------
+    list
+        A list of jet evaluations for each vector component of the chain, representing
+        the Taylor-expansion of the chain.
+    '''
+    if len(run_params) == 0:
+        max_order = max([e.order for f in evals for e in f])
+        run_params = _make_run_params(max_order)
+    
+    evr = evals[0]
+    out = [evr]
+    for k in tqdm(range(1, len(evals)), disable=kwargs.get('disable_tqdm', True)):
+        evr = general_faa_di_bruno(evals[k], evr, run_params=run_params)
+        out.append(evr)
+    return out
 
 
 class cderive:
@@ -335,45 +372,14 @@ class cderive:
             _ = self.dfunctions[k].eval(*components, **kwargs)
         return self.compose(**kwargs)
     
-    def compose(self, frame=None, **kwargs):
-        '''
-        Compose the given derivatives for the entire chain.
-        
-        Parameters
-        ----------
-        frame: callable, optional
-            An optional function which will take the current position number in the chain
-            and must return either an integer or a slice.
-            
-            By using this function, one can control the data passed through the Faa di Bruno
-            formula in case the evaluation(s) contain multidimensional data.
-            
-            If nothing specified, 'frame' will be
-            frame = lambda k: self.path[self.ordering[k]].index(k),
-            so it will assign the current position number to the index at which a single point passed
-            through the respective (unique) element.
-        
-        **kwargs: dict, optional
-            One can pass the boolean parameter disable_tqdm to enable (if False) a progress bar.
-            
-        Returns
-        -------
-        list
-            A list of jet evaluations for each vector component of the chain, representing
-            the Taylor-expansion of the chain.
-        '''
-        if frame == None:
-            frame = lambda k: self.path[self.ordering[k]].index(k)
-        
+    def compose(self, **kwargs):
         assert all(hasattr(f, '_evaluation') for f in self.dfunctions), 'Composition requires function evaluations in advance.'
-        evr = [e[frame(0)] for e in self[0]._evaluation] # the start is the derivative of the first element at the point(s) of interest
-        self._evaluation_chain = [evr]
-        for k in tqdm(range(1, len(self)), disable=kwargs.get('disable_tqdm', True)):
-            ev = [j[frame(k)] for j in self[k]._evaluation]
-            evr = general_faa_di_bruno(ev, evr, run_params=self.run_params)
-            self._evaluation_chain.append(evr)
-        self._evaluation = evr
-        return evr
+        # the path through the chain will require the selection of the point at which the trajectory
+        # passes at the respective position:
+        evals = [[e[self.path[self.ordering[pos]].index(pos)] for e in self[pos]._evaluation] for pos in range(len(self))]
+        self._evaluation_chain = compose(*evals, run_params=self.run_params, **kwargs)
+        self._evaluation = self._evaluation_chain[-1]
+        return self._evaluation
     
     def __call__(self, *z, **kwargs):
         '''
@@ -435,7 +441,7 @@ class cderive:
             Tuple of integers which defines a subsequence in self.ordering.
             If nothings specified, the entire sequence will be used, and so
             this routine becomes very similar to self.compose (with the difference that
-            a cderive object will be returned here, instead).
+            a cderive object will be returned here).
             
         positions: list, optional
             List of integers which defines the start indices of the above pattern in self.ordering.

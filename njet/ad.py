@@ -60,8 +60,7 @@ def identity(*z, order: int):
     list
         A list of jets, representing the components of the identity.
     '''
-    # add a zero to jetpoly values to produce the same shape or type as z[k]
-    return [jet(z[k], jetpoly(zero(z[k]) + 1, index=k, power=1), n=order) for k in range(len(z))]
+    return [jet(z[k], jetpoly(zero(z[k]) + 1, index=k, power=1), n=order) for k in range(len(z))] # add a zero to jetpoly values to produce the same shape or type as z[k]
 
 def get_taylor_coefficients(evaluation, output_format=0, **kwargs):
     '''
