@@ -5,6 +5,27 @@ from njet import derive
 from njet.functions import cos, sin
 from njet.extras import general_faa_di_bruno, symtensor_call, cderive
 
+def test_point_change(order=2):
+    '''
+    Basic test to confirm if derivatives are re-calculated if
+    the input point was changed.
+    '''
+    f = lambda x, y: [x**2 + 0.42*x*y - y, 0.25*(x - y)**3]
+    g = lambda x, y: [y**2 - 0.21*y - x**5, 0.883*y*x**2 + 0.32*y]
+    
+    z1 = [0.033, -1.13]
+    z2 = [1.158, 0.332]
+    
+    ref1 = f(*g(*z1))
+    ref2 = f(*g(*z2))
+    
+    dfg = cderive(g, f, order=order)
+    r1 = dfg(*z1)
+    r2 = dfg(*z2)
+    
+    assert all([r1[k][0, 0] == ref1[k] for k in range(2)])
+    assert all([r2[k][0, 0] == ref2[k] for k in range(2)])
+
 def test_symtensor_call():
     
     tol = 1e-15

@@ -252,6 +252,9 @@ def _jetp1(jev, index: int, idvalue=None, ncopies: int=1, location=-1):
     -------
     jet
     '''
+    if ncopies == 0:
+        return jev
+    
     a0 = jev.array(0)
     zero = a0*0
     one = zero + 1
