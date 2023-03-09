@@ -252,6 +252,7 @@ def _jetp1(jev, index: int, idvalue=None, ncopies: int=1, location=-1):
     -------
     jet
     '''
+    assert ncopies >= 0
     if ncopies == 0:
         return jev
     
@@ -862,14 +863,14 @@ class cderive:
         # successively add copies and identity transformations to the given jet-evaluations, defining the traces to be tracked.
         for k in range(1, L):
             jevk = jev(k)
-            cycling_data.append([_jetp1(tile(jevk[component_index], ncopies=k), 
+            cycling_data.append([_jetp1(tile(jevk[component_index], ncopies=k + 1), 
                                        index=component_index, 
-                                       ncopies=L - k) for component_index in range(len(jevk))])
+                                       ncopies=L - k - 1) for component_index in range(len(jevk))])
         for k in range(L - 1):
             jevkpL = jev(k + L)
-            cycling_data.append([_jetp1(tile(jevkpL[component_index], ncopies=L - k), 
+            cycling_data.append([_jetp1(tile(jevkpL[component_index], ncopies=L - k - 1), 
                                        index=component_index, 
-                                       ncopies=k, location=0) for component_index in range(len(jevkpL))])
+                                       ncopies=k + 1, location=0) for component_index in range(len(jevkpL))])
             
         self._cycle_data_inp = cycling_data
         self._cycle_data = compose(*cycling_data, run_params=self.run_params)

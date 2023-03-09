@@ -2,10 +2,10 @@ Vector-valued functions
 =======================
 
 In the case of a vector-valued function (i.e. functions which return an iterable object), the
-``derive`` class will automatically return a list of jet objects upon evaluation, one for each component. Although ``derive`` can handle any composition of (vector-valued) functions in this way, it may be of use to combine multi-dimensional jet output in case they were produced in different processes. Support of handling such output is addressed in the dedicated ``njet.extras`` module. In particular there exist a ``general_fa_di_bruno`` routine and the ``cderive`` class which we shall describe in this section.
+``derive`` class will automatically return a list of jet objects upon evaluation, one for each component. Although ``derive`` can handle any composition of (vector-valued) functions in this way, it may be of use to combine multi-dimensional jet output in case they were produced in different processes. Support for the handling of such cases is given in the dedicated ``njet.extras`` module. In particular, there exist a ``general_fa_di_bruno`` routine and the ``cderive`` class which we shall describe in the following.
 
-Of course, everything what is said in this section can be applied to the special 1D case.
-However, the routines here will take advantage of jets carrying NumPy arrays. A jet representing a single-valued function may be converted to a jet carrying a 1D NumPy array by means of the ``njet.extras.tile`` routine.
+Of course, everything what will be discussed here can also be applied to the special 1D case.
+However, some of the routines in ``njet.extras`` (in particular those of the ``cderive`` class) will take advantage of jets carrying NumPy arrays and so this should be taken into account. A jet representing a single-valued function may be converted to a jet carrying a 1D NumPy array by means of the ``njet.extras.tile`` routine.
 
 Faa di Bruno's formula
 ----------------------
@@ -76,7 +76,7 @@ Define two vector-valued functions and compute their jet evaluation at a specifi
     evf = df.eval(*g(*z))
     
 The two lists ``evg`` and ``evf`` contain the jet-evaluations of the two functions at the point ``z`` and ``g(*z)`` for every component, respectively, hence their Taylor-coefficients. For example,
-we can get the Taylor-coefficients of ``f`` at ``g(*z)`` for the first component:
+we can get the Taylor-coefficients of ``f`` at ``g(*z)`` for the first component (the ``n_args`` argument here is just to tell njet how to present the 0-order and not immediately necessary):
 
 .. code-block:: python
 
@@ -139,7 +139,8 @@ the previously computed multi-dimensional jet-evaluations ``evg`` and ``evf``:
      (0, 1, 1): (-0.02283956495771866+0.04217330624559905j),
      (2, 0, 0): (0.07990334788570935+0.07626091978109452j)}
      
-In this way it is possible to calculate and combine intermediate steps of a chain of functions, without taking the derivative of the entire chain in one go.
+In this way it is possible to calculate and combine intermediate steps of a chain, without the need of passing the jets through all of the members of the chain in a single large calculation.
+This can become effective in particular if there are repetitions of functions in the chain.
 
 Function chains
 ---------------

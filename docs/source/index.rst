@@ -17,7 +17,6 @@ Latest version: |release|
    poly.rst
    extras.rst
    functions.rst
-   common.rst
 
 
 Indices and tables
