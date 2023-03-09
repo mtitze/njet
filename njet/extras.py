@@ -4,7 +4,8 @@ from tqdm import tqdm
 from copy import copy
 import warnings
 
-from . import jet, derive, get_taylor_coefficients
+from njet import jet, jetpoly, derive, get_taylor_coefficients
+from njet.common import check_zero
 from .common import factorials
 
 def accel_asc(n: int):
@@ -194,6 +195,102 @@ def compose(*evals, run_params={}, **kwargs):
         out.append(evr)
     return out
 
+def tile(jev, ncopies: int):
+    '''
+    Construct a new jet in which its entries contain copies of itself.
+    
+    Note: Intention to work if all jet entries are numpy arrays. A jet with
+          scalar values can be converted to a jet containing numpy arrays
+          of shape (1,) by using ncopies=1.
+    
+    Parameters
+    ----------
+    jev: jet
+    
+    ncopies: int
+        Number of desired copies.
+    
+    Returns
+    -------
+    jet
+        A jet having arrays of length ncopies + 1
+    '''
+    a0 = jev.array(0)
+    a0_new = np.tile(a0, [ncopies] + [1]*len(a0.shape))
+    new_jet_array = [a0_new]
+    for k in range(1, jev.order + 1):
+        entry_k = jev.array(k).terms
+        new_terms_k = {}
+        for key, value in entry_k.items():
+            new_terms_k[key] = np.tile(value, [ncopies] + [1]*len(value.shape))
+        new_jet_array.append(jetpoly(terms=new_terms_k))
+    return jet(*new_jet_array)
+
+def _jetp1(jev, index: int, idvalue=None, ncopies: int=1, location=-1):
+    '''
+    Add copies of a unity transformations to the give jet entries -- either
+    in the end or at the beginning.
+    
+    Intended to work if all jet entries are numpy arrays.
+
+    Parameters
+    ----------
+    jev: jet
+    
+    index: int
+        The component of the unity transformation.
+        
+    idvalue: float, optional
+        The value of the identity. If nothing specified, the last value of jetv.array(0) will be used.
+        
+    ncopies: int, optional
+        The number of copies attached.
+        
+    location: int, optional
+        -1: Attach to end. Everything else: attach to start.
+    
+    Returns
+    -------
+    jet
+    '''
+    a0 = jev.array(0)
+    zero = a0*0
+    one = zero + 1
+    kj = frozenset({(index, 1)})
+    if idvalue is None:
+        to_concat0 = [a0[-1]]*ncopies
+    else:
+        to_concat0 = [idvalue]*ncopies
+        
+    # the unity transformation will reproduce the value of the jet in the 0-array.
+    if location == -1:
+        #a0_new = np.r_[a0, a0[-1]]
+        a0_new = np.concatenate([a0, to_concat0])
+    else:
+        a0_new = np.concatenate([to_concat0, a0])
+    
+    new_jet_array = [a0_new]
+    for k in range(1, jev.order + 1):
+        entry_k = jev.array(k).terms
+        if k == 1:
+            # ensure that kj appears in the new jetpoly in any case:
+            _ = entry_k.setdefault(kj, zero)
+        new_terms_k = {}
+        for key, value in entry_k.items():
+            if key == kj: # may happen if k = 1
+                to_concatj = [one[0]]*ncopies
+            else:
+                to_concatj = [zero[0]]*ncopies
+                
+            if location == -1:
+                #new_terms_k[key] = np.r_[value, 1]
+                new_terms_k[key] = np.concatenate([value, to_concatj])
+            else:
+                #new_terms_k[key] = np.r_[value, 0]
+                new_terms_k[key] = np.concatenate([to_concatj, value])
+        new_jet_array.append(jetpoly(terms=new_terms_k))
+    return jet(*new_jet_array)
+
 
 class cderive:
     '''
@@ -263,6 +360,10 @@ class cderive:
             The order defining how the unique functions are arranged in the chain.
             Hereby the index j must refer to the function at position j in the sequence
             of functions.
+            
+        reset: boolean, optional
+            Reset the jet-evaluations as well. This may become necessary because these evaluations
+            depend strongly on the current ordering.
         '''
         if ordering is None:
             ordering = list(range(self.n_functions))
@@ -404,6 +505,23 @@ class cderive:
             components = [np.array([points_at_function[j][l] for j in range(len(points_at_function))], dtype=np.complex128) for l in range(n_args_function)]
             _ = self.dfunctions[k].eval(*components, **kwargs)
         return self.compose(**kwargs)
+    
+    def jev(self, pos: int):
+        '''
+        Convenience function to obtain jet-evaluation data at a specific position (This
+        data can be produced by the 'eval' command).
+        
+        Parameters
+        ----------
+        pos: integer
+            The position within the chain of functions.
+            
+        Returns
+        -------
+        list
+            A list of jet-evaluations.
+        '''
+        return [e[self.path[self.ordering[pos]].index(pos)] for e in self[pos]._evaluation]
     
     def compose(self, **kwargs):
         assert all(hasattr(f, '_evaluation') for f in self.dfunctions), 'Composition requires function evaluations in advance.'
@@ -647,6 +765,60 @@ class cderive:
         Return the element number at a given position in the beamline chain (similar as .index for lists)
         '''
         return self.dfunctions.index(value)
+    
+    def cycle(self, *point, periodic='auto', **kwargs):
+        '''
+        Cycle through the given chain: Compute the derivatives at each point, assuming
+        a periodic structure of the entire chain.
+        
+        periodic: str or boolean, optional
+            If True, assume that the start point through the chain agrees with the end point.
+            If False, a check will be made for this condition. If the check fails, an extension
+            of the current chain of twice its length will be considered to calculate missing
+            derivatives.
+        '''
+        # May have to not calculate any evaluation in advance ... (because the point at
+        # length len(dchain) may not equal the one at start)
+        if len(point) == 0:
+            if hasattr(self, '_input'):
+                point = self._input
+        assert len(point) > 0, 'Reference point required.'
+
+        # Check if situation is periodic
+        L = len(self)
+        if periodic == 'auto':
+            if not hasattr(self, '_output'):
+                warnings.warn(f"periodic: {periodic} and no '_output' field found. Evaluating at {point} ...")
+                _ = self.__call__(*point, **kwargs) # TODO: maybe improve the behaviour here (load eval data)
+            periodic = all([check_zero(point[k] - self._output[-1][k]) for k in range(len(point))])
+            
+        if not periodic:
+            # Construct a chain twice as long as the current chain
+            # TODO: only length L chain required: just continue with end point here.
+            self._cycle = self.__class__(*[copy(f) for f in self.dfunctions], order=self.order, ordering=self.ordering*2, run_params=self.run_params)
+            _ = self._cycle.eval(*point, **kwargs)
+            jev = lambda k: self._cycle.jev(k)
+        else:
+            self._cycle = self
+            jev = lambda k: self.jev(k%L)
+        
+        jev0 = jev(0)
+        cycling_data = [[_jetp1(tile(jev0[component_index], ncopies=1), index=component_index, ncopies=L - 1) for component_index in range(len(jev0))]]
+        # successively add copies and identity transformations to the given jet-evaluations, defining the traces to be tracked.
+        for k in range(1, L):
+            jevk = jev(k)
+            cycling_data.append([_jetp1(tile(jevk[component_index], ncopies=k), 
+                                       index=component_index, 
+                                       ncopies=L - k) for component_index in range(len(jevk))])
+        for k in range(L - 1):
+            jevkpL = jev(k + L)
+            cycling_data.append([_jetp1(tile(jevkpL[component_index], ncopies=L - k), 
+                                       index=component_index, 
+                                       ncopies=k, location=0) for component_index in range(len(jevkpL))])
+            
+        self._cycle_data_inp = cycling_data
+        self._cycle_data = compose(*cycling_data, run_params=self.run_params)
+        return [[jcmp[k] for jcmp in self._cycle_data[k + L - 1]] for k in range(L)]
     
     
 def _get_ordering(sequence, start=0):
