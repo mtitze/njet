@@ -766,19 +766,11 @@ class cderive:
         '''
         return self.dfunctions.index(value)
     
-    def cycle(self, *point, periodic='auto', **kwargs):
+    def _prepare_cycle(self, *point, periodic='auto', **kwargs):
         '''
-        Cycle through the given chain: Compute the derivatives at each point, assuming
-        a periodic structure of the entire chain.
-        
-        periodic: str or boolean, optional
-            If True, assume that the start point through the chain agrees with the end point.
-            If False, a check will be made for this condition. If the check fails, an extension
-            of the current chain of twice its length will be considered to calculate missing
-            derivatives.
+        Internal routine to check if the current chain admits data suitable for a cycle calculation and
+        prepare a function to obtain the jet-evaluations depending on the position in the chain.
         '''
-        # May have to not calculate any evaluation in advance ... (because the point at
-        # length len(dchain) may not equal the one at start)
         if len(point) == 0:
             if hasattr(self, '_input'):
                 point = self._input
@@ -788,7 +780,7 @@ class cderive:
         L = len(self)
         if periodic == 'auto':
             if not hasattr(self, '_output'):
-                warnings.warn(f"periodic: {periodic} and no '_output' field found. Evaluating at {point} ...")
+                warnings.warn(f"periodic: '{periodic}' and no '_output' field found. Evaluating at {point} ...")
                 _ = self.__call__(*point, **kwargs) # TODO: maybe improve the behaviour here (load eval data)
             periodic = all([check_zero(point[k] - self._output[-1][k]) for k in range(len(point))])
             
@@ -801,9 +793,41 @@ class cderive:
         else:
             self._cycle = self
             jev = lambda k: self.jev(k%L)
+        return jev
+    
+    def cycle(self, *point, periodic='auto', **kwargs):
+        '''
+        Cycle through the given chain: Compute the derivatives at each point, assuming
+        a periodic structure of the entire chain.
         
+        Parameters
+        ----------
+        point: point of reference, optional
+            The point of reference at which the derivatives should be computed at the start
+            of the chain.
+        
+        periodic: str or boolean, optional
+            If True, assume that the start point through the chain agrees with the end point (i.e.
+            is a 'fix point').
+            If False, a check will be made for this condition. If the check fails, an extension
+            of the current chain of twice its length will be considered to calculate the
+            derivatives and the missing points.
+            
+        **kwargs
+            Optional keyworded arguments passed to a (possible) chain evaluation.
+            
+        Returns
+        -------
+        list
+            A list of jet-evaluations, where the k-th entry corresponds to the derivative of the
+            chain from position k to position k + L, where L denotes the length of the chain (using
+            a periodic chain structure).
+        '''
+        L = len(self)
+        jev = self._prepare_cycle(*point, periodic=periodic, **kwargs)
         jev0 = jev(0)
         cycling_data = [[_jetp1(tile(jev0[component_index], ncopies=1), index=component_index, ncopies=L - 1) for component_index in range(len(jev0))]]
+        
         # successively add copies and identity transformations to the given jet-evaluations, defining the traces to be tracked.
         for k in range(1, L):
             jevk = jev(k)
