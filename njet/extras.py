@@ -214,6 +214,9 @@ def tile(jev, ncopies: int):
     jet
         A jet having arrays of length ncopies + 1
     '''
+    assert ncopies >= 0
+    if ncopies == 0:
+        return jev
     a0 = jev.array(0)
     a0_new = np.tile(a0, [ncopies] + [1]*len(a0.shape))
     new_jet_array = [a0_new]
@@ -343,7 +346,7 @@ class cderive:
         Optional keyworded arguments passed to njet.ad.derive init.
     '''
 
-    def __init__(self, *functions, order: int=1, ordering=None, run_params={}, **kwargs):
+    def __init__(self, *functions, order: int=1, ordering=None, run_params={}, reset=True, **kwargs):
 
         # Determine user input for the 'functions' parameter
         supported_objects = ['njet.ad.derive', 'njet.extras.cderive'] # objects of these kinds will not be instantiated with 'derive'
@@ -356,9 +359,9 @@ class cderive:
             run_params = _make_run_params(order)
         self.run_params = run_params
         
-        self.set_ordering(ordering=ordering, **kwargs)
+        self.set_ordering(ordering=ordering, reset=reset)
                 
-    def set_ordering(self, ordering=None, reset=True, **kwargs):
+    def set_ordering(self, ordering=None, reset=True):
         '''
         Set the ordering of the current chain. Also compute the number of passages expected through
         each element according to the ordering.

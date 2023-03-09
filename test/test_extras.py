@@ -247,3 +247,109 @@ def test_cderive3(point=[0.01, -0.053], order=3):
             assert abs((ref[k] - r[k]).array(0)) < tolerances12[k][0] 
             for j in range(1, 4):
                 assert  max(np.abs(list((ref[k] - r[k]).array(j).terms.values()))) < tolerances12[k][j]    
+
+###################
+# Cycling test(s) #
+###################
+
+def check_jet(A, tolerances: list):
+    '''
+    Convenience function to check if a jets containing jetpoly objects (as a result
+    of a jet-evaluation) is close to zero.
+    
+    A list of tolerances will be used to compare the maximum of the 
+    absolute values of the k-th array with its k-th entry.
+    '''
+    assert len(tolerances) == A.order + 1
+    
+    # Check the 0-parts:
+    diff0 = np.abs(A.array(0))
+    if hasattr(diff0, '__iter__'):
+        if len(diff0) > 0:
+            diff0 = max(diff0)
+        else:
+            diff0 = 0
+    assert diff0 < tolerances[0]
+    
+    # Check the higher-order parts:
+    diff = A.get_array()[1:]
+    j = 1
+    for diffj in diff:
+        check = np.abs(list(diffj.terms.values()))
+        if len(check) > 0:
+            check = max(check)
+        else:
+            check = 0
+        assert check < tolerances[j], f'at {j}: {check} >= {tolerances[j]}'
+        j += 1
+                
+cyc_point0 = (0, 0)
+cyc_point1 = (0.0004, -0.0005)
+                
+cyc_ordering0 = [0, 1, 2, 3, 4]
+cyc_ordering1 = [0, 1, 2, 3, 4, 3, 4, 3, 2, 3, 4, 3, 1, 0, 2, 0]
+cyc_ordering2 = [1, 0, 2, 0, 1, 1, 4, 3, 2, 3, 4, 0, 1, 2, 2, 0, 4, 4, 3, 3]
+
+cyc_tolerances0 = [1e-15, 1e-15, 1e-14, 5e-13]
+cyc_tolerances1 = [1e-14, 2e-12, 5e-10, 1e-9]
+cyc_tolerances2 = [1e-14, 2e-12, 5e-10, 1e-9]
+
+@pytest.mark.parametrize("point, ordering, tolerances", [(cyc_point0, cyc_ordering0, cyc_tolerances0), 
+                                                         (cyc_point0, cyc_ordering1, cyc_tolerances1),
+                                                         (cyc_point0, cyc_ordering2, cyc_tolerances2),
+                                                         (cyc_point1, cyc_ordering0, cyc_tolerances0),
+                                                         (cyc_point1, cyc_ordering1, cyc_tolerances1),
+                                                         (cyc_point1, cyc_ordering2, cyc_tolerances2)])
+def test_cycling1(point, ordering, tolerances, order=3):
+    '''
+    Test if we receive the same results if we compute the derivatives of a chain
+    separately or using the cycle feature.
+    '''
+    # Construct a series of chains, where every chain is cyclic shifted in comparison to the next:
+    chains = []
+    for k in range(len(ordering)):
+        ordering_k = ordering[k:] + ordering[:k]
+        chains.append(cderive(*opchain1, ordering=ordering_k, order=order, n_args=2))
+
+    # To derive each chain separately we construct derive classes for the cyclic functions (cfunc's):
+    def make_cfunc(k):
+        c = chains[k]
+        def cfunc(*z):
+            for e in c:
+                z = e.jetfunc(*z)
+            return z
+        return cfunc
+    dchains = []
+    for k in range(len(chains)):
+        cfunc = make_cfunc(k) # the chain of functions
+        dchains.append(derive(cfunc, order=order, n_args=2))
+
+    # Compute the reference jet-evaluations (derivatives) at the point of interest:
+    # First we have to make a function transporting the start point through the chain up to position k:
+    def make_partf(k):
+        functions = [opchain1[j] for j in ordering[:k]]
+        def partf(*z):
+            for f in functions:
+                z = f(*z)
+            return z
+        return partf
+    # Now compute the derivatives:
+    refdirs = []
+    for k in range(len(ordering)):
+        partf_k = make_partf(k)
+        refdirs.append(dchains[k].eval(*partf_k(*point)))
+    
+    # Construct the chain-derive class for the entire chain with respect to the given ordering and order:
+    dopchain1 = cderive(*opchain1, ordering=ordering, order=order, n_args=2)
+    # Consistency check: No evaluation results in this class should be taken over from anything previously:
+    assert not hasattr(dopchain1, '_evaluation')
+    assert not any([hasattr(dopchain1.dfunctions[k], '_evaluation') for k in range(len(opchain1))])
+    
+    # Cycle through the chain at the point of interest:
+    cyc = dopchain1.cycle(*point)
+    
+    # Compare the results against the references:
+    for k in range(len(ordering)):
+        for cmp in range(2):
+            check_jet(refdirs[k][cmp] - cyc[k][cmp], tolerances=tolerances[:order + 1])
+        
