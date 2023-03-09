@@ -4,9 +4,8 @@ from tqdm import tqdm
 from copy import copy
 import warnings
 
-from njet import jet, jetpoly, derive, get_taylor_coefficients
-from njet.common import check_zero
-from .common import factorials
+from . import jet, jetpoly, derive, get_taylor_coefficients
+from .common import factorials, check_zero
 
 def accel_asc(n: int):
     '''
@@ -199,9 +198,9 @@ def tile(jev, ncopies: int):
     '''
     Construct a new jet in which its entries contain copies of itself.
     
-    Note: Intention to work if all jet entries are numpy arrays. A jet with
-          scalar values can be converted to a jet containing numpy arrays
-          of shape (1,) by using ncopies=1.
+    Intended to work if the jet entries are numpy arrays. A jet with
+    scalar values can be converted to a jet containing numpy arrays
+    of shape (1,) by using ncopies=1.
     
     Parameters
     ----------
@@ -329,6 +328,12 @@ class cderive:
         A dictionary containing the output of njet.extras._make_run_params. These parameters
         can be send to the routine to avoid internal re-calculation when the routine
         it is called repeatedly.
+        
+    reset: boolean, optional
+        Parameter given to self.set_ordering. If 'True' (default), erase any jet-evaluation data 
+        coming along with the input (the ._evaluation fields). To prevent this behavior, 
+        set this parameter to 'False'. However, in this case one should ensure that correct 
+        data has been stored -- in particular concerning the requested ordering of the chain.
 
     **kwargs
         Optional keyworded arguments passed to njet.ad.derive init.
@@ -459,10 +464,16 @@ class cderive:
             If True, the currently stored data along the chain will be produced
             by collecting the transverse points starting with the given point through the chain.
         '''
+        if hasattr(self, '_input'):
+            check = all([check_zero(point[k] - self._input[k]) for k in range(len(point))])
+            if check == False:
+                return False
+            
         if not all([hasattr(df, '_input') for df in self.dfunctions]):
             # Nothing can be compared, so the check will fail
             return False
-        elif not hasattr(self, '_output'): 
+            
+        if not hasattr(self, '_output'): 
             # Probe the current chain
             _ = self.jetfunc(*point, **kwargs)
             
@@ -507,8 +518,8 @@ class cderive:
     
     def jev(self, pos: int):
         '''
-        Convenience function to obtain jet-evaluation data at a specific position (This
-        data can be produced by the 'eval' command).
+        Convenience function to obtain jet-evaluation data at a specific position
+        (such data can be produced by the 'eval' command).
         
         Parameters
         ----------
@@ -572,7 +583,7 @@ class cderive:
                 eval_required = True
             elif not self._probe(*z, **kwargs):
                 eval_required = True
-        
+                        
         # Perform the composition, if necessary
         if eval_required:
             _ = self.eval(*z, **kwargs) # evaluation includes 'self.compose'

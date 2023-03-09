@@ -4,6 +4,9 @@ Vector-valued functions
 In the case of a vector-valued function (i.e. functions which return an iterable object), the
 ``derive`` class will automatically return a list of jet objects upon evaluation, one for each component. Although ``derive`` can handle any composition of (vector-valued) functions in this way, it may be of use to combine multi-dimensional jet output in case they were produced in different processes. Support of handling such output is addressed in the dedicated ``njet.extras`` module. In particular there exist a ``general_fa_di_bruno`` routine and the ``cderive`` class which we shall describe in this section.
 
+Of course, everything what is said in this section can be applied to the special 1D case.
+However, the routines here will take advantage of jets carrying NumPy arrays. A jet representing a single-valued function may be converted to a jet carrying a 1D NumPy array by means of the ``njet.extras.tile`` routine.
+
 Faa di Bruno's formula
 ----------------------
 
