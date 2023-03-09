@@ -417,8 +417,7 @@ class cderive:
                             
     def jetfunc(self, *point, **kwargs):
         '''
-        Run a point through the chain once, to determine the point(s) at which
-        the derivative(s) should be calculated.
+        Run a point through the chain.
         
         Parameters
         ----------
@@ -524,6 +523,11 @@ class cderive:
         return [e[self.path[self.ordering[pos]].index(pos)] for e in self[pos]._evaluation]
     
     def compose(self, **kwargs):
+        '''
+        Compose the current jet-evaluations in the chain (requires function evaluations in advance).
+        
+        See njet.extras.compose for details; its output is stored in self._evaluation._chain, while the last element is returned.
+        '''
         assert all(hasattr(f, '_evaluation') for f in self.dfunctions), 'Composition requires function evaluations in advance.'
         # the path through the chain will require the selection of the point through which the trajectory passes at the respective position:
         evals = [[e[self.path[self.ordering[pos]].index(pos)] for e in self[pos]._evaluation] for pos in range(len(self))]
@@ -796,9 +800,22 @@ class cderive:
         return jev
     
     def cycle(self, *point, periodic='auto', **kwargs):
-        '''
+        r'''
         Cycle through the given chain: Compute the derivatives at each point, assuming
         a periodic structure of the entire chain.
+        
+        The basic idea goes as follows: Let c1 --> c2 --> c3 --> c4 --> c5 denote the current
+        chain (in this example consisting of 5 elements). Then this routine will extend the internal
+        jet-evaluation data to numpy arrays of length 5 by suitable clones and identity operators,
+        so that we can compute (compose) in parallel the following chain of length 2*5 - 1:
+        
+        |c1 ---> c2 ---> c3 ---> c4 ---> c5*
+        |        c2 ---> c3 ---> c4 ---> c5 ---> c1*
+        |                c3 ---> c4 ---> c5 ---> c1 ---> c2*
+        |                        c4 ---> c5 ---> c1 ---> c2 ---> c3*
+        |                                c5 ---> c1 ---> c2 ---> c3 ---> c4*
+        
+        The final results will then be returned as the starred values in the above diagram.
         
         Parameters
         ----------
