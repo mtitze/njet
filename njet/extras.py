@@ -788,36 +788,85 @@ class cderive:
         '''
         return self.dfunctions.index(value)
     
-    def _prepare_cycle(self, *point, periodic='auto', **kwargs):
+    def _prepare_cycle(self, *point, periodic=False, warn=False, **kwargs):
         '''
-        Internal routine to check if the current chain admits data suitable for a cycle calculation and
-        prepare a function to obtain the jet-evaluations depending on the position in the chain.
-        '''
-        if len(point) == 0:
-            if hasattr(self, '_input'):
-                point = self._input
-        assert len(point) > 0, 'Reference point required.'
-
-        # Check if situation is periodic
-        L = len(self)
-        if periodic == 'auto':
-            if not hasattr(self, '_output'):
-                warnings.warn(f"periodic: '{periodic}' and no '_output' field found. Evaluating at\n {point}\n ...")
-                _ = self.__call__(*point, **kwargs) # TODO: maybe improve the behaviour here (load eval data)
-            periodic = all([check_zero(point[k] - self._output[-1][k]) for k in range(len(point))])
+        Internal routine to process user input, check if the current chain admits data 
+        suitable for cycling and prepare a function to obtain the jet-evaluations depending on 
+        the position in the chain.
+                
+        Parameters
+        ----------
+        *point: float or iterable, optional
+            The point at which to evaluate the derivative(s). It has to be provided if the chain has
+            not yet stored any jet-evaluation data.
+        
+        periodic: boolean, optional
+            If True, assume that the final point equals the given point. In particular, the
+            data taken in the calculation will be taken from the current jet-evaluations (if
+            it exists).
             
-        if not periodic:
-            # Construct a chain twice as long as the current chain
-            # TODO: only length L chain required: just continue with end point here.
-            self._cycle = self.__class__(*[copy(f) for f in self.dfunctions], order=self.order, ordering=self.ordering*2, run_params=self.run_params)
-            _ = self._cycle.eval(*point, **kwargs)
+        warn: boolean, optional
+            Warn in case an evaluation is required.
+            
+        **kwargs
+            Optional keyworded arguments passed to the underlying jet-functions in case an evaluation
+            is required.
+        
+        Returns
+        -------
+        callable
+            A function taking an integer (pos) and returning the jet-evaluation at this position. It will
+            have a similar functionality than self.jev, with the difference that it will take values from
+            0 to 2*len(self) instead.
+        '''
+        data_exists = all([hasattr(f, '_evaluation') for f in self.dfunctions])
+        if not data_exists:
+            # Evaluation required.
+            if len(point) == 0:
+                if hasattr(self, '_input'):
+                    point = self._input
+                elif hasattr(self.dfunctions[self.ordering[0]], '_input'): # get the input of the first function (if exists)
+                    inp = self.dfunctions[self.ordering[0]]._input
+                    point = [inp[k].array(0)[0] for k in range(len(inp))] # the index [0] means we are looking at the first occurence (at the first element)
+            assert len(point) > 0, 'No evaluation data exists. Reference point required.'
+            if warn:
+                warnings.warn(f"No evaluation data exists. Evaluating at\n {point}\n ...")
+            if not periodic:
+                # need to process through the entire chain (of length 2)
+                ordering = self.ordering*2
+            else:
+                ordering = self.ordering
+            self._cycle = self.__class__(*[copy(f) for f in self.dfunctions], order=self.order, ordering=ordering, run_params=self.run_params)
+            _ = self._cycle.eval(*point, **kwargs)            
             jev = lambda k: self._cycle.jev(k)
         else:
-            self._cycle = self
-            jev = lambda k: self.jev(k%L)
+            # Evaluation data exists, but in the non-periodic case it might have to be extended.
+            # Check if end-point agrees with the start.
+            inp = self.dfunctions[self.ordering[0]]._input
+            point = [inp[k].array(0)[0] for k in range(len(inp))] # the index [0] means we are looking at the first occurence 
+            outp = self.dfunctions[self.ordering[-1]]._evaluation
+            final_point = [outp[k].array(0)[-1] for k in range(len(outp))] # the index [-1] means we are looking at the last
+            periodic = periodic or all([check_zero(point[k] - final_point[k]) for k in range(len(point))]) # Use existing data if periodic == False, but start and end point agree.
+            
+            # Define the function which will provide the jet-evaluation data
+            L = len(self)
+            if periodic:
+                self._cycle = self
+                jev = lambda k: self.jev(k%L)
+            else:
+                # In this scenario, data exists but the point is not fixed. Evaluation has to be done.
+                if warn:
+                    warnings.warn(f"Evaluation data exists, but periodic: {periodic}. Extending & evaluating at\n {point}\n ...")
+                self._cycle = self.__class__(*[copy(f) for f in self.dfunctions], order=self.order, ordering=self.ordering, run_params=self.run_params)
+                _ = self._cycle.eval(*final_point, **kwargs) # the final point will be the start point of the extension
+                def jev(k):
+                    if k < L:
+                        return self.jev(k)
+                    else:
+                        return self._cycle.jev(k%L)
         return jev
     
-    def cycle(self, *point, periodic='auto', **kwargs):
+    def cycle(self, *args, **kwargs):
         r'''
         Cycle through the given chain: Compute the derivatives at each point, assuming
         a periodic structure of the entire chain.
@@ -837,17 +886,14 @@ class cderive:
         
         Parameters
         ----------
-        point: point of reference, optional
-            The point of reference at which the derivatives should be computed at the start
-            of the chain.
+        *point: float or iterable, optional
+            The point at which to evaluate the derivative(s). It has to be provided if the chain has
+            not yet stored any jet-evaluation data.
         
-        periodic: str or boolean, optional
-            If 'True', assume that the start point through the chain agrees with the end point (i.e.
-            is a 'fix point'). This will save calculation time, since an existing evaluation can 
-            (and will) be used.
-            If 'False', a check will be made against this condition. If the check fails, an extension
-            of the current chain of twice its length will be considered to calculate the
-            derivatives and the missing points and a warning will be issued.
+        periodic: boolean, optional
+            If True, assume that the final point equals the given point. In particular, the
+            data taken in the calculation will be taken from the current jet-evaluations (if
+            it exists).
             
         **kwargs
             Optional keyworded arguments passed to a (possible) chain evaluation.
@@ -860,18 +906,18 @@ class cderive:
             a periodic chain structure).
         '''
         L = len(self)
-        jev = self._prepare_cycle(*point, periodic=periodic, **kwargs)
-        jev0 = jev(0)
+        self._cycle_jev = self._prepare_cycle(*args, **kwargs)
+        jev0 = self._cycle_jev(0)
         cycling_data = [[_jetp1(tile(jev0[component_index], ncopies=1), index=component_index, ncopies=L - 1) for component_index in range(len(jev0))]]
         
         # successively add copies and identity transformations to the given jet-evaluations, defining the traces to be tracked.
         for k in range(1, L):
-            jevk = jev(k)
+            jevk = self._cycle_jev(k)
             cycling_data.append([_jetp1(tile(jevk[component_index], ncopies=k + 1), 
                                        index=component_index, 
                                        ncopies=L - k - 1) for component_index in range(len(jevk))])
         for k in range(L - 1):
-            jevkpL = jev(k + L)
+            jevkpL = self._cycle_jev(k + L)
             cycling_data.append([_jetp1(tile(jevkpL[component_index], ncopies=L - k - 1), 
                                        index=component_index, 
                                        ncopies=k + 1, location=0) for component_index in range(len(jevkpL))])
