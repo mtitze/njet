@@ -802,7 +802,7 @@ class cderive:
         L = len(self)
         if periodic == 'auto':
             if not hasattr(self, '_output'):
-                warnings.warn(f"periodic: '{periodic}' and no '_output' field found. Evaluating at {point} ...")
+                warnings.warn(f"periodic: '{periodic}' and no '_output' field found. Evaluating at\n {point}\n ...")
                 _ = self.__call__(*point, **kwargs) # TODO: maybe improve the behaviour here (load eval data)
             periodic = all([check_zero(point[k] - self._output[-1][k]) for k in range(len(point))])
             
@@ -842,11 +842,12 @@ class cderive:
             of the chain.
         
         periodic: str or boolean, optional
-            If True, assume that the start point through the chain agrees with the end point (i.e.
-            is a 'fix point').
-            If False, a check will be made for this condition. If the check fails, an extension
+            If 'True', assume that the start point through the chain agrees with the end point (i.e.
+            is a 'fix point'). This will save calculation time, since an existing evaluation can 
+            (and will) be used.
+            If 'False', a check will be made against this condition. If the check fails, an extension
             of the current chain of twice its length will be considered to calculate the
-            derivatives and the missing points.
+            derivatives and the missing points and a warning will be issued.
             
         **kwargs
             Optional keyworded arguments passed to a (possible) chain evaluation.

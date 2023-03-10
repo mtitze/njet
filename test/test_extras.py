@@ -248,9 +248,9 @@ def test_cderive3(point=[0.01, -0.053], order=3):
             for j in range(1, 4):
                 assert  max(np.abs(list((ref[k] - r[k]).array(j).terms.values()))) < tolerances12[k][j]    
 
-###################
-# Cycling test(s) #
-###################
+#################
+# Cycling tests #
+#################
 
 def check_jet(A, tolerances: list):
     '''
@@ -266,7 +266,7 @@ def check_jet(A, tolerances: list):
     diff0 = np.abs(A.array(0))
     if hasattr(diff0, '__iter__'):
         if len(diff0) > 0:
-            diff0 = max(diff0)
+            diff0 = np.max(diff0)
         else:
             diff0 = 0
     assert diff0 < tolerances[0]
@@ -277,7 +277,7 @@ def check_jet(A, tolerances: list):
     for diffj in diff:
         check = np.abs(list(diffj.terms.values()))
         if len(check) > 0:
-            check = max(check)
+            check = np.max(check)
         else:
             check = 0
         assert check < tolerances[j], f'at {j}: {check} >= {tolerances[j]}'
@@ -305,11 +305,13 @@ def test_cycling1(point, ordering, tolerances, order=3):
     Test if we receive the same results if we compute the derivatives of a chain
     separately or using the cycle feature.
     '''
+    n_args = 2
+    
     # Construct a series of chains, where every chain is cyclic shifted in comparison to the next:
     chains = []
     for k in range(len(ordering)):
         ordering_k = ordering[k:] + ordering[:k]
-        chains.append(cderive(*opchain1, ordering=ordering_k, order=order, n_args=2))
+        chains.append(cderive(*opchain1, ordering=ordering_k, order=order, n_args=n_args))
 
     # To derive each chain separately we construct derive classes for the cyclic functions (cfunc's):
     def make_cfunc(k):
@@ -322,7 +324,7 @@ def test_cycling1(point, ordering, tolerances, order=3):
     dchains = []
     for k in range(len(chains)):
         cfunc = make_cfunc(k) # the chain of functions
-        dchains.append(derive(cfunc, order=order, n_args=2))
+        dchains.append(derive(cfunc, order=order, n_args=n_args))
 
     # Compute the reference jet-evaluations (derivatives) at the point of interest:
     # First we have to make a function transporting the start point through the chain up to position k:
@@ -340,7 +342,7 @@ def test_cycling1(point, ordering, tolerances, order=3):
         refdirs.append(dchains[k].eval(*partf_k(*point)))
     
     # Construct the chain-derive class for the entire chain with respect to the given ordering and order:
-    dopchain1 = cderive(*opchain1, ordering=ordering, order=order, n_args=2)
+    dopchain1 = cderive(*opchain1, ordering=ordering, order=order, n_args=n_args)
     # Consistency check: No evaluation results in this class should be taken over from anything previously:
     assert not hasattr(dopchain1, '_evaluation')
     assert not any([hasattr(dopchain1.dfunctions[k], '_evaluation') for k in range(len(opchain1))])
@@ -350,6 +352,39 @@ def test_cycling1(point, ordering, tolerances, order=3):
     
     # Compare the results against the references:
     for k in range(len(ordering)):
-        for cmp in range(2):
+        for cmp in range(n_args):
             check_jet(refdirs[k][cmp] - cyc[k][cmp], tolerances=tolerances[:order + 1])
         
+        
+cyc2_ordering = [0, 1, 3, 1, 2, 4, 0, 1, 0, 0, 0, 1, 1, 2, 2]
+cyc2_tolerances = [1e-15, 5e-15, 5e-14, 5e-13, 5e-11]
+
+cyc2_q1 = np.array([0.001, -0.0009])
+cyc2_p1 = np.array([-0.0018, -0.0018])
+
+cyc2_q2 = np.array([[0.00133, -0.000824], [0.00007, -0.00031]]) 
+cyc2_p2 = np.array([[-0.00171, -0.00122], [0.000012, -0.000212]])
+
+@pytest.mark.parametrize("q, p, ordering, tolerances", [(cyc2_q1, cyc2_p1, cyc2_ordering, cyc2_tolerances),
+                                                        (cyc2_q2, cyc2_p2, cyc2_ordering, cyc2_tolerances)])
+def test_cycling2(q, p, ordering, tolerances, order=4):
+    '''
+    Test if cycling works with numpy arrays.
+    '''
+    n_args = 2
+    
+    # build the chain-derive object
+    dopchain1 = cderive(*opchain1, ordering=ordering, order=order, n_args=n_args)
+    
+    # derive the chain of functions directly to provide a reference
+    df = derive(dopchain1.jetfunc, order=order, n_args=n_args)
+    ref = df.eval(q, p)
+    
+    # verify that dopchain1 has not yet any evaluation results stored
+    assert not hasattr(dopchain1, '_evaluation')
+    assert not any([hasattr(f, '_evaluation') for f in dopchain1.dfunctions])
+    
+    cyc = dopchain1.cycle(q, p)
+    
+    for j in range(n_args):
+        check_jet(ref[j] - cyc[0][j], tolerances=tolerances)    

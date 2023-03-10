@@ -75,8 +75,8 @@ Define two vector-valued functions and compute their jet evaluation at a specifi
     evg = dg.eval(*z)
     evf = df.eval(*g(*z))
     
-The two lists ``evg`` and ``evf`` contain the jet-evaluations of the two functions at the point ``z`` and ``g(*z)`` for every component, respectively, hence their Taylor-coefficients. For example,
-we can get the Taylor-coefficients of ``f`` at ``g(*z)`` for the first component (the ``n_args`` argument here is just to tell njet how to present the 0-order and not immediately necessary):
+The two lists ``evg`` and ``evf`` contain the jet-evaluations of the two functions at the points ``z`` and ``g(*z)`` for every component, and hence their Taylor-coefficients. For example,
+we can get the Taylor-coefficients of ``f`` at ``g(*z)`` for the first component (the ``n_args`` argument here is just to tell ``njet`` how to present the 0th-order and not immediately necessary):
 
 .. code-block:: python
 
