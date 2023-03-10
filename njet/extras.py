@@ -158,7 +158,7 @@ def general_faa_di_bruno(f, g, run_params={}):
     for order, r, e in indices:
         for k in range(n_dim):
             jfk = f[k]
-            if jfk.array(r) == 0: 
+            if check_zero(jfk.array(r)): 
                 # skip in case that the r-th derivative of the k-th component of jfk does not exist
                 continue
             out[order][k] += symtensor_call([[jg.array(nj)/facts[nj] for jg in g] for nj in e], jfk.array(r).terms)/facts[r]*facts[order]
@@ -217,15 +217,17 @@ def tile(jev, ncopies: int):
     assert ncopies >= 0
     if ncopies == 0:
         return jev
-    a0 = jev.array(0)
-    a0_new = np.tile(a0, [ncopies] + [1]*len(a0.shape))
-    new_jet_array = [a0_new]
-    for k in range(1, jev.order + 1):
-        entry_k = jev.array(k).terms
-        new_terms_k = {}
-        for key, value in entry_k.items():
-            new_terms_k[key] = np.tile(value, [ncopies] + [1]*len(value.shape))
-        new_jet_array.append(jetpoly(terms=new_terms_k))
+    new_jet_array = []
+    for k in range(jev.order + 1):
+        jk = jev.array(k)
+        if hasattr(jk, 'terms'): # Assume the entry is of type jetpoly
+            entry_k = jev.array(k).terms
+            new_terms_k = {}
+            for key, value in entry_k.items():
+                new_terms_k[key] = np.tile(value, [ncopies] + [1]*len(value.shape))
+            new_jet_array.append(jetpoly(terms=new_terms_k))
+        else:
+            new_jet_array.append(np.tile(jk, [ncopies] + [1]*len(jk.shape)))
     return jet(*new_jet_array)
 
 def _jetp1(jev, index: int, idvalue=None, ncopies: int=1, location=-1):
@@ -277,7 +279,11 @@ def _jetp1(jev, index: int, idvalue=None, ncopies: int=1, location=-1):
     
     new_jet_array = [a0_new]
     for k in range(1, jev.order + 1):
-        entry_k = jev.array(k).terms
+        jk = jev.array(k)
+        if not hasattr(jk, 'terms'):
+            entry_k = {}
+        else:
+            entry_k = jev.array(k).terms
         if k == 1:
             # ensure that kj appears in the new jetpoly in any case:
             _ = entry_k.setdefault(kj, zero)
@@ -633,6 +639,7 @@ class cderive:
         '''
         # Input handling and consistency checks
         #######################################
+        assert type(pattern) == tuple
         if len(pattern) == 0:
             pattern = tuple(self.ordering)
         size = len(pattern)
@@ -971,8 +978,8 @@ def _get_pattern_positions(sequence, pattern):
     sequence: list
         A list of integers, representing the sequence.
         
-    pattern: tuple or list
-        A tuple or list of integers, representing the pattern.
+    pattern: tuple
+        A tuple of integers, representing the pattern.
     '''
     size = len(pattern)
     assert 1 <= size and size <= len(sequence)

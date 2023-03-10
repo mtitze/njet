@@ -145,10 +145,135 @@ This can become effective in particular if there are repetitions of functions in
 Function chains
 ---------------
 
-In the case that a chain of functions :math:`f_1 \circ f_2 ... \circ f_N` needs to be differentiated, and there are repetitions of :math:`f_k`'s in the chain, the generalized Faa di Bruno formula may help in reducing the amount of calculations required.
+In the case that a chain of functions :math:`f_N \circ f_{N - 1} ... \circ f_1` needs to be differentiated, and there are repetitions of :math:`f_k`'s in the chain, the generalized Faa di Bruno formula may help in reducing the amount of calculations required.
 
-The main idea behind this goes as follows (docs will be updated soon)
+For example, if we want to compute a chain of :math:`2^N` repetitions of the same function :math:`f`, then we can first compute the composition :math:`f_2 := f \circ f`, then the compositon :math:`f_4 := f_2 \circ f_2` and so on, until we are done after :math:`N` steps.
+
+Moreover, if a chain indeed admits repetitions, a single point will pass through a specific function several times while it is transported from :math:`f_1` to :math:`f_N`. So one can use this observation to first calculate the 'intersection' points for each unique element in the chain, and then differentiate the unique functions at the intersection points in parallel using NumPy.
  
+In order to manage function chains, the dedicated class ``cderive`` has been created. This class takes a series of functions, defining the *unique* functions in the chain, an ``order`` parameter, defining the number of derivatives to be computed and an optional ``ordering`` parameter, which is a list of integers and defines the chain itself. For example, consider an alternation of a rotation and some
+polynomial perturbation :math:`M = 15` times:
+
+.. code-block:: python
+
+    from njet.functions import sin, cos
+
+    g = 1
+    per = lambda *z, **kwargs: [z[0], z[1] - g*z[1]**2]
+    rot = lambda *z, alpha=0: [cos(alpha)*z[0] - sin(alpha)*z[1], sin(alpha)*z[0] + cos(alpha)*z[1]]
+
+    M = 15
+    ordering = [0, 1]*M
+    drp = cderive(rot, per, order=2, ordering=ordering, n_args=2)
+
+To compute the derivatives of this chain, we simply call the ``cderive`` object at the point of interest. Hereby we can pass any additional keyworded arguments to the respective
+functions (currently every function in the chain will be called with the same set of keyworded parameters, that's why we have provided ``per`` with an ``**kwargs`` parameter). For example:
+
+.. code-block:: python
+
+    z0 = [1, 0]
+    drp(*z0, alpha=1.32)
+  > ({(0, 0): (0.18525034725773537+0j),
+      (1, 0): (-0.20701900672114942+0j),
+      (0, 1): (-0.43735394282452555+0j),
+      (0, 2): (-2.59506626693419+0j),
+      (2, 0): (-1.6014453189625777+0j),
+      (1, 1): (0.12335967609958237+0j)},
+     {(0, 0): (-0.04933171623183177+0j),
+      (1, 0): (-0.8002365169456884+0j),
+      (0, 1): (0.042177808227965234+0j),
+      (0, 2): (0.13864362384229817+0j),
+      (2, 0): (-0.8741825019912118+0j),
+      (1, 1): (-1.1619247121644274+0j)})
+
+The ``cderive`` object ``drp`` in the above example contains two unique elements, which are
+instances of the ``derive`` class. These unique elements can be accessed in the ``.dfunctions`` field:
+
+.. code-block:: python
+
+    drp.dfunctions
+  > [<njet.ad.derive at 0x7f6a4c09db40>, <njet.ad.derive at 0x7f6a4c09f250>]
+
+If one is interested in obtaining the function at position ``k`` in the chain, then one can type ``drp[k]``, e.g.
+
+.. code-block:: python
+
+    drp[13]
+  > <njet.ad.derive at 0x7f6a4c09f250>
+
+In fact, one can iterate over the ``drp`` object as with ordinary lists. The ordering of the chain is stored in ``drp.ordering``. If one wishes to change the ordering on the same object, there is a dedicated routine for it, ``drp.set_ordering``, because with a change in the ordering also other internal changes will become necessary. In particular, any previously computed jet evaluations may become invalid, since points passing through the newly ordered chain will 'hit' the unique functions at different places. Access to these jet-evaluations (the derivatives) are conveniently done by the ``.jev`` function. For example, the Taylor-coefficients of the first component in the current jet evaluation at ``z0`` in the above chain at position 4 can be obtained as follows:
+
+.. code-block:: python
+
+    drp.jev(4)[0].get_taylor_coefficients(n_args=2)
+  > {(0, 0): (-0.17262911069079837+0j),
+     (1, 0): 0.2481754516523729,
+     (0, 1): -0.9687151001182652}
+
+In some circumstances, however, previously computed jet-evaluations remain valid. For example, this is the case if we want to extract a subchain of a given chain, defined by a slice of neighbouring indices. We can extracted subchains from the original chain in the same manner as it can be done with lists. For example:
+
+.. code-block:: python
+
+    mysubchain = drp[1:13]
+    mysubchain.jev(3)[0].get_taylor_coefficients(n_args=2)
+  > {(0, 0): (-0.17262911069079837+0j),
+     (1, 0): 0.2481754516523729,
+     (0, 1): -0.9687151001182652
+
+Notice that the index of the same data is now at 3, because the sub-chain starts at index 1 of the original chain.
+
+Another scenario where jet-evaluation data remains valid is by merging patterns occuring in the ordering by means of the general Faa di Bruno formula. A pattern of functions in a chain can be merged by the ``.merge`` command, which will return a new ``cderive`` object in which the pattern has been merged. For example, if we want to merge the first occurence of the pattern ``(1, 0, 1)`` in the chain ``drp`` we could do the following:
+
+.. code-block:: python
+
+    drpm = drp.merge(pattern=(1, 0, 1), positions=[1])
+    
+The new chain ``drpm`` now has ``len(drpm) = 28``, since we have merged 3 elements of the original
+chain of length 30 and added 1 new 'merged' chain. Moreover, the new chain still maintains any previously computed jet-evaluations (although the ones of the merged functions will vanish internally). These jet-evaluations can be combined in a ``cderive`` class by means of successive 'Faa di Bruno' operations using the ``.compose`` routine. In some circumstances this may help improve performance. The results are the same:
+
+.. code-block:: python
+    
+    c1 = drp.compose()
+    c2 = drpm.compose()
+    
+    from njet import get_taylor_coefficients
+    
+    get_taylor_coefficients(c1, n_args=2)
+  > ({(0, 0): (0.18525034725773537+0j),
+      (1, 0): (-0.20701900672114942+0j),
+      (0, 1): (-0.43735394282452555+0j),
+      (0, 2): (-2.59506626693419+0j),
+      (2, 0): (-1.6014453189625777+0j),
+      (1, 1): (0.12335967609958237+0j)},
+     {(0, 0): (-0.04933171623183177+0j),
+      (1, 0): (-0.8002365169456884+0j),
+      (0, 1): (0.042177808227965234+0j),
+      (0, 2): (0.13864362384229817+0j),
+      (2, 0): (-0.8741825019912118+0j),
+      (1, 1): (-1.1619247121644274+0j)})
+      
+    get_taylor_coefficients(c2, n_args=2)
+  > ({(0, 0): (0.18525034725773537+0j),
+      (1, 0): (-0.20701900672114942+0j),
+      (0, 1): (-0.43735394282452555+0j),
+      (0, 2): (-2.5950662669341904+0j),
+      (2, 0): (-1.6014453189625777+0j),
+      (1, 1): (0.12335967609958237+0j)},
+     {(0, 0): (-0.04933171623183177+0j),
+      (1, 0): (-0.8002365169456884+0j),
+      (0, 1): (0.042177808227965234+0j),
+      (0, 2): (0.1386436238422989+0j),
+      (2, 0): (-0.8741825019912118+0j),
+      (1, 1): (-1.1619247121644274+0j)})
+
+In case one has a periodic system, where the chain is traversed again and again, one might
+be interested in the derivatives along the chain for every possible cycle. A cycle of start index :math:`k` is hereby understood as the chain of :math:`N` functions :math:`f_{k - 1} \circ ... \circ f_1 \circ f_N \circ f_{N - 1} \circ ... \circ f_k`. 
+Such a calculation would have to be done for every :math:`k`, but it can also be performed in parallel using jets carrying NumPy entries. For this purpose the ``.cycle`` routine has been created. Going back to our example this would read:
+
+As with many other routines, also the ``.cycle`` routine can handle multi-dimensional NumPy arrays:
+
+Last but not least: The ``.extras`` module is somewhat experimental and I can not guarantee correctness in all circumstances. So please double-check your results and let me know if you encounter any problems or bugs.
+
 Module synopsis
 ---------------
 
