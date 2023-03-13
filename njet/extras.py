@@ -559,6 +559,44 @@ class cderive:
         self._evaluation = self._evaluation_chain[-1]
         return self._evaluation
     
+    def _eval_memcheck(self, *z, **kwargs):
+        '''
+        Check internal memory if evaluation is required.
+        
+        Parameters
+        ----------
+        *z
+            The point at which the evaluation should be calculated.
+            
+        **kwargs
+            Additional keyworded parameters intended for the functions in the chain.
+        
+        Returns
+        -------
+        eval_required: boolean
+            True, if a (re-)evaluation is required.
+            
+        kwargs_changed: boolean
+            True, if the keyworded arguments have been changed in comparison to a previous run.
+        '''
+        # Determine if the keyworded arguments have been changed
+        kwargs_changed = True
+        if hasattr(self, '_call_kwargs'):
+            kwargs_changed = self._call_kwargs != kwargs
+        if kwargs_changed or not hasattr(self, '_call_kwargs'):
+            self._call_kwargs = kwargs
+            
+        # Determine if a (re-)evaluation is required
+        eval_required = False
+        if len(z) > 0:
+            if kwargs_changed:
+                eval_required = True
+            if not all([hasattr(df, '_evaluation') for df in self.dfunctions]):
+                eval_required = True
+            elif not self._probe(*z, **kwargs):
+                eval_required = True
+        return eval_required, kwargs_changed
+
     def __call__(self, *z, **kwargs):
         '''
         Compute the derivatives of the chain of functions at a given point.
@@ -579,25 +617,9 @@ class cderive:
         # These two keywords are reserved for the get_taylor_coefficients routine and will be removed from the input:
         mult_prm = kwargs.pop('mult_prm', True)
         mult_drv = kwargs.pop('mult_drv', True)
-        
-        # Determine if the keyworded arguments have been changed
-        kwargs_changed = True
-        if hasattr(self, '_call_kwargs'):
-            kwargs_changed = not all(self._call_kwargs.get(key, None) == val for key, val in kwargs.items())
-        if kwargs_changed or not hasattr(self, '_call_kwargs'):
-            self._call_kwargs = kwargs
-                        
-        # Determine if a (re-)evaluation is required
-        eval_required = False
-        if len(z) > 0:
-            if kwargs_changed:
-                eval_required = True
-            if not all([hasattr(df, '_evaluation') for df in self.dfunctions]):
-                eval_required = True
-            elif not self._probe(*z, **kwargs):
-                eval_required = True
-                        
+               
         # Perform the composition, if necessary
+        eval_required, kwargs_changed = self._eval_memcheck(*z, **kwargs)
         if eval_required:
             _ = self.eval(*z, **kwargs) # evaluation includes 'self.compose'
         elif not hasattr(self, '_evaluation') or kwargs_changed:
@@ -813,11 +835,11 @@ class cderive:
             it exists).
             
         warn: boolean, optional
-            Warn in case an evaluation is required.
+            Show warnings.
             
         **kwargs
             Optional keyworded arguments passed to the underlying jet-functions in case an evaluation
-            is required.
+            is required. If they differ from self._call_kwargs (if it exists), a warning will be issued.
         
         Returns
         -------
@@ -826,51 +848,38 @@ class cderive:
             have a similar functionality than self.jev, with the difference that it will take values from
             0 to 2*len(self) instead.
         '''
-        data_exists = all([hasattr(f, '_evaluation') for f in self.dfunctions])
-        if not data_exists:
-            # Evaluation required.
-            if len(point) == 0:
-                if hasattr(self, '_input'):
-                    point = self._input
-                elif hasattr(self.dfunctions[self.ordering[0]], '_input'): # get the input of the first function (if exists)
-                    inp = self.dfunctions[self.ordering[0]]._input
-                    point = [inp[k].array(0)[0] for k in range(len(inp))] # the index [0] means we are looking at the first occurence (at the first element)
-            assert len(point) > 0, 'No evaluation data exists. Reference point required.'
+        # Check if given input is stored in the database. If not, re-evaluate.
+        eval_required, kwargs_changed = self._eval_memcheck(*point, **kwargs)
+        if eval_required or kwargs_changed:
             if warn:
-                warnings.warn(f"No evaluation data exists. Evaluating at\n {point}\n ...")
-            if not periodic:
-                # need to process through the entire chain (of length 2)
-                ordering = self.ordering*2
-            else:
-                ordering = self.ordering
-            self._cycle = self.__class__(*[copy(f) for f in self.dfunctions], order=self.order, ordering=ordering, run_params=self.run_params)
-            _ = self._cycle.eval(*point, **kwargs)            
-            jev = lambda k: self._cycle.jev(k)
+                warnings.warn('Input parameter(s) changed; re-evaluating ...')
+            self.__call__(*point, **kwargs)
+
+        # In the non-periodic case the evaluation data might have to be extended.
+        # Check if end-point agrees with the start.
+        inp = self.dfunctions[self.ordering[0]]._input
+        point = [inp[k].array(0)[0] for k in range(len(inp))] # the index [0] means we are looking at the first occurence 
+        outp = self.dfunctions[self.ordering[-1]]._evaluation
+        final_point = [outp[k].array(0)[-1] for k in range(len(outp))] # the index [-1] means we are looking at the last
+        periodic = periodic or all([check_zero(point[k] - final_point[k]) for k in range(len(point))]) # Use existing data if periodic == False, but start and end point agree.
+
+        # Define the function which will provide the jet-evaluation data
+        L = len(self)
+        if periodic:
+            self._cycle = self
+            jev = lambda k: self.jev(k%L)
         else:
-            # Evaluation data exists, but in the non-periodic case it might have to be extended.
-            # Check if end-point agrees with the start.
-            inp = self.dfunctions[self.ordering[0]]._input
-            point = [inp[k].array(0)[0] for k in range(len(inp))] # the index [0] means we are looking at the first occurence 
-            outp = self.dfunctions[self.ordering[-1]]._evaluation
-            final_point = [outp[k].array(0)[-1] for k in range(len(outp))] # the index [-1] means we are looking at the last
-            periodic = periodic or all([check_zero(point[k] - final_point[k]) for k in range(len(point))]) # Use existing data if periodic == False, but start and end point agree.
-            
-            # Define the function which will provide the jet-evaluation data
-            L = len(self)
-            if periodic:
-                self._cycle = self
-                jev = lambda k: self.jev(k%L)
-            else:
-                # In this scenario, data exists but the point is not fixed. Evaluation has to be done.
-                if warn:
-                    warnings.warn(f"Evaluation data exists, but periodic: {periodic}. Extending & evaluating at\n {point}\n ...")
-                self._cycle = self.__class__(*[copy(f) for f in self.dfunctions], order=self.order, ordering=self.ordering, run_params=self.run_params)
-                _ = self._cycle.eval(*final_point, **kwargs) # the final point will be the start point of the extension
-                def jev(k):
-                    if k < L:
-                        return self.jev(k)
-                    else:
-                        return self._cycle.jev(k%L)
+            # In this scenario, data exists but the point is not fixed. Evaluation has to be done.
+            if warn:
+                warnings.warn(f"Evaluation data exists, but periodic: {periodic}. Extending & evaluating at\n {final_point}\n ...")
+            self._cycle = self.__class__(*[copy(f) for f in self.dfunctions], order=self.order, ordering=self.ordering, run_params=self.run_params, reset=True)
+            _ = self._cycle.eval(*final_point, **kwargs) # the final point will be the start point of the extension
+            def jev(k):
+                if k < L:
+                    return self.jev(k)
+                else:
+                    return self._cycle.jev(k%L)
+        self._cycle_periodic = periodic
         return jev
     
     def cycle(self, *args, **kwargs):
@@ -926,8 +935,10 @@ class cderive:
         for k in range(L - 1):
             jevkpL = self._cycle_jev(k + L)
             cycling_data.append([_jetp1(tile(jevkpL[component_index], ncopies=L - k - 1), 
-                                       index=component_index, 
-                                       ncopies=k + 1, location=0) for component_index in range(len(jevkpL))])
+                                        idvalue=jevkpL[component_index].array(0),
+                                        index=component_index, 
+                                        ncopies=k + 1, 
+                                        location=0) for component_index in range(len(jevkpL))])
             
         self._cycle_data_inp = cycling_data
         self._cycle_data = compose(*cycling_data, run_params=self.run_params)

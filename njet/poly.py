@@ -256,12 +256,12 @@ class jetpoly:
                     continue
                 indices[index] = power
                 if mult_prm or mult_drv:
-                    multiplicity *= facts[power]
+                    multiplicity = multiplicity*facts[power]
                     
             # Step 2: Update the Taylor-coefficients dictionary
             if not check_zero(value): # only add non-zero values
                 if mult_drv: # remove the factorials in the Taylor expansion, here related to the derivatives of the powers.
-                    value *= multiplicity
+                    value = value*multiplicity
                 if mult_prm:
                     value = value/facts[sum(indices)] # the denominator ensures to remove multiplicities emerging from permutations of derivatives.
 

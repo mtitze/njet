@@ -171,20 +171,21 @@ functions (currently every function in the chain will be called with the same se
 
 .. code-block:: python
 
-    z0 = [1, 0]
-    drp(*z0, alpha=1.32)
-  > ({(0, 0): (0.18525034725773537+0j),
-      (1, 0): (-0.20701900672114942+0j),
-      (0, 1): (-0.43735394282452555+0j),
-      (0, 2): (-2.59506626693419+0j),
-      (2, 0): (-1.6014453189625777+0j),
-      (1, 1): (0.12335967609958237+0j)},
-     {(0, 0): (-0.04933171623183177+0j),
-      (1, 0): (-0.8002365169456884+0j),
-      (0, 1): (0.042177808227965234+0j),
-      (0, 2): (0.13864362384229817+0j),
-      (2, 0): (-0.8741825019912118+0j),
-      (1, 1): (-1.1619247121644274+0j)})
+    z0 = [0.2, 0.1]
+    alpha = 1.22
+    drp(*z0, alpha=alpha)
+  > ({(0, 0): (0.18073767467258015+0j),
+      (1, 0): (0.3704449136384162+0j),
+      (0, 1): (0.3778714745973873+0j),
+      (0, 2): (-1.2481054532394522+0j),
+      (2, 0): (-2.5881230191830347+0j),
+      (1, 1): (-0.74624063677712+0j)},
+     {(0, 0): (-0.012836565325653162+0j),
+      (1, 0): (-0.4426107548482863+0j),
+      (0, 1): (0.8026126813486407+0j),
+      (0, 2): (-0.49946504768391176+0j),
+      (2, 0): (0.7197445629662029+0j),
+      (1, 1): (-0.3181227776491683+0j)})
 
 The ``cderive`` object ``drp`` in the above example contains two unique elements, which are
 instances of the ``derive`` class. These unique elements can be accessed in the ``.dfunctions`` field:
@@ -206,9 +207,9 @@ In fact, one can iterate over the ``drp`` object as with ordinary lists. The ord
 .. code-block:: python
 
     drp.jev(4)[0].get_taylor_coefficients(n_args=2)
-  > {(0, 0): (-0.17262911069079837+0j),
-     (1, 0): 0.2481754516523729,
-     (0, 1): -0.9687151001182652}
+  > {(0, 0): (-0.0911100230191827+0j),
+     (1, 0): 0.34364574631604705,
+     (0, 1): -0.9390993563190676}
 
 In some circumstances, however, previously computed jet-evaluations remain valid. For example, this is the case if we want to extract a subchain of a given chain, defined by a slice of neighbouring indices. We can extracted subchains from the original chain in the same manner as it can be done with lists. For example:
 
@@ -216,9 +217,9 @@ In some circumstances, however, previously computed jet-evaluations remain valid
 
     mysubchain = drp[1:13]
     mysubchain.jev(3)[0].get_taylor_coefficients(n_args=2)
-  > {(0, 0): (-0.17262911069079837+0j),
-     (1, 0): 0.2481754516523729,
-     (0, 1): -0.9687151001182652
+  > {(0, 0): (-0.0911100230191827+0j),
+     (1, 0): 0.34364574631604705,
+     (0, 1): -0.9390993563190676}
 
 Notice that the index of the same data is now at 3, because the sub-chain starts at index 1 of the original chain.
 
@@ -239,40 +240,94 @@ chain of length 30 and added 1 new 'merged' chain. Moreover, the new chain still
     from njet import get_taylor_coefficients
     
     get_taylor_coefficients(c1, n_args=2)
-  > ({(0, 0): (0.18525034725773537+0j),
-      (1, 0): (-0.20701900672114942+0j),
-      (0, 1): (-0.43735394282452555+0j),
-      (0, 2): (-2.59506626693419+0j),
-      (2, 0): (-1.6014453189625777+0j),
-      (1, 1): (0.12335967609958237+0j)},
-     {(0, 0): (-0.04933171623183177+0j),
-      (1, 0): (-0.8002365169456884+0j),
-      (0, 1): (0.042177808227965234+0j),
-      (0, 2): (0.13864362384229817+0j),
-      (2, 0): (-0.8741825019912118+0j),
-      (1, 1): (-1.1619247121644274+0j)})
-      
+  > ({(0, 0): (0.18073767467258015+0j),
+      (1, 0): (0.3704449136384162+0j),
+      (0, 1): (0.3778714745973873+0j),
+      (0, 2): (-1.2481054532394522+0j),
+      (2, 0): (-2.5881230191830347+0j),
+      (1, 1): (-0.74624063677712+0j)},
+     {(0, 0): (-0.012836565325653162+0j),
+      (1, 0): (-0.4426107548482863+0j),
+      (0, 1): (0.8026126813486407+0j),
+      (0, 2): (-0.49946504768391176+0j),
+      (2, 0): (0.7197445629662029+0j),
+      (1, 1): (-0.3181227776491683+0j)})
+
     get_taylor_coefficients(c2, n_args=2)
-  > ({(0, 0): (0.18525034725773537+0j),
-      (1, 0): (-0.20701900672114942+0j),
-      (0, 1): (-0.43735394282452555+0j),
-      (0, 2): (-2.5950662669341904+0j),
-      (2, 0): (-1.6014453189625777+0j),
-      (1, 1): (0.12335967609958237+0j)},
-     {(0, 0): (-0.04933171623183177+0j),
-      (1, 0): (-0.8002365169456884+0j),
-      (0, 1): (0.042177808227965234+0j),
-      (0, 2): (0.1386436238422989+0j),
-      (2, 0): (-0.8741825019912118+0j),
-      (1, 1): (-1.1619247121644274+0j)})
+  > ({(0, 0): (0.18073767467258015+0j),
+      (1, 0): (0.3704449136384162+0j),
+      (0, 1): (0.3778714745973873+0j),
+      (0, 2): (-1.2481054532394522+0j),
+      (2, 0): (-2.5881230191830347+0j),
+      (1, 1): (-0.7462406367771199+0j)},
+     {(0, 0): (-0.012836565325653162+0j),
+      (1, 0): (-0.4426107548482863+0j),
+      (0, 1): (0.8026126813486407+0j),
+      (0, 2): (-0.49946504768391176+0j),
+      (2, 0): (0.7197445629662029+0j),
+      (1, 1): (-0.3181227776491683+0j)})
 
 In case one has a periodic system, where the chain is traversed again and again, one might
 be interested in the derivatives along the chain for every possible cycle. A cycle of start index :math:`k` is hereby understood as the chain of :math:`N` functions :math:`f_{k - 1} \circ ... \circ f_1 \circ f_N \circ f_{N - 1} \circ ... \circ f_k`. 
-Such a calculation would have to be done for every :math:`k`, but it can also be performed in parallel using jets carrying NumPy entries. For this purpose the ``.cycle`` routine has been created. Going back to our example this would read:
+Such a calculation would have to be done for every :math:`k`, but it can also be performed in parallel using jets carrying NumPy entries. For this purpose there exist a dedicated routine: ``.cycle``. This routine require the same keyworded input parameters as the ordinary ``cderive`` function. Going back to our example this would read:
 
-As with many other routines, also the ``.cycle`` routine can handle multi-dimensional NumPy arrays:
+.. code-block:: python
 
-Last but not least: The ``.extras`` module is somewhat experimental and I can not guarantee correctness in all circumstances. So please double-check your results and let me know if you encounter any problems or bugs.
+    cyc = drp.cycle(*z0, alpha=alpha)
+    
+The object ``cyc`` is a list of length ``len(drp)`` which contain the jet-evaluation results for every cycle. This includes our previous result:
+
+.. code-block:: python
+
+    get_taylor_coefficients(cyc[0], n_args=2)
+  > ({(0, 0): (0.18073767467258015+0j),
+      (1, 0): (0.3704449136384162+0j),
+      (0, 1): (0.3778714745973873+0j),
+      (0, 2): (-1.2481054532394522+0j),
+      (2, 0): (-2.5881230191830347+0j),
+      (1, 1): (-0.74624063677712+0j)},
+     {(0, 0): (-0.012836565325653162+0j),
+      (1, 0): (-0.4426107548482863+0j),
+      (0, 1): (0.8026126813486407+0j),
+      (0, 2): (-0.49946504768391176+0j),
+      (2, 0): (0.7197445629662029+0j),
+      (1, 1): (-0.3181227776491683+0j)})
+    
+as well as any other result around the cycle. For example, at the next position we check:
+
+.. code-block:: python
+
+    ordering2 = [1] + [0, 1]*(M - 1) + [0]
+    drp2 = cderive(rot, per, order=2, ordering=ordering2, n_args=2)
+    
+    get_taylor_coefficients(cyc[1], n_args=2) == drp2(*rot(*z0, alpha=alpha), alpha=alpha)
+  > True
+
+In case that the underlying functions take parameters, it is important to remember that these parameters must be included in the call of the ``.cycle`` routine. In case some results look weird, there is a ``warn`` switch which might provide some clues.
+
+Similar to other routines, also the ``.cycle`` routine can handle multi-dimensional NumPy arrays:
+
+.. code-block:: python
+
+    z1 = np.array([[0.02, -0.056, z0[0]], [0.0031, 0.0118, z0[1]]])
+    cyc = drp.cycle(*z1, alpha=alpha)
+    get_taylor_coefficients(cyc[0], n_args=2)
+  > ({(0, 0): array([ 0.01863169+0.j, -0.04082189+0.j,  0.18073767+0.j]),
+      (1, 0): array([0.84531442+0.j, 0.80706613+0.j, 0.37044491+0.j]),
+      (0, 1): array([0.5277127 +0.j, 0.51823247+0.j, 0.37787147+0.j]),
+      (0, 2): array([ 0.57344527+0.j,  1.20526504+0.j, -1.24810545+0.j]),
+      (2, 0): array([-0.72251201+0.j,  1.81211122+0.j, -2.58812302+0.j]),
+      (1, 1): array([ 0.10110713+0.j,  0.33841931+0.j, -0.74624064+0.j])},
+     {(0, 0): array([-0.00775766+0.j,  0.0386481 +0.j, -0.01283657+0.j]),
+      (1, 0): array([-0.51833409+0.j, -0.49550034+0.j, -0.44261075+0.j]),
+      (0, 1): array([0.85906428+0.j, 0.81893139+0.j, 0.80261268+0.j]),
+      (0, 2): array([ 0.55558523+0.j, -0.11809903+0.j, -0.49946505+0.j]),
+      (2, 0): array([ 0.25984599+0.j, -0.73940164+0.j,  0.71974456+0.j]),
+      (1, 1): array([ 0.13269792+0.j,  0.94135934+0.j, -0.31812278+0.j])})
+      
+As one can see in the above example, the last line agrees with our previous results.
+
+Last but not least I would like to stress that the ``.extras`` module is more experimental. Therefore, please check your results carefully and let me know if you encounter any problems or bugs.
 
 Module synopsis
 ---------------
