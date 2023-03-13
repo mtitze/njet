@@ -325,7 +325,7 @@ Similar to other routines, also the ``.cycle`` routine can handle multi-dimensio
       (2, 0): array([ 0.25984599+0.j, -0.73940164+0.j,  0.71974456+0.j]),
       (1, 1): array([ 0.13269792+0.j,  0.94135934+0.j, -0.31812278+0.j])})
       
-As one can see in the above example, the last line agrees with our previous results.
+As one can see in the above example, the last entry in each coefficient agrees with our previous result.
 
 Last but not least I would like to stress that the ``.extras`` module is more experimental. Therefore, please check your results carefully and let me know if you encounter any problems or bugs.
 
