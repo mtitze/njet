@@ -147,9 +147,9 @@ Function chains
 
 In the case that a chain of functions :math:`f_N \circ f_{N - 1} ... \circ f_1` needs to be differentiated, and there are repetitions of :math:`f_k`'s in the chain, the generalized Faa di Bruno formula may help in reducing the amount of calculations required.
 
-For example, if we want to compute a chain of :math:`2^N` repetitions of the same function :math:`f`, then we can first compute the composition :math:`f_2 := f \circ f`, then the compositon :math:`f_4 := f_2 \circ f_2` and so on, until we are done after :math:`N` steps.
+For example, if we want to compute a chain of :math:`2^N` repetitions of the same function :math:`f`, then we can first compute the composition :math:`f_2 := f \circ f`, then the compositon :math:`f_4 := f_2 \circ f_2` and so on, until we are finished after :math:`N` steps.
 
-Moreover, if a chain indeed admits repetitions, a single point will pass through a specific function several times while it is transported from :math:`f_1` to :math:`f_N`. So one can use this observation to first calculate the 'intersection' points for each unique element in the chain, and then differentiate the unique functions at the intersection points in parallel using NumPy.
+Moreover, if a chain indeed admits repetitions, a single point will pass through a specific function several times while it is transported from :math:`f_1` to :math:`f_N`. We can take advantage of this by calculating the derivatives at these 'intersecting' points for each unique element of the chain in parallel, using NumPy.
  
 In order to manage function chains, the dedicated class ``cderive`` has been created. This class takes a series of functions, defining the *unique* functions in the chain, an ``order`` parameter, defining the number of derivatives to be computed and an optional ``ordering`` parameter, which is a list of integers and defines the chain itself. For example, consider an alternation of a rotation and some
 polynomial perturbation :math:`M = 15` times:
@@ -269,13 +269,13 @@ chain of length 30 and added 1 new 'merged' chain. Moreover, the new chain still
 
 In case one has a periodic system, where the chain is traversed again and again, one might
 be interested in the derivatives along the chain for every possible cycle. A cycle of start index :math:`k` is hereby understood as the chain of :math:`N` functions :math:`f_{k - 1} \circ ... \circ f_1 \circ f_N \circ f_{N - 1} \circ ... \circ f_k`. 
-Such a calculation would have to be done for every :math:`k`, but it can also be performed in parallel using jets carrying NumPy entries. For this purpose there exist a dedicated routine: ``.cycle``. This routine require the same keyworded input parameters as the ordinary ``cderive`` function. Going back to our example this would read:
+Such a calculation would have to be done for every :math:`k`, but it can also be performed in parallel using jets carrying NumPy entries. For this purpose there exist a dedicated routine: ``.cycle``. This routine is called with the same input parameters as the ordinary ``cderive`` function. Going back to our example this would read:
 
 .. code-block:: python
 
     cyc = drp.cycle(*z0, alpha=alpha)
     
-The object ``cyc`` is a list of length ``len(drp)`` which contain the jet-evaluation results for every cycle. This includes our previous result:
+The object ``cyc`` is a list of length ``len(drp)`` which contains the jet-evaluation results for every cycle. This includes our previous result:
 
 .. code-block:: python
 
