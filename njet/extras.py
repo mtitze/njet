@@ -194,6 +194,10 @@ def compose(*evals, run_params={}, **kwargs):
         out.append(evr)
     return out
 
+#################################
+#   Jet manipulation routines   #
+#################################
+
 def tile(jev, ncopies: int):
     '''
     Construct a new jet in which its entries contain copies of itself.
@@ -230,7 +234,7 @@ def tile(jev, ncopies: int):
             new_jet_array.append(np.tile(jk, [ncopies] + [1]*len(jk.shape)))
     return jet(*new_jet_array)
 
-def _jetp1(jev, index: int, idvalue=None, ncopies: int=1, location=-1):
+def _jetp1(jev, index: int, to_concat0=None, ncopies: int=1, location=-1):
     '''
     Add copies of a unity transformations to the give jet entries -- either
     in the end or at the beginning.
@@ -244,8 +248,9 @@ def _jetp1(jev, index: int, idvalue=None, ncopies: int=1, location=-1):
     index: int
         The component of the unity transformation.
         
-    idvalue: float, optional
-        The value of the identity. If nothing specified, the last value of jetv.array(0) will be used.
+    to_concat0: array-like, optional
+        The value to be concatenated, representing the 0-entry of the jet array.
+        If nothing specified, the last (or first) value of jetv.array(0) will be used.
         
     ncopies: int, optional
         The number of copies attached.
@@ -265,10 +270,11 @@ def _jetp1(jev, index: int, idvalue=None, ncopies: int=1, location=-1):
     zero = a0*0
     one = zero + 1
     kj = frozenset({(index, 1)})
-    if idvalue is None:
-        to_concat0 = [a0[-1]]*ncopies
-    else:
-        to_concat0 = [idvalue]*ncopies
+    if to_concat0 is None:
+        if location == -1:
+            to_concat0 = [a0[-1]]*ncopies # The index '-1' here is related to the use of _jetp1 in the cderive.cycle routine: In case there are several passages through the specific function, we will take a copy of the last passage. This also means that _jetp1 is intended to be used on jets whose entries carry numpy arrays.
+        else:
+            to_contat0 = [a0[0]]*ncopies
         
     # the unity transformation will reproduce the value of the jet in the 0-array.
     if location == -1:
@@ -303,6 +309,34 @@ def _jetp1(jev, index: int, idvalue=None, ncopies: int=1, location=-1):
         new_jet_array.append(jetpoly(terms=new_terms_k))
     return jet(*new_jet_array)
 
+def _jbuild(jets):
+    '''
+    Combine the arrays of the given jets, to return a new jet.
+    Internal routine; all jetpoly objects need to have identical keys.
+    
+    Parameters
+    ----------
+    jets: list
+        A list of njet.jet objects.
+        
+    Returns
+    -------
+    jet
+        A jet in which the entries of each original jet are included in a large numpy array.
+    '''
+    max_order = max([j.order for j in jets])
+    new_array = [np.array([j.array(0) for j in jets])]
+    for k in range(1, max_order):
+        new_terms = {}
+        all_keys = set().union(*[j.array(k).terms.keys() for j in jets])
+        for key in all_keys:
+            new_terms[key] = np.array([j.array(k).terms.get(key, 0) for j in jets])
+        new_array.append(jetpoly(terms=new_terms))
+    return jet(*new_array, n=max_order)
+
+##########################
+#   Chain-derive class   #
+##########################
 
 class cderive:
     '''
@@ -867,8 +901,8 @@ class cderive:
         inp = self.dfunctions[self.ordering[0]]._input
         point = [inp[k].array(0)[0] for k in range(len(inp))] # the index [0] means we are looking at the first occurence 
         outp = self.dfunctions[self.ordering[-1]]._evaluation
-        final_point = [outp[k].array(0)[-1] for k in range(len(outp))] # the index [-1] means we are looking at the last
-        periodic = periodic or all([check_zero(point[k] - final_point[k]) for k in range(len(point))]) # Use existing data if periodic == False, but start and end point agree.
+        final_point = [outp[k].array(0)[-1] for k in range(len(outp))] # the index [-1] means we are looking at the last occurence
+        periodic = periodic or all([check_zero(point[k] - final_point[k]) for k in range(len(point))]) # Use existing data in case that periodic == False, but start and end point agree nonetheless.
 
         # Define the function which will provide the jet-evaluation data
         L = len(self)
@@ -889,7 +923,7 @@ class cderive:
         self._cycle_periodic = periodic
         return jev
     
-    def cycle(self, *args, **kwargs):
+    def cycle(self, *args, outf='default', **kwargs):
         r'''
         Cycle through the given chain: Compute the derivatives at each point, assuming
         a periodic structure of the entire chain.
@@ -914,19 +948,28 @@ class cderive:
             not yet stored any jet-evaluation data.
         
         periodic: boolean, optional
-            If True, assume that the final point equals the given point. In particular, the
+            If true, assume that the final point equals the given point. In particular, the
             data taken in the calculation will be taken from the current jet-evaluations (if
             it exists).
+            
+        outf: str, optional
+            Output format; if 'default', compose the extended jet-evaluations and return a list of jet-evaluations,
+            representing the derivatives along the chain.
+            Otherwise, return a cderive class of length len(self)*2 - 1 for further processing (e.g. merging). The
+            class can be composed to yield the jet-evaluations along the current chain of len(self). This second option
+            is intended to be used for performance improvements.
             
         **kwargs
             Optional keyworded arguments passed to a (possible) chain evaluation.
             
         Returns
         -------
-        list
-            A list of jet-evaluations, where the k-th entry corresponds to the derivative of the
+        list or cderive
+            Depending on the 'outf' parameter the output is either
+            1) A list of jet-evaluations, where the k-th entry corresponds to the derivative of the
             chain from position k to position k + L, where L denotes the length of the chain (using
             a periodic chain structure).
+            2) A cderive class with the property mentioned above.
         '''
         L = len(self)
         self._cycle_jev = self._prepare_cycle(*args, **kwargs)
@@ -939,18 +982,33 @@ class cderive:
             cycling_data.append([_jetp1(tile(jevk[component_index], ncopies=k + 1), 
                                        index=component_index, 
                                        ncopies=L - k - 1) for component_index in range(len(jevk))])
+            
+        concat0 = [[jevk[ic].array(0) for ic in range(len(jevk))]]
         for k in range(L - 1):
             jevkpL = self._cycle_jev(k + L)
             cycling_data.append([_jetp1(tile(jevkpL[component_index], ncopies=L - k - 1), 
-                                        idvalue=jevkpL[component_index].array(0),
+                                        to_concat0=[c[component_index] for c in concat0],
                                         index=component_index, 
                                         ncopies=k + 1, 
                                         location=0) for component_index in range(len(jevkpL))])
+            concat0.append([jevkpL[ic].array(0) for ic in range(len(jevkpL))])
             
         self._cycle_data_inp = cycling_data
-        self._cycle_data = compose(*cycling_data, run_params=self.run_params)
-        return [[jcmp[k] for jcmp in self._cycle_data[k + L - 1]] for k in range(L)]
-    
+        if outf == 'default':
+            # Compose the extended jet-evaluations and return the resulting list along the chain:
+            self._cycle_data = compose(*cycling_data, run_params=self.run_params)
+            return [[jcmp[k] for jcmp in self._cycle_data[k + L - 1]] for k in range(L)]
+        else:
+            # Construct a cderive class of length len(self)*2 - 1, having self._cycle_data_inp as jet-evaluations, and 
+            # so that its compose routine will provide the same results as above.
+            new_functions = [copy(f) for f in self.dfunctions] # shallow copy to prevent ._evaluation results to be overwritten in original in the code below
+            ordering = (self.ordering*2)[:-1]
+            for l in range(len(new_functions)):
+                n_args = new_functions[l].n_args
+                jets_l = [[self._cycle_data_inp[k][icmp] for k in range(len(ordering)) if ordering[k] == l] for icmp in range(n_args)]
+                new_functions[l]._evaluation = [_jbuild(jc) for jc in jets_l]
+            return self.__class__(*new_functions, ordering=ordering, order=self.order, run_params=self.run_params, reset=False)
+
     
 def _get_ordering(sequence, start=0):
     '''
