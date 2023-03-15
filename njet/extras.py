@@ -496,15 +496,21 @@ class cderive:
         except:
             warnings.warn('Probe check aborted with error(s).')
             return False
-            
-    def eval(self, *point, **kwargs):
+                    
+    def eval(self, *point, compose=True, **kwargs):
         '''
-        Evaluate the individual (unique) functions in the chain at the requested point.
+        Evaluate the functions in the chain at the requested point.
         
         Parameters
         ----------
         *point: single value or array-like
             The point at which the evaluation should be performed.
+            
+        compose: boolean, optional
+            If true (default), compose the evaluations after they have been computed and 
+            return the result, resembling the behaviour of the original njet.derive.eval routine.
+            If false, only generating the jet-evaluation data 
+            (e.g. in preparation for a succeeding merge command).
             
         **kwargs: dict, optional
             Keyworded arguments passed to the underlying jet-functions.
@@ -515,7 +521,7 @@ class cderive:
         -------
         list
             The outcome of self.compose routine (containing the jet-evaluations for each component).
-        '''
+        '''        
         _ = self.jetfunc(*point, **kwargs)
         points_at_functions = [[self._output[l] for l in range(len(self)) if self.ordering[l] == k] for k in range(self.n_functions)]
         # let Q = points_per_function[j], so Q is a list of points which needs to be computed for function j
@@ -527,7 +533,9 @@ class cderive:
             points_at_function = points_at_functions[k]
             components = [np.array([points_at_function[j][l] for j in range(len(points_at_function))], dtype=np.complex128) for l in range(n_args_function)]
             _ = self.dfunctions[k].eval(*components, **kwargs)
-        return self.compose(**kwargs)
+            
+        if compose:
+            return self.compose(**kwargs)
     
     def jev(self, pos: int):
         '''
@@ -675,7 +683,7 @@ class cderive:
         assert 0 <= min(positions) and max(positions) < len(self) - size + 1, 'Pattern positions out of bounds.'
         for k in range(n_patterns - 1):
             assert positions[k + 1] - positions[k] >= size, 'Overlapping pattern.'
-        assert all(tuple(self.ordering[pos: pos + size]) == pattern for pos in positions), 'Not all patterns found in sequence.'
+        assert all(tuple(self.ordering[pos: pos + size]) == pattern for pos in positions), 'Not all patterns found in sequence at requested positions.'
         assert all(hasattr(self.dfunctions[k], '_evaluation') for k in pattern), 'Merging requires function evaluations in advance.'
         self._merge_pattern = pattern
         self._merge_positions = positions
