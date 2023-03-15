@@ -509,8 +509,7 @@ class cderive:
         compose: boolean, optional
             If true (default), compose the evaluations after they have been computed and 
             return the result, resembling the behaviour of the original njet.derive.eval routine.
-            If false, only generating the jet-evaluation data 
-            (e.g. in preparation for a succeeding merge command).
+            If false, only generate the jet-evaluation data (e.g. in preparation for a succeeding merge command).
             
         **kwargs: dict, optional
             Keyworded arguments passed to the underlying jet-functions.
@@ -861,7 +860,7 @@ class cderive:
         if eval_required or kwargs_changed:
             if warn:
                 warnings.warn('Input parameter(s) changed; re-evaluating ...')
-            self.__call__(*point, **kwargs)
+            self.eval(*point, compose=False, **kwargs)
 
         # In the non-periodic case the evaluation data might have to be extended.
         # Check if end-point agrees with the start.
@@ -881,7 +880,7 @@ class cderive:
             if warn:
                 warnings.warn(f"Evaluation data exists, but periodic: {periodic}. Extending & evaluating at\n {final_point}\n ...")
             self._cycle = self.__class__(*[copy(f) for f in self.dfunctions], order=self.order, ordering=self.ordering, run_params=self.run_params, reset=True)
-            _ = self._cycle.eval(*final_point, **kwargs) # the final point will be the start point of the extension
+            self._cycle.eval(*final_point, compose=False, **kwargs) # the final point will be the start point of the extension
             def jev(k):
                 if k < L:
                     return self.jev(k)

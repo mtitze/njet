@@ -230,7 +230,11 @@ Another scenario where jet-evaluation data remains valid is by merging patterns 
     drpm = drp.merge(pattern=(1, 0, 1), positions=[1])
     
 The new chain ``drpm`` now has ``len(drpm) = 28``, since we have merged 3 elements of the original
-chain of length 30 and added 1 new 'merged' chain. Moreover, the new chain still maintains any previously computed jet-evaluations (although the ones of the merged functions will vanish internally). These jet-evaluations can be combined in a ``cderive`` class by means of successive 'Faa di Bruno' operations using the ``.compose`` routine. In some circumstances this may help improve performance. The results are the same:
+chain of length 30 and added 1 new 'merged' chain. Moreover, the new chain still maintains any previously computed jet-evaluations (although the ones of the merged functions will vanish internally).
+
+The ``.merge`` command requires that jet-evaluation data has been computed in advance. This can be done with the ``.eval`` command (preferably by using the ``compose=False`` option to prevent the automatic composition calculation before the merging command). After merging, the jet-evaluation of the entire chain can be combined by means of successive 'Faa di Bruno' operations using the ``.compose`` routine. In scenarios where chains admit repeated function patterns, these three steps may drastically improve performance in comparison to the conventional ``derive`` approach.
+
+Coming back to our example, we confirm that the results before and after merging are the same:
 
 .. code-block:: python
     
@@ -269,7 +273,7 @@ chain of length 30 and added 1 new 'merged' chain. Moreover, the new chain still
 
 In case one has a periodic system, where the chain is traversed again and again, one might
 be interested in the derivatives along the chain for every possible cycle. A cycle of start index :math:`k` is hereby understood as the chain of :math:`N` functions :math:`f_{k - 1} \circ ... \circ f_1 \circ f_N \circ f_{N - 1} \circ ... \circ f_k`. 
-Such a calculation would have to be done for every :math:`k`, but it can also be performed in parallel using jets carrying NumPy entries. For this purpose there exist a dedicated routine: ``.cycle``. This routine is called with the same input parameters as the ordinary ``cderive`` function. Going back to our example this would read:
+Such a calculation would have to be done for every :math:`k`, but it can also be performed in parallel using jets carrying NumPy entries. For this purpose there exist a dedicated routine: ``.cycle``. This routine is called with the same input parameters as the ordinary ``cderive`` function. Returning to our example this would read:
 
 .. code-block:: python
 
