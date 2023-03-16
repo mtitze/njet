@@ -80,7 +80,7 @@ we can get the Taylor-coefficients of ``f`` at ``g(*z)`` for the first component
 
 .. code-block:: python
 
-    evf[0].get_taylor_coefficients(n_args=3)
+    evf[0].taylor_coefficients(n_args=3)
   > {(0, 0, 0): (-0.032316721543419864+0.07248263230025642j),
      (0, 0, 1): (0.0008719493399318281+0.0045037973966777466j),
      (1, 0, 0): (8.673861926635063+0.3207111009469555j),
@@ -127,7 +127,7 @@ the previously computed multi-dimensional jet-evaluations ``evg`` and ``evf``:
 .. code-block:: python
 
     gfb = general_faa_di_bruno(evf, evg)
-    gfb[0].get_taylor_coefficients(n_args=3)
+    gfb[0].taylor_coefficients(n_args=3)
   > {(0, 0, 0): (-0.032316721543419864+0.07248263230025642j),
      (0, 0, 1): (-0.009661433404866623+0.033781618523554095j),
      (1, 0, 0): (0.02880173173559441+0.11295869722633461j),
@@ -206,7 +206,7 @@ In fact, one can iterate over the ``drp`` object as with ordinary lists. The ord
 
 .. code-block:: python
 
-    drp.jev(4)[0].get_taylor_coefficients(n_args=2)
+    drp.jev(4)[0].taylor_coefficients(n_args=2)
   > {(0, 0): (-0.0911100230191827+0j),
      (1, 0): 0.34364574631604705,
      (0, 1): -0.9390993563190676}
@@ -216,7 +216,7 @@ In some circumstances, however, previously computed jet-evaluations remain valid
 .. code-block:: python
 
     mysubchain = drp[1:13]
-    mysubchain.jev(3)[0].get_taylor_coefficients(n_args=2)
+    mysubchain.jev(3)[0].taylor_coefficients(n_args=2)
   > {(0, 0): (-0.0911100230191827+0j),
      (1, 0): 0.34364574631604705,
      (0, 1): -0.9390993563190676}
@@ -241,9 +241,9 @@ Coming back to our example, we confirm that the results before and after merging
     c1 = drp.compose()
     c2 = drpm.compose()
     
-    from njet import get_taylor_coefficients
+    from njet import taylor_coefficients
     
-    get_taylor_coefficients(c1, n_args=2)
+    taylor_coefficients(c1, n_args=2)
   > ({(0, 0): (0.18073767467258015+0j),
       (1, 0): (0.3704449136384162+0j),
       (0, 1): (0.3778714745973873+0j),
@@ -257,7 +257,7 @@ Coming back to our example, we confirm that the results before and after merging
       (2, 0): (0.7197445629662029+0j),
       (1, 1): (-0.3181227776491683+0j)})
 
-    get_taylor_coefficients(c2, n_args=2)
+    taylor_coefficients(c2, n_args=2)
   > ({(0, 0): (0.18073767467258015+0j),
       (1, 0): (0.3704449136384162+0j),
       (0, 1): (0.3778714745973873+0j),
@@ -283,7 +283,7 @@ The object ``cyc`` is a list of length ``len(drp)`` which contains the jet-evalu
 
 .. code-block:: python
 
-    get_taylor_coefficients(cyc[0], n_args=2)
+    taylor_coefficients(cyc[0], n_args=2)
   > ({(0, 0): (0.18073767467258015+0j),
       (1, 0): (0.3704449136384162+0j),
       (0, 1): (0.3778714745973873+0j),
@@ -304,7 +304,7 @@ as well as any other result around the cycle. For example, at the next position 
     ordering2 = [1] + [0, 1]*(M - 1) + [0]
     drp2 = cderive(rot, per, order=2, ordering=ordering2, n_args=2)
     
-    get_taylor_coefficients(cyc[1], n_args=2) == drp2(*rot(*z0, alpha=alpha), alpha=alpha)
+    taylor_coefficients(cyc[1], n_args=2) == drp2(*rot(*z0, alpha=alpha), alpha=alpha)
   > True
 
 In case that the underlying functions take parameters, it is important to remember that these parameters must be included in the call of the ``.cycle`` routine. In case some results look weird, there is a ``warn`` switch which might provide some clues.
@@ -315,7 +315,7 @@ Similar to other routines, also the ``.cycle`` routine can handle multi-dimensio
 
     z1 = np.array([[0.02, -0.056, z0[0]], [0.0031, 0.0118, z0[1]]])
     cyc = drp.cycle(*z1, alpha=alpha)
-    get_taylor_coefficients(cyc[0], n_args=2)
+    taylor_coefficients(cyc[0], n_args=2)
   > ({(0, 0): array([ 0.01863169+0.j, -0.04082189+0.j,  0.18073767+0.j]),
       (1, 0): array([0.84531442+0.j, 0.80706613+0.j, 0.37044491+0.j]),
       (0, 1): array([0.5277127 +0.j, 0.51823247+0.j, 0.37787147+0.j]),
