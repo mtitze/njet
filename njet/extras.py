@@ -326,7 +326,7 @@ def _jbuild(jets):
     '''
     max_order = max([j.order for j in jets])
     new_array = [np.array([j.array(0) for j in jets])]
-    for k in range(1, max_order):
+    for k in range(1, max_order + 1):
         new_terms = {}
         all_keys = set().union(*[j.array(k).terms.keys() for j in jets])
         for key in all_keys:

@@ -172,7 +172,7 @@ def opk(*z, f=[], g=[], h=[]):
     return [f[0]*z[0]**3 + f[1]*z[0]**2 + f[2]*z[0] + g[0]*z[1]**3 + \
             g[1]*z[1]**2 + g[2]*z[1], h[0]*z[0] + h[1]*z[1]]
 
-opchain1 = [lambda *z, k=k: opk(*z, f=fl[k], g=gl[k], h=hl[k]) for k in range(5)] # k=k because of Python's late bindings, see https://stackoverflow.com/questions/49617380/list-comprehension-with-lambda-function
+opchain1 = [lambda *z, k=k: opk(*z, f=fl[k], g=gl[k], h=hl[k]) for k in range(5)] # "k=k" because of Python's late bindings, see https://stackoverflow.com/questions/49617380/list-comprehension-with-lambda-function
 
 @pytest.mark.parametrize("pattern, ordering", [(pattern1_1, ordering1), (pattern1_2, ordering1), (pattern1_3, ordering1), 
                                                (pattern1_4, ordering1), (pattern2_1, ordering2), (pattern2_2, ordering2),
@@ -269,7 +269,7 @@ def check_jet(A, tolerances: list):
             diff0 = np.max(diff0)
         else:
             diff0 = 0
-    assert diff0 < tolerances[0]
+    assert diff0 < tolerances[0], f'at 0: {diff0} >= {tolerances[0]}'
     
     # Check the higher-order parts:
     diff = A.get_array()[1:]
@@ -387,4 +387,48 @@ def test_cycling2(q, p, ordering, tolerances, order=4):
     cyc = dopchain1.cycle(q, p)
     
     for j in range(n_args):
-        check_jet(ref[j] - cyc[0][j], tolerances=tolerances)    
+        check_jet(ref[j] - cyc[0][j], tolerances=tolerances)
+        
+        
+cyc3_point1 = 0.0003, 0.00063
+cyc3_point2 = -0.00037, 0.00049
+cyc3_point3 = np.array([[cyc3_point1[0], cyc3_point2[0]], [cyc3_point1[1], cyc3_point2[1]]])
+
+cyc3_ordering = [0, 1, 0, 1, 0, 2, 0, 1, 0, 2, 2, 0, 0, 2, 0, 0, 1, 4, 3, 2, 4]
+cyc3_tolerances = [1e-15, 5e-15, 1e-13, 1e-11]
+
+@pytest.mark.parametrize("point, ordering, tolerances", [(cyc3_point1, cyc3_ordering, cyc3_tolerances),
+                                                         (cyc3_point2, cyc3_ordering, cyc3_tolerances),
+                                                         (cyc3_point3, cyc3_ordering, cyc3_tolerances)])
+def test_cycling3(point, ordering, tolerances, order=3):
+    '''
+    Test cycling if returning a cderive object:
+    1) Comparison to default cycling.
+    2) Merging & Comparison.
+    3) Using numpy arrays. (Note that in a previous test, the result of using numpy arrays with the 'default' outf-parameter
+       already agrees with the single-point results, so the test on equality between the 'default' array-result to the
+       array-result for cderive objects should imply also agreement with the single-point results.)
+    '''
+    
+    n_args = 2
+    d_ref = cderive(*opchain1, order=order, ordering=ordering, n_args=n_args)
+    d1 = cderive(*opchain1, order=order, ordering=ordering, n_args=n_args)
+
+    cyc_ref = d_ref.cycle(*point, outf='default')
+    dcyc = d1.cycle(*point, outf=None)
+
+    dcycm = dcyc.merge(pattern=(ordering[2], ordering[3]))
+
+    cyc = dcyc.compose()
+    cycm = dcycm.compose()
+        
+    for j in range(2):
+        tc_j = cyc[j]
+        tcm_j = cycm[j]
+            
+        for k in range(len(ordering)):
+            tc_ref_j = cyc_ref[k][j]
+            check_jet(tc_j[k] - tc_ref_j, tolerances=tolerances)
+            check_jet(tcm_j[k] - tc_ref_j, tolerances=tolerances)
+            
+        
