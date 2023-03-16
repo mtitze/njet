@@ -319,7 +319,7 @@ class jet:
                 result.append(ek)
         return self.__class__(*result, n=self.order, graph=[(1, '(*)'), self.graph])
     
-    def get_taylor_coefficients(self, n_args: int=0, **kwargs):
+    def taylor_coefficients(self, n_args: int=0, **kwargs):
         '''Extract the Taylor coefficients from a given jet-evaluation (the output of njet.ad.derive.eval).
         
         Let m be the number of arguments of the involved poylnomials. 
@@ -340,7 +340,7 @@ class jet:
             The total number of involved variables.
             
         **kwargs
-            Optional arguments passed to poly.get_taylor_coefficients routine.
+            Optional arguments passed to poly.taylor_coefficients routine.
             
             Note that one can control how to deal with multiplicities C(j1, ..., jm) (notation see above) by
             passing mult_drv and mult_prm attributes to this routine.
@@ -364,15 +364,15 @@ class jet:
         self_array = self.get_array()
         const = self_array[0]
         if not check_zero(const):
-            if not hasattr(const, 'get_taylor_coefficients'):
+            if not hasattr(const, 'taylor_coefficients'):
                 tc[(0,)*n_args] = const
             else:
-                tc.update(const.get_taylor_coefficients(n_args=n_args, **kwargs))
+                tc.update(const.taylor_coefficients(n_args=n_args, **kwargs))
         
         for entry in self_array[1:]: # iteration over the derivatives of order >= 1.
-            if not hasattr(entry, 'get_taylor_coefficients'): # skip any non-polynomial entry.
+            if not hasattr(entry, 'taylor_coefficients'): # skip any non-polynomial entry.
                 continue
-            tc.update(entry.get_taylor_coefficients(n_args=n_args, **kwargs))
+            tc.update(entry.taylor_coefficients(n_args=n_args, **kwargs))
             # Since we loop over derivatives of a specific order, it is ensured that these Taylor coefficients are always different, 
             # so the above procedure does not overwrite existing keys.
         self.tc = tc
@@ -388,7 +388,7 @@ class jet:
             The order of the derivatives to extract.
             
         tc: dict, optional
-            The output of self.get_taylor_coefficients, containing the entries of the derivative. If nothing
+            The output of self.taylor_coefficients, containing the entries of the derivative. If nothing
             specified, the last evaluation (stored in self.tc) will be used.
             
         Returns
@@ -399,7 +399,7 @@ class jet:
         if 'tc' in kwargs.keys():
             self.tc = kwargs['tc']
         if not hasattr(self, 'tc'):
-            self.tc = self.get_taylor_coefficients(**kwargs)
+            self.tc = self.taylor_coefficients(**kwargs)
         return {j: self.tc[j] for j in self.tc.keys() if sum(j) == k}
     
     def build_tensor(self, k: int, **kwargs):

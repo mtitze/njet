@@ -4,7 +4,7 @@ from tqdm import tqdm
 from copy import copy
 import warnings
 
-from . import jet, jetpoly, derive, get_taylor_coefficients
+from . import jet, jetpoly, derive, taylor_coefficients
 from .common import factorials, check_zero
 
 def accel_asc(n: int):
@@ -655,7 +655,7 @@ class cderive:
         dict
             The Taylor-coefficients of the chain at the point of interest.
         '''
-        # These two keywords are reserved for the get_taylor_coefficients routine and will be removed from the input:
+        # These two keywords are reserved for the taylor_coefficients routine and will be removed from the input:
         mult_prm = kwargs.pop('mult_prm', True)
         mult_drv = kwargs.pop('mult_drv', True)
                
@@ -666,7 +666,7 @@ class cderive:
         elif not hasattr(self, '_evaluation') or kwargs_changed:
             _ = self.compose(**kwargs)
 
-        return get_taylor_coefficients(self._evaluation, n_args=self.dfunctions[0].n_args, mult_prm=mult_prm, mult_drv=mult_drv)
+        return taylor_coefficients(self._evaluation, n_args=self.dfunctions[0].n_args, mult_prm=mult_prm, mult_drv=mult_drv)
 
     def merge(self, pattern=(), positions=None, **kwargs):
         '''
@@ -955,9 +955,9 @@ class cderive:
         outf: str, optional
             Output format; if 'default', compose the extended jet-evaluations and return a list of jet-evaluations,
             representing the derivatives along the chain.
-            Otherwise, return a cderive class of length len(self)*2 - 1 for further processing (e.g. merging). The
-            class can be composed to yield the jet-evaluations along the current chain of len(self). This second option
-            is intended to be used for performance improvements.
+            Otherwise, return a cderive object of length len(self)*2 - 1 for further processing. The
+            object can be composed to yield the jet-evaluations along the current chain of len(self) in form of numpy
+            arrays. This second option is intended to be used for performance improvements.
             
         **kwargs
             Optional keyworded arguments passed to a (possible) chain evaluation.

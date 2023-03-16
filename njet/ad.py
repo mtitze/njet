@@ -62,7 +62,7 @@ def identity(*z, order: int):
     '''
     return [jet(z[k], jetpoly(zero(z[k]) + 1, index=k, power=1), n=order) for k in range(len(z))] # add a zero to jetpoly values to produce the same shape or type as z[k]
 
-def get_taylor_coefficients(evaluation, output_format=0, **kwargs):
+def taylor_coefficients(evaluation, output_format=0, **kwargs):
     '''
     Return the Taylor coefficients of a jet evaluation.
     
@@ -73,20 +73,20 @@ def get_taylor_coefficients(evaluation, output_format=0, **kwargs):
         of this list instead. If != 0, disable this behavior.
     
     **kwargs
-        Parameters passed to njet.jet.get_taylor_coefficients routine.
+        Parameters passed to njet.jet.taylor_coefficients routine.
         
     Returns
     -------
     dict
         One or more dictionaries, representing the Taylor-coefficients of the given
-        evaluation (see njet.poly.jetpoly.get_taylor_coefficients for details).
+        evaluation (see njet.poly.jetpoly.taylor_coefficients for details).
     '''
     try:
-        out = evaluation.get_taylor_coefficients(**kwargs)
+        out = evaluation.taylor_coefficients(**kwargs)
         if output_format != 0:
             out = [out]
     except:
-        out = (*[ev.get_taylor_coefficients(**kwargs) for ev in evaluation],) # also stored in ev._tc
+        out = (*[ev.taylor_coefficients(**kwargs) for ev in evaluation],) # also stored in ev._tc
         if len(out) == 1 and output_format == 0:
             out = out[0]
     return out
@@ -160,18 +160,18 @@ class derive:
             List of values at which the function and its derivatives should be evaluated.
             
         **kwargs:
-            Optional arguments passed to self._evaluation.get_taylor_coefficients routine.
+            Optional arguments passed to self._evaluation.taylor_coefficients routine.
 
         Returns
         -------
         dict
             Dictionary of compontens of the multivariate Taylor expansion of the given function self.jetfunc
         '''
-        # These two keywords are reserved for the get_taylor_coefficients routine and will be removed from the input:
+        # These two keywords are reserved for the taylor_coefficients routine and will be removed from the input:
         mult_prm = kwargs.pop('mult_prm', True)
         mult_drv = kwargs.pop('mult_drv', True)
         # perform the computation, based on the input vector
-        return get_taylor_coefficients(self.eval(*z, **kwargs), n_args=self.n_args, mult_prm=mult_prm, mult_drv=mult_drv)
+        return taylor_coefficients(self.eval(*z, **kwargs), n_args=self.n_args, mult_prm=mult_prm, mult_drv=mult_drv)
         
     def build_tensor(self, k: int, **kwargs):
         '''

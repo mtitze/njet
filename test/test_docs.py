@@ -1,7 +1,7 @@
 # Tests of some of the examples in the documentation
 import numpy as np
 
-from njet import get_taylor_coefficients
+from njet import taylor_coefficients
 from njet.extras import cderive
 from njet.functions import sin, cos
 
@@ -44,14 +44,14 @@ def test_docs_extras(tol=5e-15):
     
     assert all([dequal(result1[k], ref1[k], tol=tol) for k in range(2)])
     
-    result2 = drp.jev(4)[0].get_taylor_coefficients(n_args=2)
+    result2 = drp.jev(4)[0].taylor_coefficients(n_args=2)
     
     assert result2 == {(0, 0): -0.0911100230191827,
                        (1, 0): 0.34364574631604705,
                        (0, 1): -0.9390993563190676}
     
     mysubchain = drp[1:13]
-    result3 = mysubchain.jev(3)[0].get_taylor_coefficients(n_args=2)
+    result3 = mysubchain.jev(3)[0].taylor_coefficients(n_args=2)
     
     assert result3 == result2
     
@@ -61,27 +61,27 @@ def test_docs_extras(tol=5e-15):
     c1 = drp.compose()
     c2 = drpm.compose()
 
-    result4 = get_taylor_coefficients(c1, n_args=2)
+    result4 = taylor_coefficients(c1, n_args=2)
     assert result4 == result1
     
-    result5 = get_taylor_coefficients(c2, n_args=2)
+    result5 = taylor_coefficients(c2, n_args=2)
     assert all([dequal(result5[k], result1[k], tol=tol) for k in range(2)])
     
     cyc = drp.cycle(*z0, alpha=alpha)
     assert len(cyc) == len(drp)
     
-    tc0 = get_taylor_coefficients(cyc[0], n_args=2)
+    tc0 = taylor_coefficients(cyc[0], n_args=2)
     assert tc0 == ref1
         
     ordering2 = [1] + [0, 1]*(M - 1) + [0]
     drp2 = cderive(rot, per, order=2, ordering=ordering2, n_args=2)
-    tc1 = get_taylor_coefficients(cyc[1], n_args=2)
+    tc1 = taylor_coefficients(cyc[1], n_args=2)
     assert tc1 == drp2(*rot(*z0, alpha=alpha), alpha=alpha)
     
     z1 = np.array([[0.02, -0.056, z0[0]], [0.0031, 0.0118, z0[1]]])
     cyc_arr = drp.cycle(*z1, alpha=alpha)
-    result6 = get_taylor_coefficients(cyc_arr[0], n_args=2)
-    result7 = get_taylor_coefficients(cyc_arr[1], n_args=2)
+    result6 = taylor_coefficients(cyc_arr[0], n_args=2)
+    result7 = taylor_coefficients(cyc_arr[1], n_args=2)
     
     for k in range(2):
         for key in result6[k].keys():

@@ -202,7 +202,7 @@ class jetpoly:
     def imag(self):
         return (self - self.conjugate())/2/1j
         
-    def get_taylor_coefficients(self, n_args: int=0, facts=[], mult_prm: bool=True, mult_drv: bool=True):
+    def taylor_coefficients(self, n_args: int=0, facts=[], mult_prm: bool=True, mult_drv: bool=True):
         '''
         Obtain the Taylor coefficients of the current polynomial.
         

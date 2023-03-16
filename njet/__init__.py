@@ -19,5 +19,5 @@
 '''
 
 from ._version import __version__
-from .ad import jet, derive, get_taylor_coefficients
+from .ad import jet, derive, taylor_coefficients
 from .jet import jetpoly
