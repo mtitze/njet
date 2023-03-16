@@ -621,7 +621,7 @@ class cderive:
             True, if the keyworded arguments have been changed in comparison to a previous run.
         '''
         # Determine if the keyworded arguments have been changed
-        kwargs_changed = True
+        kwargs_changed = False
         if hasattr(self, '_call_kwargs'):
             kwargs_changed = self._call_kwargs != kwargs
         if kwargs_changed or not hasattr(self, '_call_kwargs'):
