@@ -143,8 +143,8 @@ class jet:
     def __add__(self, other):
         other = self.convert(other)
         max_order = max([self.order, other.order])
-        result = self.__class__(n=max_order, graph=[(2, '+'), self.graph, other.graph])
-        result.array = lambda n: self.array(n) + other.array(n)
+        result_array = [self.array(n) + other.array(n) for n in range(max_order + 1)]
+        result = self.__class__(*result_array, n=max_order, graph=[(2, '+'), self.graph, other.graph])
         return result
     
     def __radd__(self, other):
@@ -161,7 +161,7 @@ class jet:
         other = self.convert(other)
         max_order = max([self.order, other.order])
         result = self.__class__(n=max_order, graph=[(2, '*'), self.graph, other.graph])
-        # compute the derivatives      
+        # compute the derivatives
         f1, f2 = self.get_array(n=max_order), other.get_array(n=max_order)
         glr = general_leibniz_rule(f1, f2)
         result.array = lambda n: glr[n] if n <= max_order else 0

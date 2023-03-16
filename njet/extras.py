@@ -972,7 +972,7 @@ class cderive:
             2) A cderive class with the property mentioned above.
         '''
         L = len(self)
-        self._cycle_jev = self._prepare_cycle(*args, **kwargs)
+        self._cycle_jev = self._prepare_cycle(*args, **kwargs)        
         jev0 = self._cycle_jev(0)
         cycling_data = [[_jetp1(tile(jev0[component_index], ncopies=1), index=component_index, ncopies=L - 1) for component_index in range(len(jev0))]]
         
