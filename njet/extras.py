@@ -624,14 +624,12 @@ class cderive:
         kwargs_changed = False
         if hasattr(self, '_call_kwargs'):
             kwargs_changed = self._call_kwargs != kwargs
-        if kwargs_changed or not hasattr(self, '_call_kwargs'):
-            self._call_kwargs = kwargs
+        elif len(kwargs) > 0:
+            kwargs_changed = True
             
         # Determine if a (re-)evaluation is required
         eval_required = False
         if len(z) > 0:
-            if kwargs_changed:
-                eval_required = True
             if not all([hasattr(df, '_evaluation') for df in self.dfunctions]):
                 eval_required = True
             elif not self._probe(*z, **kwargs):
@@ -891,7 +889,7 @@ class cderive:
         '''
         # Check if given input is stored in the database. If not, re-evaluate.
         eval_required, kwargs_changed = self._eval_memcheck(*point, **kwargs)
-        if eval_required or kwargs_changed:
+        if eval_required:
             if warn:
                 warnings.warn('Input parameter(s) changed; re-evaluating ...')
             self.eval(*point, compose=False, **kwargs)
@@ -985,7 +983,7 @@ class cderive:
             
         concat0 = [[jevk[ic].array(0) for ic in range(len(jevk))]]
         for k in range(L - 1):
-            jevkpL = self._cycle_jev(k + L)
+            jevkpL = self._cycle_jev(k + L)            
             cycling_data.append([_jetp1(tile(jevkpL[component_index], ncopies=L - k - 1), 
                                         to_concat0=[c[component_index] for c in concat0],
                                         index=component_index, 
