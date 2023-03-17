@@ -267,21 +267,29 @@ def _jetp1(jev, index: int, to_concat0=None, ncopies: int=1, location=-1):
         return jev
     
     a0 = jev.array(0)
-    zero = a0*0
-    one = zero + 1
     kj = frozenset({(index, 1)})
     if to_concat0 is None:
         if location == -1:
-            to_concat0 = [a0[-1]]*ncopies # The index '-1' here is related to the use of _jetp1 in the cderive.cycle routine: In case there are several passages through the specific function, we will take a copy of the last passage. This also means that _jetp1 is intended to be used on jets whose entries carry numpy arrays.
+            to_concat0 = np.array([a0[-1]]*ncopies) # The index '-1' here is related to the use of _jetp1 in the cderive.cycle routine: In case there are several passages through the specific function, we will take a copy of the last passage. This also means that _jetp1 is intended to be used on jets whose entries carry numpy arrays.
         else:
-            to_contat0 = [a0[0]]*ncopies
+            to_contat0 = np.array([a0[0]]*ncopies)
+    else:
+        to_concat0 = np.array(to_concat0)
+            
+    zero = np.zeros(to_concat0.shape)
+    one = np.ones(to_concat0.shape)
+    concat_ones = np.array([one[0]]*ncopies)
+    concat_zeros = np.array([zero[0]]*ncopies)
         
     # the unity transformation will reproduce the value of the jet in the 0-array.
+    shape = [a0.shape[0] + to_concat0.shape[0]] + list(a0.shape[1:])
+    a0_new = np.empty(tuple(shape), dtype=np.complex128)
     if location == -1:
-        #a0_new = np.r_[a0, a0[-1]]
-        a0_new = np.concatenate([a0, to_concat0])
+        a0_new[:a0.shape[0]] = a0
+        a0_new[a0.shape[0]:] = to_concat0
     else:
-        a0_new = np.concatenate([to_concat0, a0])
+        a0_new[:to_concat0.shape[0]] = to_concat0
+        a0_new[to_concat0.shape[0]:] = a0
     
     new_jet_array = [a0_new]
     for k in range(1, jev.order + 1):
@@ -289,23 +297,27 @@ def _jetp1(jev, index: int, to_concat0=None, ncopies: int=1, location=-1):
         if not hasattr(jk, 'terms'):
             entry_k = {}
         else:
-            entry_k = jev.array(k).terms
+            entry_k = jk.terms
         if k == 1:
             # ensure that kj appears in the new jetpoly in any case:
             _ = entry_k.setdefault(kj, zero)
         new_terms_k = {}
         for key, value in entry_k.items():
             if key == kj: # may happen if k = 1
-                to_concatj = [one[0]]*ncopies
+                to_concatj = concat_ones
             else:
-                to_concatj = [zero[0]]*ncopies
+                to_concatj = concat_zeros
                 
+            
+            shape = [value.shape[0] + to_concatj.shape[0]] + list(value.shape[1:])
+            nt = np.empty(tuple(shape), dtype=np.complex128)
             if location == -1:
-                #new_terms_k[key] = np.r_[value, 1]
-                new_terms_k[key] = np.concatenate([value, to_concatj])
+                nt[:value.shape[0]] = value
+                nt[value.shape[0]:] = to_concatj
             else:
-                #new_terms_k[key] = np.r_[value, 0]
-                new_terms_k[key] = np.concatenate([to_concatj, value])
+                nt[:to_concatj.shape[0]] = to_concatj
+                nt[to_concatj.shape[0]:] = value
+            new_terms_k[key] = nt
         new_jet_array.append(jetpoly(terms=new_terms_k))
     return jet(*new_jet_array)
 
@@ -660,8 +672,8 @@ class cderive:
         # Perform the composition, if necessary
         eval_required, kwargs_changed = self._eval_memcheck(*z, **kwargs)
         if eval_required:
-            _ = self.eval(*z, **kwargs) # evaluation includes 'self.compose'
-        elif not hasattr(self, '_evaluation') or kwargs_changed:
+            _ = self.eval(*z, **kwargs)
+        if not hasattr(self, '_evaluation'):
             _ = self.compose(**kwargs)
 
         return taylor_coefficients(self._evaluation, n_args=self.dfunctions[0].n_args, mult_prm=mult_prm, mult_drv=mult_drv)
@@ -981,9 +993,10 @@ class cderive:
                                        index=component_index, 
                                        ncopies=L - k - 1) for component_index in range(len(jevk))])
             
+            
         concat0 = [[jevk[ic].array(0) for ic in range(len(jevk))]]
         for k in range(L - 1):
-            jevkpL = self._cycle_jev(k + L)            
+            jevkpL = self._cycle_jev(k + L)
             cycling_data.append([_jetp1(tile(jevkpL[component_index], ncopies=L - k - 1), 
                                         to_concat0=[c[component_index] for c in concat0],
                                         index=component_index, 
