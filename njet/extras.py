@@ -339,7 +339,7 @@ def _jbuild(jets):
     jet
         A jet in which the entries of each original jet are included in a large numpy array.
     '''
-    max_order = max([j.order for j in jets])
+    max_order = max(j.order for j in jets)
     new_array = [np.array([j.array(0) for j in jets])]
     for k in range(1, max_order + 1):
         new_terms = {}
@@ -953,7 +953,6 @@ class cderive:
                                        index=component_index, 
                                        ncopies=L - k - 1) for component_index in range(len(jevk))])
 
-
         concat0 = [[jevk[ic].array(0) for ic in range(len(jevk))]]
         for k in range(L - 1):
             jevkpL = data[k + L]
@@ -1035,7 +1034,7 @@ class cderive:
             ordering = (self.ordering*2)[:-1]
             for l in range(len(new_functions)):
                 n_args = new_functions[l].n_args
-                jets_l = [[cycling_data[k][icmp] for k in range(len(ordering)) if ordering[k] == l] for icmp in range(n_args)]
+                jets_l = ([cycling_data[k][icmp] for k in range(len(ordering)) if ordering[k] == l] for icmp in range(n_args))
                 new_functions[l]._evaluation = [_jbuild(jc) for jc in jets_l]
             del cycling_data
             gc.collect() # cleanup to prevent cluttering of memory
