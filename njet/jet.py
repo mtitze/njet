@@ -84,7 +84,7 @@ def bell_polynomials(*z):
 class jet:
     def __init__(self, *values, **kwargs):
         self.__array_priority__ = 1000 # prevent numpy __mul__ and force self.__rmul__ instead if multiplication from left with a numpy object
-        self.set_array(*values, **kwargs)
+        self.set_array(*values, **kwargs) # self._zero is set here
         self.graph = kwargs.get('graph', [(1, '0'), self]) # for keeping track of the computation graph
         
     def get_array(self, **kwargs):
@@ -97,7 +97,8 @@ class jet:
             zero = values[0]*0
         else:
             zero = 0
-        self.array = lambda k: values[k] if k <= omax else zero
+        self._zero = zero
+        self.array = lambda k: values[k] if k <= omax else self._zero
         self.set_order(n=kwargs.get('n', omax))
             
     def set_order(self, n):
@@ -164,7 +165,7 @@ class jet:
         # compute the derivatives
         f1, f2 = self.get_array(n=max_order), other.get_array(n=max_order)
         glr = general_leibniz_rule(f1, f2)
-        result.array = lambda n: glr[n] if n <= max_order else 0
+        result.array = lambda n: glr[n] if n <= max_order else self._zero
         # result.array = lambda k: general_leibniz_rule(f1[:k + 1], f2[:k + 1]) if k <= max_order else 0
         # The next line would work for arbitrary orders, but it is also much slower instead of pre-loading the array:
         # result.array = lambda n: sum([n_over_k(n, k)*self.array(n - k)*other.array(k) for k in range(n + 1)])

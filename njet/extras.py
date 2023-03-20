@@ -157,11 +157,11 @@ def general_faa_di_bruno(f, g, run_params={}):
     out = [[fk.array(0) for fk in f]] + [[0 for k in range(n_dim)] for l in range(max_order)]
     for order, r, e in indices:
         for k in range(n_dim):
-            jfk = f[k]
-            if check_zero(jfk.array(r)): 
+            jfk_r = f[k].array(r)
+            if check_zero(jfk_r): 
                 # skip in case that the r-th derivative of the k-th component of jfk does not exist
                 continue
-            out[order][k] += symtensor_call([[jg.array(nj)/facts[nj] for jg in g] for nj in e], jfk.array(r).terms)/facts[r]*facts[order]
+            out[order][k] += symtensor_call([[jg.array(nj)/facts[nj] for jg in g] for nj in e], jfk_r.terms)/facts[r]*facts[order]
     return [jet(*[out[k][j] for k in range(max_order + 1)], n=max_order) for j in range(n_dim)]
 
 def compose(*evals, run_params={}, **kwargs):
@@ -225,7 +225,7 @@ def tile(jev, ncopies: int):
     for k in range(jev.order + 1):
         jk = jev.array(k)
         if hasattr(jk, 'terms'): # Assume the entry is of type jetpoly
-            entry_k = jev.array(k).terms
+            entry_k = jk.terms
             new_terms_k = {}
             for key, value in entry_k.items():
                 new_terms_k[key] = np.tile(value, [ncopies] + [1]*len(value.shape))
@@ -340,7 +340,7 @@ def _jbuild(jets):
     new_array = [np.array([j.array(0) for j in jets])]
     for k in range(1, max_order + 1):
         new_terms = {}
-        all_keys = set().union(*[j.array(k).terms.keys() for j in jets])
+        all_keys = set().union(*[getattr(j.array(k), 'terms', {}).keys() for j in jets]) # if there are no terms in an entry for order >= 1, then the jetpoly term was zero.
         for key in all_keys:
             new_terms[key] = np.array([j.array(k).terms.get(key, 0) for j in jets])
         new_array.append(jetpoly(terms=new_terms))

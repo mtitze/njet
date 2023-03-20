@@ -83,8 +83,14 @@ def test_general_faa_di_bruno():
             assert check < tolerances[k][j]
             j += 1
     
-@pytest.mark.parametrize("x, y", [(0, 0), (0.56, 0.67), (np.array([0.1, -0.2]), np.array([0.526, 1.84]))])
-def test_cderive1(x, y, phi=0.224*np.pi, n_reps: int=5, tol=1e-15):
+phi1 = 0 # no rotation at all
+phi2 = 0.224*np.pi
+
+@pytest.mark.parametrize("x, y, phi", [(0, 0, phi1), (0.56, 0.67, phi1), 
+                                       (np.array([0.1, -0.2]), np.array([0.526, 1.84]), phi1), 
+                                       (0, 0, phi2), (0.56, 0.67, phi2), 
+                                       (np.array([0.1, -0.2]), np.array([0.526, 1.84]), phi2)])
+def test_cderive1(x, y, phi, n_reps: int=5, tol=1e-15):
     '''
     Test the derivatives of the 'n_reps'-times composition of a rotation,
     where the rotation takes an additional parameter (the rotation angle).
@@ -108,11 +114,11 @@ def test_cderive1(x, y, phi=0.224*np.pi, n_reps: int=5, tol=1e-15):
     if (0, 0) in drot_phi[1].keys():
         assert (np.abs(drot_phi[1][0, 0] - ref0[1]) < tol).all()
         
-    assert (np.abs(drot_phi[0][1, 0] - refx[0]) < tol).all() # the derivative of the first component of rot in x-direction (== rotation x-component [0] in x-direction)
-    assert (np.abs(drot_phi[0][0, 1] - refy[0]) < tol).all() # the derivative of the first component of rot in y-direction (== rotation x-component [0] in y-direction)
+    assert (np.abs(drot_phi[0].get((1, 0), 0) - refx[0]) < tol).all() # the derivative of the first component of rot in x-direction (== rotation x-component [0] in x-direction)
+    assert (np.abs(drot_phi[0].get((0, 1), 0) - refy[0]) < tol).all() # the derivative of the first component of rot in y-direction (== rotation x-component [0] in y-direction)
 
-    assert (np.abs(drot_phi[1][1, 0] - refx[1]) < tol).all() # the derivative of the second component of rot in x-direction (== rotation y-component [1] in x-direction)
-    assert (np.abs(drot_phi[1][0, 1] - refy[1]) < tol).all() # the derivative of the second component of rot in y-direction (== rotation y-component [1] in y-direction)
+    assert (np.abs(drot_phi[1].get((1, 0), 0) - refx[1]) < tol).all() # the derivative of the second component of rot in x-direction (== rotation y-component [1] in x-direction)
+    assert (np.abs(drot_phi[1].get((0, 1), 0) - refy[1]) < tol).all() # the derivative of the second component of rot in y-direction (== rotation y-component [1] in y-direction)
     
     dcrotm = dcrot.merge((0, 0), positions=[0, 3])
     result1 = dcrotm(x, y, alpha=phi/len(ordering))
@@ -431,4 +437,18 @@ def test_cycling3(point, ordering, tolerances, order=3):
             check_jet(tc_j[k] - tc_ref_j, tolerances=tolerances)
             check_jet(tcm_j[k] - tc_ref_j, tolerances=tolerances)
             
-        
+            
+def test_cycling4():
+    '''
+    This test is similar to the cderive1 test above, 
+    but produces some jet entries which do not contain jetpoly entries in their higher-order entries
+    and may thus test the _jbuild routine for such cases.
+    '''
+    per = lambda *z, **kwargs: [z[0], z[1] - z[1]**2]
+    rot = lambda *z, alpha=0: [cos(alpha)*z[0] - sin(alpha)*z[1], sin(alpha)*z[0] + cos(alpha)*z[1]]
+    z1 = [0.2, 0.1]
+    M = 15
+    ordering = [0, 1]*M
+    drp = cderive(rot, per, order=2, ordering=ordering, n_args=2)
+    drp.eval(*z1, alpha=0.15*np.pi, compose=False)
+    cyc = drp.cycle(outf=None, warn=True, periodic=True, pdb=True)
