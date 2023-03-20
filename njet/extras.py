@@ -3,6 +3,7 @@ from more_itertools import distinct_permutations, windowed
 from tqdm import tqdm
 from copy import copy
 import warnings
+import gc
 
 from . import jet, jetpoly, derive, taylor_coefficients
 from .common import factorials, check_zero
@@ -318,6 +319,8 @@ def _jetp1(jev, index: int, to_concat0=None, ncopies: int=1, location=-1):
                 nt[:to_concatj.shape[0]] = to_concatj
                 nt[to_concatj.shape[0]:] = value
             new_terms_k[key] = nt
+            
+            del nt
         new_jet_array.append(jetpoly(terms=new_terms_k))
     return jet(*new_jet_array)
 
@@ -933,6 +936,36 @@ class cderive:
         self._cycle_periodic = periodic
         return jev
     
+    @staticmethod
+    def _cycle_accumulator(data, L):
+        '''
+        Internal routine to accumulate data required for cycling.
+        
+        Code moved out of main routine to better work with the garbage collector.
+        '''
+        jev0 = data[0]
+        cycling_data = [[_jetp1(tile(jev0[component_index], ncopies=1), index=component_index, ncopies=L - 1) for component_index in range(len(jev0))]]
+        
+        # successively add copies and identity transformations to the given jet-evaluations, defining the traces to be tracked.
+        for k in range(1, L):
+            jevk = data[k]
+            cycling_data.append([_jetp1(tile(jevk[component_index], ncopies=k + 1), 
+                                       index=component_index, 
+                                       ncopies=L - k - 1) for component_index in range(len(jevk))])
+
+
+        concat0 = [[jevk[ic].array(0) for ic in range(len(jevk))]]
+        for k in range(L - 1):
+            jevkpL = data[k + L]
+            cycling_data.append([_jetp1(tile(jevkpL[component_index], ncopies=L - k - 1), 
+                                        to_concat0=[c[component_index] for c in concat0],
+                                        index=component_index, 
+                                        ncopies=k + 1, 
+                                        location=0) for component_index in range(len(jevkpL))])
+            concat0.append([jevkpL[ic].array(0) for ic in range(len(jevkpL))])
+            
+        return cycling_data
+    
     def cycle(self, *args, outf='default', **kwargs):
         r'''
         Cycle through the given chain: Compute the derivatives at each point, assuming
@@ -982,33 +1015,19 @@ class cderive:
             2) A cderive class with the property mentioned above.
         '''
         L = len(self)
-        self._cycle_jev = self._prepare_cycle(*args, **kwargs)        
-        jev0 = self._cycle_jev(0)
-        cycling_data = [[_jetp1(tile(jev0[component_index], ncopies=1), index=component_index, ncopies=L - 1) for component_index in range(len(jev0))]]
+        self._cycle_jev = self._prepare_cycle(*args, **kwargs)
+        data = [self._cycle_jev(k) for k in range(2*L - 1)]
+        cycling_data = self._cycle_accumulator(data=data, L=L)
+        del data
         
-        # successively add copies and identity transformations to the given jet-evaluations, defining the traces to be tracked.
-        for k in range(1, L):
-            jevk = self._cycle_jev(k)
-            cycling_data.append([_jetp1(tile(jevk[component_index], ncopies=k + 1), 
-                                       index=component_index, 
-                                       ncopies=L - k - 1) for component_index in range(len(jevk))])
-            
-            
-        concat0 = [[jevk[ic].array(0) for ic in range(len(jevk))]]
-        for k in range(L - 1):
-            jevkpL = self._cycle_jev(k + L)
-            cycling_data.append([_jetp1(tile(jevkpL[component_index], ncopies=L - k - 1), 
-                                        to_concat0=[c[component_index] for c in concat0],
-                                        index=component_index, 
-                                        ncopies=k + 1, 
-                                        location=0) for component_index in range(len(jevkpL))])
-            concat0.append([jevkpL[ic].array(0) for ic in range(len(jevkpL))])
-            
-        self._cycle_data_inp = cycling_data
         if outf == 'default':
             # Compose the extended jet-evaluations and return the resulting list along the chain:
-            self._cycle_data = compose(*cycling_data, run_params=self.run_params)
-            return [[jcmp[k] for jcmp in self._cycle_data[k + L - 1]] for k in range(L)]
+            compose_result = compose(*cycling_data, run_params=self.run_params)
+            result = [[jcmp[k] for jcmp in compose_result[k + L - 1]] for k in range(L)]
+            del cycling_data
+            del compose_result
+            gc.collect() # cleanup to prevent cluttering of memory
+            return result
         else:
             # Construct a cderive class of length len(self)*2 - 1, having self._cycle_data_inp as jet-evaluations, and 
             # so that its compose routine will provide the same results as above.
@@ -1016,8 +1035,10 @@ class cderive:
             ordering = (self.ordering*2)[:-1]
             for l in range(len(new_functions)):
                 n_args = new_functions[l].n_args
-                jets_l = [[self._cycle_data_inp[k][icmp] for k in range(len(ordering)) if ordering[k] == l] for icmp in range(n_args)]
+                jets_l = [[cycling_data[k][icmp] for k in range(len(ordering)) if ordering[k] == l] for icmp in range(n_args)]
                 new_functions[l]._evaluation = [_jbuild(jc) for jc in jets_l]
+            del cycling_data
+            gc.collect() # cleanup to prevent cluttering of memory
             return self.__class__(*new_functions, ordering=ordering, order=self.order, run_params=self.run_params, reset=False)
 
     
@@ -1079,3 +1100,4 @@ def _get_pattern_positions(sequence, pattern):
             last_pos = k
         k += 1
     return positions
+
