@@ -1,3 +1,5 @@
+from copy import copy
+
 from .common import check_zero, factorials, nCr, convert_indices
 from .poly import jetpoly
 
@@ -92,13 +94,15 @@ class jet:
         return [self.array(k) for k in range(n + 1)]
     
     def set_array(self, *values, **kwargs):
-        omax = len(values) - 1
+        self._values = values
+        del values
+        omax = len(self._values) - 1
         if omax > 0:
-            zero = values[0]*0
+            zero = self._values[0]*0
         else:
             zero = 0
         self._zero = zero
-        self.array = lambda k: values[k] if k <= omax else self._zero
+        self.array = lambda k: self._values[k] if k <= omax else self._zero
         self.set_order(n=kwargs.get('n', omax))
             
     def set_order(self, n):
@@ -165,7 +169,7 @@ class jet:
         # compute the derivatives
         f1, f2 = self.get_array(n=max_order), other.get_array(n=max_order)
         glr = general_leibniz_rule(f1, f2)
-        result.array = lambda n: glr[n] if n <= max_order else self._zero
+        result.set_array(*glr)
         # result.array = lambda k: general_leibniz_rule(f1[:k + 1], f2[:k + 1]) if k <= max_order else 0
         # The next line would work for arbitrary orders, but it is also much slower instead of pre-loading the array:
         # result.array = lambda n: sum([n_over_k(n, k)*self.array(n - k)*other.array(k) for k in range(n + 1)])
@@ -219,16 +223,16 @@ class jet:
         Return a (shallow) copy of this jet.
         '''
         result = self.__class__(n=self.order, graph=self.graph)
-        result.array = self.array
+        result.set_array(*(copy(self.get_array())))
         return result
     
     def truncate(self, max_power):
-        result = self.__class__(n=self.order, graph=self.graph)
+        result = self.__class__(*self.get_array(), n=self.order, graph=self.graph)
         def result_array(n):
             try:
-                return self.array(n).truncate(max_power)
+                return result._values[n].truncate(max_power)
             except:
-                return self.array(n)
+                return result._values[n]
         result.array = result_array
         return result
     
@@ -301,7 +305,7 @@ class jet:
     def conjugate(self):
         # N.B.: (f^(n)).conjugate() = (f.conjugate())^(n)
         result = self.__class__(n=self.order, graph=[(1, 'cg'), self.graph])
-        result.array = lambda n: self.array(n).conjugate()
+        result.array = lambda n: result._values[n].conjugate()
         return result
     
     def real(self):
