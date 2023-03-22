@@ -328,12 +328,12 @@ def _jbuild(jets):
     '''
     Combine the arrays of the given jets, to return a new jet.
     Internal routine; all jetpoly objects need to have identical keys.
-    
+
     Parameters
     ----------
     jets: list
         A list of njet.jet objects.
-        
+
     Returns
     -------
     jet
@@ -959,7 +959,7 @@ class cderive:
             cycling_data.append([_jetp1(tile(jevkpL[component_index], ncopies=L - k - 1), 
                                         to_concat0=[c[component_index] for c in concat0],
                                         index=component_index, 
-                                        ncopies=k + 1, 
+                                        ncopies=k + 1,
                                         location=0) for component_index in range(len(jevkpL))])
             concat0.append([jevkpL[ic].array(0) for ic in range(len(jevkpL))])
             
@@ -969,41 +969,41 @@ class cderive:
         r'''
         Cycle through the given chain: Compute the derivatives at each point, assuming
         a periodic structure of the entire chain.
-        
+
         The basic idea goes as follows: Let c1 --> c2 --> c3 --> c4 --> c5 denote the current
         chain (in this example consisting of 5 elements). Then this routine will extend the internal
         jet-evaluation data to numpy arrays of length 5 by suitable clones and identity operators,
         so that we can compute (compose) in parallel the following chain of length 2*5 - 1:
-        
+
         |c1 ---> c2 ---> c3 ---> c4 ---> c5*
         |        c2 ---> c3 ---> c4 ---> c5 ---> c1*
         |                c3 ---> c4 ---> c5 ---> c1 ---> c2*
         |                        c4 ---> c5 ---> c1 ---> c2 ---> c3*
         |                                c5 ---> c1 ---> c2 ---> c3 ---> c4*
-        
+
         The final results will then be returned as the starred values in the above diagram.
-        
+
         Parameters
         ----------
         *point: float or iterable, optional
             The point at which to evaluate the derivative(s). It has to be provided if the chain has
             not yet stored any jet-evaluation data.
-        
+
         periodic: boolean, optional
             If true, assume that the final point equals the given point. In particular, the
             data taken in the calculation will be taken from the current jet-evaluations (if
             it exists).
-            
+
         outf: str, optional
             Output format; if 'default', compose the extended jet-evaluations and return a list of jet-evaluations,
             representing the derivatives along the chain.
             Otherwise, return a cderive object of length len(self)*2 - 1 for further processing. The
             object can be composed to yield the jet-evaluations along the current chain of len(self) in form of numpy
             arrays. This second option is intended to be used for performance improvements.
-            
+
         **kwargs
             Optional keyworded arguments passed to a (possible) chain evaluation.
-            
+
         Returns
         -------
         list or cderive
@@ -1036,10 +1036,11 @@ class cderive:
                 n_args = new_functions[l].n_args
                 jets_l = ([cycling_data[k][icmp] for k in range(len(ordering)) if ordering[k] == l] for icmp in range(n_args))
                 new_functions[l]._evaluation = [_jbuild(jc) for jc in jets_l]
-            del cycling_data
+            result = self.__class__(*new_functions, ordering=ordering, order=self.order, run_params=self.run_params, reset=False)
+            self._cycle_result = result
+            del cycling_data # without this, the memory demand will increase
             gc.collect() # cleanup to prevent cluttering of memory
-            return self.__class__(*new_functions, ordering=ordering, order=self.order, run_params=self.run_params, reset=False)
-
+            # N.B. if we would return self._cycle_result, then we would get a memory doubling if we repeat this procedure; the amount of data is doubled at the first repetition and afterwards mildly increases for the minimal example. For the time being the only known option to prevent this is to let the results be attached to the current class.
     
 def _get_ordering(sequence, start=0):
     '''
@@ -1099,4 +1100,3 @@ def _get_pattern_positions(sequence, pattern):
             last_pos = k
         k += 1
     return positions
-
