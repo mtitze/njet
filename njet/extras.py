@@ -1004,9 +1004,9 @@ class cderive:
         noreturn: boolean, optional
             If True, the routine will not return any object. One still has access to the results by
             the internal variable self._cycle_result. This option is intended to prevent a (possible) memory overflow
-            problem which emerges at the 'return' statement: For some reason, the private heap gets doubled 
-            if we return the result after one repeated call of 'cycle. This may become problematic for large data sets,
-            where one should run the code with noreturn=True instead.
+            problem which emerges at the 'return' statement: For some reason the private heap in Python gets approx. doubled 
+            if the result(s) are returned after one repeated call of 'cycle'. This may become problematic for large data 
+            sets and/or limited memory, where it is therefore recommended to run the routine with noreturn=True option.
 
         **kwargs
             Optional keyworded arguments passed to a (possible) chain evaluation.
