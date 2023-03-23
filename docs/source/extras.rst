@@ -145,7 +145,7 @@ This can become effective in particular if there are repetitions of functions in
 Function chains
 ---------------
 
-In the case that a chain of functions :math:`f_N \circ f_{N - 1} ... \circ f_1` needs to be differentiated, and there are repetitions of :math:`f_k`'s in the chain, the generalized Faa di Bruno formula may help in reducing the amount of calculations required.
+In the case that a chain of functions of the form :math:`f_N \circ f_{N - 1} ... \circ f_1` needs to be differentiated, and there are repetitions of :math:`f_k`'s in the chain, the generalized Faa di Bruno formula may help in reducing the amount of calculations required.
 
 For example, if we want to compute a chain of :math:`2^N` repetitions of the same function :math:`f`, then we can first compute the composition :math:`f_2 := f \circ f`, then the compositon :math:`f_4 := f_2 \circ f_2` and so on, until we are finished after :math:`N` steps.
 
@@ -272,7 +272,7 @@ Coming back to our example, we confirm that the results before and after merging
       (1, 1): (-0.3181227776491683+0j)})
 
 In case one has a periodic system, where the chain is traversed again and again, one might
-be interested in the derivatives along the chain for every possible cycle. A cycle of start index :math:`k` is hereby understood as the chain of :math:`N` functions :math:`f_{k - 1} \circ ... \circ f_1 \circ f_N \circ f_{N - 1} \circ ... \circ f_k`. 
+be interested in the derivatives along the chain for every possible cycle. A cycle of start index :math:`k` is hereby understood as a chain of :math:`N` functions of the form :math:`f_{k - 1} \circ ... \circ f_1 \circ f_N \circ f_{N - 1} \circ ... \circ f_k`. 
 Such a calculation would have to be done for every :math:`k`, but it can also be performed in parallel using jets carrying NumPy entries. For this purpose there exist a dedicated routine: ``.cycle``. This routine is called with the same input parameters as the ordinary ``cderive`` function. Returning to our example this would read:
 
 .. code-block:: python
@@ -331,20 +331,18 @@ Similar to other routines, also the ``.cycle`` routine can handle multi-dimensio
       
 We can see in the above example that the last entry in each coefficient agrees with our previous result, as expected.
 
-The ``.cycle`` routine has the option to return a ``cderive`` object instead of a list of jet-evaluations. This ``cderive`` object now contains (multi-dimensional) NumPy arrays which represent the different traces to be calculated in parallel (see the docstring in ``.cycle`` what traces mean) and so it will have a different length of ``2*len(drp) - 1`` with ordering ``drp.ordering*2[:-1]``. If the traces are combined, they will yield a jet-evaluation result of NumPy arrays, where every entry corresponds to the list above. We confirm this by looking at position 5 for the first component in our example:
+The ``.cycle`` routine has the option to return a ``cderive`` object instead of a list of jet-evaluations. This ``cderive`` object now contains (multi-dimensional) NumPy arrays which represent the different traces to be calculated in parallel (see the docstring in ``.cycle`` what traces mean) and so it will have a different length of ``2*len(drp) - 1`` with ordering ``(drp.ordering*2)[:-1]``. If the traces are combined, they will yield a jet-evaluation result of NumPy arrays, where every entry corresponds to the list above. We confirm this by looking at position 5 in the chain and the first component in our example with three different (two-dimensional) input points ``z1``:
 
 .. code-block:: python
 
     pos = 5
-    cyc_arr[pos][0].taylor_coefficients(n_args=2)
+    cyc[pos][0].taylor_coefficients(n_args=2)
   > {(0, 0): array([ 0.01178258+0.j, -0.01398243+0.j,  0.12224696+0.j]),
      (1, 0): array([0.84452107+0.j, 0.83519304+0.j, 0.49549387+0.j]),
      (0, 1): array([0.52872394+0.j, 0.50442847+0.j, 0.50766504+0.j]),
      (0, 2): array([-0.34437699+0.j, -0.4025439 +0.j, -1.51963413+0.j]),
      (2, 0): array([-0.62792391+0.j,  1.18315592+0.j, -2.73434645+0.j]),
      (1, 1): array([ 0.21824765+0.j,  0.0447755 +0.j, -0.48232797+0.j])}
-     
-.. code-block:: python
      
     cc = drp.cycle(*z1, alpha=alpha, outf=0)
     cc_m = cc.compose()
@@ -356,7 +354,7 @@ The ``.cycle`` routine has the option to return a ``cderive`` object instead of 
      (2, 0): array([-0.62792391+0.j,  1.18315592+0.j, -2.73434645+0.j]),
      (1, 1): array([ 0.21824765+0.j,  0.0447755 +0.j, -0.48232797+0.j])}
 
-The option to return a ``cderive`` object has the advantage that, before combining, one could abuse any possible pattern repetitions of the ``cc`` chain with merge command(s), as discussed previously (but remember that the ``cc`` chain has now a different length and ordering in comparison to ``drp``):
+The option to return the ``cderive`` object ``cc`` has the feature that, before combining, we can take advantage of any possible pattern repetitions (of the ``cc`` chain) with merge command(s), as discussed previously:
 
 .. code-block:: python
 
@@ -369,7 +367,7 @@ The option to return a ``cderive`` object has the advantage that, before combini
      (2, 0): array([-0.62792391+0.j,  1.18315592+0.j, -2.73434645+0.j]),
      (1, 1): array([ 0.21824765+0.j,  0.0447755 +0.j, -0.48232797+0.j])}
      
-Notice that the ``pos`` variable can be used just fine even after merging (which will change the length of the ``cc`` chain), because now the ``pos`` variable represents a component in the multi-dimensional NumPy array which is tracked around the chain, and not a position in the ``cc1`` or ``cc`` chain.
+Notice that the ``pos`` variable can be used just fine even after merging (which will change the length of the ``cc`` chain), because now the ``pos`` variable represents a component in the multi-dimensional NumPy array which is tracked around the chain, and not a position in the ``cc`` or ``cc1`` chain.
 
 Last but not least I would like to stress that the ``.extras`` module is more experimental. Therefore, please check your results carefully and let me know if you encounter any problems or bugs.
 
