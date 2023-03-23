@@ -230,9 +230,9 @@ Another scenario where jet-evaluation data remains valid is by merging patterns 
     drpm = drp.merge(pattern=(1, 0, 1), positions=[1])
     
 The new chain ``drpm`` now has ``len(drpm) = 28``, since we have merged 3 elements of the original
-chain of length 30 and added 1 new 'merged' chain. Moreover, the new chain still maintains any previously computed jet-evaluations (although the ones of the merged functions will vanish internally).
+chain of length 30 and added 1 new 'merged' element. Moreover, the new chain still maintains any previously computed jet-evaluations (although the ones of the merged functions will vanish internally).
 
-The ``.merge`` command requires that jet-evaluation data has been computed in advance. This can be done with the ``.eval`` command (preferably by using the ``compose=False`` option to prevent the automatic composition calculation before the merging command). After merging, the jet-evaluation of the entire chain can be combined by means of successive 'Faa di Bruno' operations using the ``.compose`` routine. In scenarios where chains admit repeated function patterns, these three steps may drastically improve performance in comparison to the conventional ``derive`` approach.
+The ``.merge`` command requires that jet-evaluation data has been computed in advance. This can be done with the ``.eval`` command (in fact, ``.eval`` is always called whenever the ``cderive`` class is taken at a specific point, but ``.eval`` omits the calculation and return of the Taylor-coefficients, which is not always necessary). The ``.eval`` command can preferably be invoked with the ``compose=False`` option, to prevent the automatic composition calculation. After merging, the jet-evaluation of the entire chain can be combined by means of successive 'Faa di Bruno' operations, using the ``.compose`` routine. In scenarios where chains admit repeated function patterns, these three steps may drastically improve performance in comparison to the conventional ``derive`` approach.
 
 Coming back to our example, we confirm that the results before and after merging are the same:
 
@@ -329,7 +329,47 @@ Similar to other routines, also the ``.cycle`` routine can handle multi-dimensio
       (2, 0): array([ 0.25984599+0.j, -0.73940164+0.j,  0.71974456+0.j]),
       (1, 1): array([ 0.13269792+0.j,  0.94135934+0.j, -0.31812278+0.j])})
       
-As one can see in the above example, the last entry in each coefficient agrees with our previous result.
+We can see in the above example that the last entry in each coefficient agrees with our previous result, as expected.
+
+The ``.cycle`` routine has the option to return a ``cderive`` object instead of a list of jet-evaluations. This ``cderive`` object now contains (multi-dimensional) NumPy arrays which represent the different traces to be calculated in parallel (see the docstring in ``.cycle`` what traces mean) and so it will have a different length of ``2*len(drp) - 1`` with ordering ``drp.ordering*2[:-1]``. If the traces are combined, they will yield a jet-evaluation result of NumPy arrays, where every entry corresponds to the list above. We confirm this by looking at position 5 for the first component in our example:
+
+.. code-block:: python
+
+    pos = 5
+    cyc_arr[pos][0].taylor_coefficients(n_args=2)
+  > {(0, 0): array([ 0.01178258+0.j, -0.01398243+0.j,  0.12224696+0.j]),
+     (1, 0): array([0.84452107+0.j, 0.83519304+0.j, 0.49549387+0.j]),
+     (0, 1): array([0.52872394+0.j, 0.50442847+0.j, 0.50766504+0.j]),
+     (0, 2): array([-0.34437699+0.j, -0.4025439 +0.j, -1.51963413+0.j]),
+     (2, 0): array([-0.62792391+0.j,  1.18315592+0.j, -2.73434645+0.j]),
+     (1, 1): array([ 0.21824765+0.j,  0.0447755 +0.j, -0.48232797+0.j])}
+     
+.. code-block:: python
+     
+    cc = drp.cycle(*z1, alpha=alpha, outf=0)
+    cc_m = cc.compose()
+    cc_m[0][pos].taylor_coefficients(n_args=2)
+  > {(0, 0): array([ 0.01178258+0.j, -0.01398243+0.j,  0.12224696+0.j]),
+     (1, 0): array([0.84452107+0.j, 0.83519304+0.j, 0.49549387+0.j]),
+     (0, 1): array([0.52872394+0.j, 0.50442847+0.j, 0.50766504+0.j]),
+     (0, 2): array([-0.34437699+0.j, -0.4025439 +0.j, -1.51963413+0.j]),
+     (2, 0): array([-0.62792391+0.j,  1.18315592+0.j, -2.73434645+0.j]),
+     (1, 1): array([ 0.21824765+0.j,  0.0447755 +0.j, -0.48232797+0.j])}
+
+The option to return a ``cderive`` object has the advantage that, before combining, one could abuse any possible pattern repetitions of the ``cc`` chain with merge command(s), as discussed previously (but remember that the ``cc`` chain has now a different length and ordering in comparison to ``drp``):
+
+.. code-block:: python
+
+    cc1 = cc.merge(pattern=(1, 0, 1), positions=[1])
+    cc1_m[0][pos].taylor_coefficients(n_args=2)
+  > {(0, 0): array([ 0.01178258+0.j, -0.01398243+0.j,  0.12224696+0.j]),
+     (1, 0): array([0.84452107+0.j, 0.83519304+0.j, 0.49549387+0.j]),
+     (0, 1): array([0.52872394+0.j, 0.50442847+0.j, 0.50766504+0.j]),
+     (0, 2): array([-0.34437699+0.j, -0.4025439 +0.j, -1.51963413+0.j]),
+     (2, 0): array([-0.62792391+0.j,  1.18315592+0.j, -2.73434645+0.j]),
+     (1, 1): array([ 0.21824765+0.j,  0.0447755 +0.j, -0.48232797+0.j])}
+     
+Notice that the ``pos`` variable can be used just fine even after merging (which will change the length of the ``cc`` chain), because now the ``pos`` variable represents a component in the multi-dimensional NumPy array which is tracked around the chain, and not a position in the ``cc1`` or ``cc`` chain.
 
 Last but not least I would like to stress that the ``.extras`` module is more experimental. Therefore, please check your results carefully and let me know if you encounter any problems or bugs.
 

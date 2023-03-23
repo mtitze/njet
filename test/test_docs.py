@@ -82,7 +82,7 @@ def test_docs_extras(tol=5e-15):
     cyc_arr = drp.cycle(*z1, alpha=alpha)
     result6 = taylor_coefficients(cyc_arr[0], n_args=2)
     result7 = taylor_coefficients(cyc_arr[1], n_args=2)
-    
+
     for k in range(2):
         for key in result6[k].keys():
             assert abs(result6[k][key][-1] - ref1[k][key]) < tol
@@ -90,3 +90,16 @@ def test_docs_extras(tol=5e-15):
     for k in range(2):
         for key in result7[k].keys():
             assert abs(result7[k][key][-1] - tc1[k][key]) < tol
+    
+    pos = 5
+    result8 = cyc_arr[pos][0].taylor_coefficients(n_args=2)
+    cc = drp.cycle(*z1, alpha=alpha, outf=0)
+    cc_m = cc.compose()
+    result9 = cc_m[0][pos].taylor_coefficients(n_args=2)
+    cc1 = cc.merge(pattern=(1, 0, 1), positions=[1])
+    cc1_m = cc1.compose()
+    result10 = cc1_m[0][pos].taylor_coefficients(n_args=2)
+    
+    for key in result8.keys():
+        assert (np.abs(result9[key] - result8[key]) < tol).all()
+        assert (np.abs(result10[key] - result8[key]) < tol).all()
