@@ -354,7 +354,7 @@ The ``.cycle`` routine has the option to return a ``cderive`` object instead of 
      (2, 0): array([-0.62792391+0.j,  1.18315592+0.j, -2.73434645+0.j]),
      (1, 1): array([ 0.21824765+0.j,  0.0447755 +0.j, -0.48232797+0.j])}
 
-The option to return the ``cderive`` object ``cc`` has the feature that, before combining, we can take advantage of any possible pattern repetitions (of the ``cc`` chain) with merge command(s), as discussed previously:
+The option to return the ``cderive`` object ``cc`` has the feature that, before combining, we can take advantage of any possible pattern repetitions (of the ``cc`` chain) with merge command(s), e.g.:
 
 .. code-block:: python
 
@@ -367,7 +367,7 @@ The option to return the ``cderive`` object ``cc`` has the feature that, before 
      (2, 0): array([-0.62792391+0.j,  1.18315592+0.j, -2.73434645+0.j]),
      (1, 1): array([ 0.21824765+0.j,  0.0447755 +0.j, -0.48232797+0.j])}
      
-Notice that the ``pos`` variable can be used just fine even after merging (which will change the length of the ``cc`` chain), because now the ``pos`` variable represents a component in the multi-dimensional NumPy array which is tracked around the chain, and not a position in the ``cc`` or ``cc1`` chain.
+Notice that the ``pos`` variable can be used just fine even after merging (which will produce the chain ``cc1``, having a length different than ``cc``), because now the ``pos`` variable represents a component in the multi-dimensional NumPy array which is tracked around the chain, and not a position in the ``cc`` or ``cc1`` chain.
 
 Last but not least I would like to stress that the ``.extras`` module is more experimental. Therefore, please check your results carefully and let me know if you encounter any problems or bugs.
 
