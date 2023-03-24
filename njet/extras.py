@@ -965,7 +965,7 @@ class cderive:
             
         return cycling_data
     
-    def cycle(self, *args, outf='default', noreturn=False, **kwargs):
+    def cycle(self, *args, outf='default', **kwargs):
         r'''
         Cycle through the given chain: Compute the derivatives at each point, assuming
         a periodic structure of the entire chain.
@@ -982,6 +982,9 @@ class cderive:
         |                                c5 ---> c1 ---> c2 ---> c3 ---> c4*
 
         The final results will then be returned as the starred values in the above diagram.
+        
+        Attention: For larger cycles it may become necessary to delete any previously computed output
+                   with this routine in order to free up memory.
 
         Parameters
         ----------
@@ -1000,13 +1003,6 @@ class cderive:
             Otherwise, return a cderive object of length len(self)*2 - 1 for further processing. The
             object can be composed to yield the jet-evaluations along the current chain of len(self) in form of numpy
             arrays. This second option is intended to be used for performance improvements.
-            
-        noreturn: boolean, optional
-            If True, the routine will not return any object. One still has access to the results by
-            the internal variable self._cycle_result. This option is intended to prevent a (possible) memory overflow
-            problem which emerges at the 'return' statement: For some reason the private heap in Python gets approx. doubled 
-            if the result(s) are returned after one repeated call of 'cycle'. This may become problematic for large data 
-            sets and/or limited memory, where it is therefore recommended to run the routine with noreturn=True option.
 
         **kwargs
             Optional keyworded arguments passed to a (possible) chain evaluation.
@@ -1020,10 +1016,6 @@ class cderive:
             a periodic chain structure).
             2) A cderive class with the property mentioned above.
         '''
-        if hasattr(self, '_cycle_result'):
-            # clean up any previous result to prevent memory overflow, if called repeatedly
-            del self._cycle_result
-            
         L = len(self)
         self._cycle_jev = self._prepare_cycle(*args, **kwargs)
         data = [self._cycle_jev(k) for k in range(2*L - 1)]
@@ -1033,10 +1025,8 @@ class cderive:
         if outf == 'default':
             # Compose the extended jet-evaluations and return the resulting list along the chain:
             compose_result = compose(*cycling_data, run_params=self.run_params)
-            self._cycle_result = [[jcmp[k] for jcmp in compose_result[k + L - 1]] for k in range(L)]
-            del cycling_data
+            result = [[jcmp[k] for jcmp in compose_result[k + L - 1]] for k in range(L)]
             del compose_result
-            gc.collect() # cleanup to prevent cluttering of memory
         else:
             # Construct a cderive class of length len(self)*2 - 1, having self._cycle_data_inp as jet-evaluations, and 
             # so that its compose routine will provide the same results as above.
@@ -1046,13 +1036,10 @@ class cderive:
                 n_args = new_functions[l].n_args
                 jets_l = ([cycling_data[k][icmp] for k in range(len(ordering)) if ordering[k] == l] for icmp in range(n_args))
                 new_functions[l]._evaluation = [_jbuild(jc) for jc in jets_l]
-            self._cycle_result = self.__class__(*new_functions, ordering=ordering, order=self.order, run_params=self.run_params, reset=False)
-            del cycling_data # without this, the memory demand will increase
-            gc.collect() # cleanup to prevent cluttering of memory
-            
-        if noreturn == False:
-            # If we return self._cycle_result, then we might get a memory doubling if we repeat this procedure; the amount of data is doubled at the first repetition -- and afterwards mildly keeps increasing. For the time being the only known option to prevent this is to let the results be attached to the current class.
-            return self._cycle_result
+            result = self.__class__(*new_functions, ordering=ordering, order=self.order, run_params=self.run_params, reset=False)
+        del cycling_data # without this, the memory demand will increase
+        gc.collect() # cleanup to prevent cluttering of memory
+        return result
     
 def _get_ordering(sequence, start=0):
     '''
