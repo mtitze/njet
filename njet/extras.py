@@ -484,7 +484,7 @@ class cderive:
                             
     def jetfunc(self, *point, **kwargs):
         '''
-        Run a point through the chain.
+        Pass a point through the chain.
         
         Parameters
         ----------
@@ -691,7 +691,7 @@ class cderive:
         
         Parameters
         ----------
-        pattern: tuple, optional
+        pattern: tuple or list, optional
             Tuple of integers which defines a subsequence in self.ordering.
             If nothings specified, the entire sequence will be used, and so
             this routine becomes very similar to self.compose (with the difference that
@@ -715,27 +715,16 @@ class cderive:
         '''
         # Input handling and consistency checks
         #######################################
-        assert type(pattern) == tuple
-        if len(pattern) == 0:
-            pattern = tuple(self.ordering)
-        size = len(pattern)
-        assert 2 <= size and size <= len(self)
-        if positions is None:
-            positions = _get_pattern_positions(self.ordering, pattern)
-            if len(positions) == 0:
-                raise RuntimeError('Pattern not found in the sequence.')
-        # Sections must not overlap & can be found in the ordering. Evaluation(s) must exist.
-        n_patterns = len(positions)
-        assert 0 <= min(positions) and max(positions) < len(self) - size + 1, 'Pattern positions out of bounds.'
-        for k in range(n_patterns - 1):
-            assert positions[k + 1] - positions[k] >= size, 'Overlapping pattern.'
-        assert all(tuple(self.ordering[pos: pos + size]) == pattern for pos in positions), 'Not all patterns found in sequence at requested positions.'
         assert all(hasattr(self.dfunctions[k], '_evaluation') for k in pattern), 'Merging requires function evaluations in advance.'
-        self._merge_pattern = pattern
-        self._merge_positions = positions
-
+        
+        self._merge_reordering = _pattern_reordering(ordering=self.ordering, pattern=pattern, positions=positions)
+        pattern = self._merge_reordering['pattern'] # default pattern, if not provided, will 'ordering'
+        positions = self._merge_reordering['pattern_positions_start'] # default positions, if not provided, will depend on the given pattern.
+        n_patterns = self._merge_reordering['n_patterns']
+        
         # Merge the members of the pattern
         ##################################
+        size = len(pattern)
         passage_indices = [[self.ordering[:pos + k].count(pattern[k]) for k in range(size)] for pos in positions] # The number of passages the functions already had in the chain, before the respective pattern(s).
         evr = [e[[passage_indices[k][0] for k in range(n_patterns)]] for e in self.dfunctions[pattern[0]]._evaluation] # The start values of the merged element consists of all start values at the various positions of the pattern
         for k in tqdm(range(1, size), disable=kwargs.get('disable_tqdm', True)):
@@ -757,10 +746,11 @@ class cderive:
             return z
         dp = derive(pattern_function, order=self.order, n_args=getattr(self.dfunctions[self.ordering[k]], 'n_args', kwargs.get('n_args', 0)))            
         dp._evaluation = evr # Note that 'evr' contains only those points which are passing through the pattern, which is guaranteed at step (**) above.
-                
-        pattern_positions = [r for pos in positions for r in range(pos, pos + size)]
-        placeholder = -1
-        ordering_w_placeholder = [self.ordering[j] if j not in pattern_positions else placeholder for j in range(len(self))]
+        
+        # Assemble the new functions & compute the (new) jet-evaluations, by removing the data which has been merged.
+        placeholder = self._merge_reordering['placeholder']
+        ordering_w_placeholder = self._merge_reordering['ordering_w_placeholder']
+        pattern_positions = self._merge_reordering['pattern_positions']
         k = 0
         new_functions = []
         unique_function_indices = [] # to ensure that we pic only the unique functions in the chain
@@ -792,20 +782,8 @@ class cderive:
                 new_functions.append(new_func)
                 unique_function_indices.append(func_index)
                 k += 1
-                
-        # remove the chain of placeholders in the new_ordering & recalculate the ordering
-        new_ordering = []
-        j = 0
-        while j < len(self):
-            if ordering_w_placeholder[j] == placeholder:
-                new_ordering.append(placeholder)
-                j += size
-            else:
-                new_ordering.append(ordering_w_placeholder[j])
-                j += 1
-        new_ordering = _get_ordering(new_ordering)
         
-        return self.__class__(*new_functions, order=self.order, ordering=new_ordering, run_params=self.run_params, reset=False)
+        return self.__class__(*new_functions, order=self.order, ordering=self._merge_reordering['new_ordering'], run_params=self.run_params, reset=False)
     
     def __len__(self):
         return len(self.ordering)
@@ -1042,6 +1020,60 @@ class cderive:
         gc.collect() # cleanup to prevent cluttering of memory
         return result
     
+########################################################
+# Helper functions to deal with patterns and orderings #
+########################################################
+    
+def _pattern_reordering(ordering, pattern=(), positions=None, placeholder=-1):
+    '''
+    Replace a given sequence of patterns within an ordering,
+    to return a new ordering. See cderive.merge for additional information.
+    '''
+    # Input consistency checks and preparation
+    len_chain = len(ordering)
+    if len(pattern) == 0:
+        pattern = tuple(ordering)
+    else:
+        pattern = tuple(pattern) # window in _get_pattern_positions works only with tuples.
+    size = len(pattern)
+    assert 2 <= size and size <= len_chain
+    if positions is None:
+        positions = _pattern_positions(sequence=ordering, pattern=pattern)
+        if len(positions) == 0:
+            raise RuntimeError('Pattern not found in the sequence.')
+    # Sections must not overlap & can be found in the ordering.
+    n_patterns = len(positions)
+    assert 0 <= min(positions) and max(positions) < len_chain - size + 1, 'Pattern positions out of bounds.'
+    for k in range(n_patterns - 1):
+        assert positions[k + 1] - positions[k] >= size, 'Overlapping pattern.'
+    assert all(tuple(ordering[pos: pos + size]) == pattern for pos in positions), 'Not all patterns found in sequence at requested positions.'
+    
+    pattern_positions = [r for pos in positions for r in range(pos, pos + size)]
+    ordering_w_placeholder = [ordering[j] if j not in pattern_positions else placeholder for j in range(len_chain)]
+    # remove the chain of placeholders in the new_ordering & recalculate the ordering
+    new_ordering = []
+    j = 0
+    while j < len_chain:
+        if ordering_w_placeholder[j] == placeholder:
+            new_ordering.append(placeholder)
+            j += size
+        else:
+            new_ordering.append(ordering_w_placeholder[j])
+            j += 1
+    new_ordering = _get_ordering(new_ordering)
+    
+    # Assemble output & return
+    out = {}
+    out['pattern'] = pattern
+    out['n_patterns'] = n_patterns
+    out['old_ordering'] = ordering
+    out['new_ordering'] = new_ordering
+    out['pattern_positions'] = pattern_positions
+    out['pattern_positions_start'] = positions
+    out['ordering_w_placeholder'] = ordering_w_placeholder
+    out['placeholder'] = placeholder
+    return out
+    
 def _get_ordering(sequence, start=0):
     '''
     For a given sequence of integers, find a unique ordering. E.g.
@@ -1075,7 +1107,7 @@ def _get_ordering(sequence, start=0):
             new_ordering.append(e_index + start)
     return new_ordering
 
-def _get_pattern_positions(sequence, pattern):
+def _pattern_positions(sequence, pattern):
     '''
     For a given sequence and a given pattern, determine the positions at
     which the pattern occurs in the sequence -- non-overlapping -- starting

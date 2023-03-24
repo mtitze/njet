@@ -367,7 +367,7 @@ The option to return the ``cderive`` object ``cc`` has the feature that, before 
      (2, 0): array([-0.62792391+0.j,  1.18315592+0.j, -2.73434645+0.j]),
      (1, 1): array([ 0.21824765+0.j,  0.0447755 +0.j, -0.48232797+0.j])}
      
-Notice that the ``pos`` variable can be used just fine even after merging (which will produce the chain ``cc1``, having a length different than ``cc``), because now the ``pos`` variable represents a component in the multi-dimensional NumPy array which is tracked around the chain, and not a position in the ``cc`` or ``cc1`` chain.
+Notice that the ``pos`` variable can be used here just fine even after merging (which will produce the chain ``cc1``, having a different length than ``cc``), because now the ``pos`` variable represents a component in the multi-dimensional NumPy array which is tracked around the chain, and not a position in the ``cc`` or ``cc1`` chain.
 
 .. note::
     In case of larger chains it is recommended to delete any previously computed result of the ``.cycle`` module explicitly, to free up memory before ``.cycle`` is called again.
