@@ -369,7 +369,13 @@ The option to return the ``cderive`` object ``cc`` has the feature that, before 
      
 Notice that the ``pos`` variable can be used just fine even after merging (which will produce the chain ``cc1``, having a length different than ``cc``), because now the ``pos`` variable represents a component in the multi-dimensional NumPy array which is tracked around the chain, and not a position in the ``cc`` or ``cc1`` chain.
 
-Last but not least I would like to stress that the ``.extras`` module is more experimental. Therefore, please check your results carefully and let me know if you encounter any problems or bugs.
+.. note::
+    In case of larger chains it is recommended to delete any previously computed result of the ``.cycle`` module explicitly, to free up memory before ``.cycle`` is called again.
+
+.. warning::
+
+    The ``.extras`` module is more experimental. Therefore,
+    please check your results carefully and let me know if you encounter any problems or bugs.
 
 Module synopsis
 ---------------

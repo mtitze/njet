@@ -975,16 +975,17 @@ class cderive:
         jet-evaluation data to numpy arrays of length 5 by suitable clones and identity operators,
         so that we can compute (compose) in parallel the following chain of length 2*5 - 1:
 
-        |c1 ---> c2 ---> c3 ---> c4 ---> c5*
-        |        c2 ---> c3 ---> c4 ---> c5 ---> c1*
-        |                c3 ---> c4 ---> c5 ---> c1 ---> c2*
-        |                        c4 ---> c5 ---> c1 ---> c2 ---> c3*
-        |                                c5 ---> c1 ---> c2 ---> c3 ---> c4*
+        |  c1 ---> c2 ---> c3 ---> c4 ---> c5*
+        |          c2 ---> c3 ---> c4 ---> c5 ---> c1*
+        |                  c3 ---> c4 ---> c5 ---> c1 ---> c2*
+        |                          c4 ---> c5 ---> c1 ---> c2 ---> c3*
+        |                                  c5 ---> c1 ---> c2 ---> c3 ---> c4*
 
         The final results will then be returned as the starred values in the above diagram.
         
-        Attention: For larger cycles it may become necessary to delete any previously computed output
-                   with this routine in order to free up memory.
+        Attention:  
+        For larger cycles it may become necessary to delete any previously computed output
+        of this routine in advance, in order to free up memory.
 
         Parameters
         ----------
