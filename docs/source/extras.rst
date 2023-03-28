@@ -232,7 +232,7 @@ Another scenario where jet-evaluation data remains valid is by merging patterns 
 The new chain ``drpm`` now has ``len(drpm) = 28``, since we have merged 3 elements of the original
 chain of length 30 and added 1 new 'merged' element. Moreover, the new chain still maintains any previously computed jet-evaluations (although the ones of the merged functions will vanish internally).
 
-The ``.merge`` command requires that jet-evaluation data has been computed in advance. This can be done with the ``.eval`` command (in fact, ``.eval`` is always called whenever the ``cderive`` class is taken at a specific point, but ``.eval`` omits the calculation and return of the Taylor-coefficients, which is not always necessary). The ``.eval`` command can preferably be invoked with the ``compose=False`` option, to prevent the automatic composition calculation. After merging, the jet-evaluation of the entire chain can be combined by means of successive 'Faa di Bruno' operations, using the ``.compose`` routine. In scenarios where chains admit repeated function patterns, these three steps may drastically improve performance in comparison to the conventional ``derive`` approach.
+The ``.merge`` command requires that jet-evaluation data has been computed in advance. This can be done with the ``.eval`` command (in fact, ``.eval`` is always called whenever the ``cderive`` class is taken at a specific point, but ``.eval`` omits the calculation of the Taylor-coefficients, which is not always necessary). The ``.eval`` command can preferably be invoked with the ``compose=False`` option, to prevent the automatic composition calculation. After merging, the jet-evaluation of the entire chain can be combined by means of successive 'Faa di Bruno' operations, using the ``.compose`` routine. In scenarios where chains admit repeated function patterns, these three steps may drastically improve performance in comparison to the conventional ``derive`` approach.
 
 Coming back to our example, we confirm that the results before and after merging are the same:
 
@@ -331,7 +331,7 @@ Similar to other routines, also the ``.cycle`` routine can handle multi-dimensio
       
 We can see in the above example that the last entry in each coefficient agrees with our previous result, as expected.
 
-The ``.cycle`` routine has the option to return a ``cderive`` object instead of a list of jet-evaluations. This ``cderive`` object now contains (multi-dimensional) NumPy arrays which represent the different traces to be calculated in parallel (see the docstring in ``.cycle`` what traces mean) and so it will have a different length of ``2*len(drp) - 1`` with ordering ``(drp.ordering*2)[:-1]``. If the traces are combined, they will yield a jet-evaluation result of NumPy arrays, where every entry corresponds to the list above. We confirm this by looking at position 5 in the chain and the first component in our example with three different (two-dimensional) input points ``z1``:
+The ``.cycle`` routine has the option to return a ``cderive`` object instead of a list of jet-evaluations. This ``cderive`` object hereby contains the (multi-dimensional) NumPy arrays, representing the different traces which are to be calculated in parallel (see the docstring in ``.cycle`` for an illustration of these traces), and so it will have a different length of ``2*len(drp) - 1`` with ordering ``(drp.ordering*2)[:-1]``. If the traces are combined, they will yield a jet-evaluation result of NumPy arrays, where every entry corresponds to the list above. To demonstrate this we consider position 5 in our example-chain with three different (two-dimensional) input points ``z1``. In the 0-th component we have:
 
 .. code-block:: python
 
@@ -354,7 +354,7 @@ The ``.cycle`` routine has the option to return a ``cderive`` object instead of 
      (2, 0): array([-0.62792391+0.j,  1.18315592+0.j, -2.73434645+0.j]),
      (1, 1): array([ 0.21824765+0.j,  0.0447755 +0.j, -0.48232797+0.j])}
 
-The option to return the ``cderive`` object ``cc`` has the feature that, before combining, we can take advantage of any possible pattern repetitions (of the ``cc`` chain) with merge command(s), e.g.:
+The option to return the ``cderive`` object ``cc`` has the feature that, before combining, we may take advantage of any possible pattern repetitions (of the ``cc`` chain) with merge command(s), e.g.:
 
 .. code-block:: python
 
@@ -367,7 +367,7 @@ The option to return the ``cderive`` object ``cc`` has the feature that, before 
      (2, 0): array([-0.62792391+0.j,  1.18315592+0.j, -2.73434645+0.j]),
      (1, 1): array([ 0.21824765+0.j,  0.0447755 +0.j, -0.48232797+0.j])}
      
-Notice that the ``pos`` variable can be used here just fine even after merging (which will produce the chain ``cc1``, having a different length than ``cc``), because now the ``pos`` variable represents a component in the multi-dimensional NumPy array which is tracked around the chain, and not a position in the ``cc`` or ``cc1`` chain.
+Notice that the ``pos`` variable can be used just fine even after merging (which will produce the chain ``cc1``, having a different length than ``cc``), because now the ``pos`` variable represents a component in the multi-dimensional NumPy array which is tracked through the chain, and not a position in the ``cc`` or ``cc1`` chain.
 
 .. note::
     In case of larger chains it is recommended to delete any previously computed result of the ``.cycle`` module explicitly, to free up memory before ``.cycle`` is called again.
