@@ -645,8 +645,7 @@ class cderive:
         # Determine if a (re-)evaluation is required
         eval_required = not all([hasattr(df, '_evaluation') for df in self.dfunctions])            
         if len(z) > 0 and not eval_required:
-            if not self._probe(*z, **kwargs):
-                eval_required = True
+            eval_required = not self._probe(*z, **kwargs)
             
         return eval_required, kwargs_changed
 
