@@ -643,12 +643,11 @@ class cderive:
             kwargs_changed = True
             
         # Determine if a (re-)evaluation is required
-        eval_required = False
-        if len(z) > 0:
-            if not all([hasattr(df, '_evaluation') for df in self.dfunctions]):
+        eval_required = not all([hasattr(df, '_evaluation') for df in self.dfunctions])            
+        if len(z) > 0 and not eval_required:
+            if not self._probe(*z, **kwargs):
                 eval_required = True
-            elif not self._probe(*z, **kwargs):
-                eval_required = True
+            
         return eval_required, kwargs_changed
 
     def __call__(self, *z, **kwargs):
@@ -883,6 +882,7 @@ class cderive:
         # Check if given input is stored in the database. If not, re-evaluate.
         eval_required, kwargs_changed = self._eval_memcheck(*point, **kwargs)
         if eval_required:
+            assert len(point) > 0, 'Evaluation input point required.'
             if warn:
                 warnings.warn('Input parameter(s) changed; re-evaluating ...')
             self.eval(*point, compose=False, **kwargs)
