@@ -6,6 +6,8 @@ def check_zero(value):
             return check.all()
         except:
             return all(check)
+    elif isinstance(value, list):
+        return all([check_zero(e) for e in value])
     else:
         return check
     
