@@ -449,6 +449,9 @@ class cderive:
         self.path = {k: [] for k in uord}
         for j in range(len(self)):
             self.path[self.ordering[j]].append(j)
+            
+        # The number of input parameters equals the one of the first function:
+        self.n_args = self.dfunctions[self.ordering[0]].n_args
 
         if not reset:
             # check at least if the (new) path is consistent with the given data:
@@ -499,6 +502,7 @@ class cderive:
         single value or array-like
             The final value after the chain of functions has been traversed.
         '''
+        assert len(point) == self.n_args, f'Input point has length {len(point)}, expected: {self.n_args}.'
         self._input = point
         out = [point]
         for k in range(len(self)):
@@ -569,7 +573,7 @@ class cderive:
         -------
         list
             The outcome of self.compose routine (containing the jet-evaluations for each component).
-        '''        
+        '''
         _ = self.jetfunc(*point, **kwargs)
         points_at_functions = [[self._output[l] for l in range(len(self)) if self.ordering[l] == k] for k in range(self.n_functions)]
         # let Q = points_per_function[j], so Q is a list of points which needs to be computed for function j

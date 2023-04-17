@@ -151,7 +151,13 @@ For example, if we want to compute a chain of :math:`2^N` repetitions of the sam
 
 Moreover, if a chain indeed admits repetitions, a single point will pass through a specific function several times while it is transported from :math:`f_1` to :math:`f_N`. We can take advantage of this by calculating the derivatives at these 'intersecting' points for each unique element of the chain in parallel, using NumPy.
  
-In order to manage function chains, the dedicated class ``cderive`` has been created. This class takes a series of functions, defining the *unique* functions in the chain, an ``order`` parameter, defining the number of derivatives to be computed and an optional ``ordering`` parameter, which is a list of integers and defines the chain itself. For example, consider an alternation of a rotation and some
+To conveniently manage chains of functions, the dedicated class ``cderive`` ('chain-derive') has been implemented. This class takes a series of functions, defining the *unique* functions in the chain, an ``order`` parameter, defining the number of derivatives to be computed and an optional ``ordering`` parameter, which is a list of integers and defines the chain itself. It can be imported with the following line:
+
+.. code-block:: python
+
+    from njet.extras import cderive
+
+As an example, consider an alternation of a rotation and some
 polynomial perturbation :math:`M = 15` times:
 
 .. code-block:: python
