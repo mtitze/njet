@@ -91,6 +91,48 @@ def taylor_coefficients(evaluation, output_format=0, **kwargs):
             out = out[0]
     return out
 
+def build_tensor(D, k: int, **kwargs):
+    '''
+    Convert the components of the k-th derivative into the entries of a (self.n_args)**k tensor.
+    See njet.jet.build_tensor for details.
+    
+    Parameters
+    ----------
+    D: derive or cderive object
+    
+    k: int
+        The number of derivatives to be considered.
+    
+    Returns
+    -------
+    dict or list
+    '''
+    assert k <= D.order, f'Order ({D.order}) insufficient for requested number ({k}) of derivatives.'
+    assert hasattr(D, '_evaluation'), 'Derivative(s) need to be evaluated first. Try passing a point.'
+    try:
+        return D._evaluation.build_tensor(k=k, **kwargs)
+    except:
+        # Underlying function may be vector-valued:
+        return [ev.build_tensor(k=k, **kwargs) for ev in D._evaluation]
+
+def grad(D, *z, **kwargs):
+    '''
+    Returns the gradient of the current function.
+    See njet.jet.grad for details.
+    '''
+    if len(z) > 0:
+        _ = D(*z, **kwargs)
+    return build_tensor(D, k=1, **kwargs)
+
+def hess(D, *z, **kwargs):
+    '''
+    Returns the Hessian of the function.
+    See njet.jet.hess for details.
+    '''
+    if len(z) > 0:
+        _ = D(*z, **kwargs)
+    return build_tensor(D, k=2, **kwargs)
+
 class derive:
     '''
     Class to handle the derivatives of a (jet-)function (i.e. a function consisting of a composition
@@ -172,31 +214,13 @@ class derive:
         mult_drv = kwargs.pop('mult_drv', True)
         # perform the computation, based on the input vector
         return taylor_coefficients(self.eval(*z, **kwargs), n_args=self.n_args, mult_prm=mult_prm, mult_drv=mult_drv)
-        
-    def build_tensor(self, k: int, **kwargs):
-        '''
-        Convert the components of the k-th derivative into the entries of a (self.n_args)**k tensor.
-        See njet.jet.build_tensor for details.
-        '''
-        assert k <= self.order, f'Order ({self.order}) insufficient for requested number ({k}) of derivatives.'
-        assert hasattr(self, '_evaluation'), 'Derivative(s) need to be evaluated first. Try passing a point.'
-        return self._evaluation.build_tensor(k=k, **kwargs)
     
-    def grad(self, *z, **kwargs):
-        '''
-        Returns the gradient of the current function.
-        See njet.jet.grad for details.
-        '''
-        if len(z) > 0:
-            _ = self(*z, **kwargs)
-        return self.build_tensor(k=1, **kwargs)
+    def build_tensor(self, *args, **kwargs):
+        return build_tensor(self, *args, **kwargs)
     
-    def hess(self, *z, **kwargs):
-        '''
-        Returns the Hessian of the function.
-        See njet.jet.hess for details.
-        '''
-        if len(z) > 0:
-            _ = self(*z, **kwargs)
-        return self.build_tensor(k=2, **kwargs)
+    def grad(self, *args, **kwargs):
+        return grad(self, *args, **kwargs)
+    
+    def hess(self, *args, **kwargs):
+        return hess(self, *args, **kwargs)
         

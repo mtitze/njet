@@ -217,7 +217,7 @@ In fact, one can iterate over the ``drp`` object as with ordinary lists. The ord
      (1, 0): 0.34364574631604705,
      (0, 1): -0.9390993563190676}
 
-In some circumstances, however, previously computed jet-evaluations remain valid. For example, this is the case if we want to extract a subchain of a given chain, defined by a slice of neighbouring indices. We can extracted subchains from the original chain in the same manner as it can be done with lists. For example:
+In some circumstances, however, previously computed jet-evaluations remain valid. For example, this is the case if we want to extract a subchain of a given chain, defined by a slice of neighbouring indices. We can extract subchains from the original chain in the same manner as it can be done with lists. For example:
 
 .. code-block:: python
 

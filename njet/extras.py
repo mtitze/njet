@@ -7,6 +7,7 @@ import gc
 
 from . import jet, jetpoly, derive, taylor_coefficients
 from .common import factorials, check_zero
+from .ad import build_tensor, grad, hess
 
 def accel_asc(n: int):
     '''
@@ -1022,6 +1023,15 @@ class cderive:
         del cycling_data # without this, the memory demand will increase
         gc.collect() # cleanup to prevent cluttering of memory
         return result
+    
+    def build_tensor(self, *args, **kwargs):
+        return build_tensor(self, *args, **kwargs)
+    
+    def grad(self, *args, **kwargs):
+        return grad(self, *args, **kwargs)
+    
+    def hess(self, *args, **kwargs):
+        return hess(self, *args, **kwargs)
     
 ########################################################
 # Helper functions to deal with patterns and orderings #
