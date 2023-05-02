@@ -503,7 +503,7 @@ class cderive:
         single value or array-like
             The final value after the chain of functions has been traversed.
         '''
-        assert len(point) == self.n_args, f'Input point has length {len(point)}, expected: {self.n_args}.'
+        assert len(point) == self.n_args, f'Input point has length {len(point)}, expected: {self.n_args}'
         self._input = point
         out = [point]
         for k in range(len(self)):
