@@ -118,7 +118,7 @@ def general_faa_di_bruno(f, g, run_params={}):
     n-jet-collections of F and G, i.e. fk = n-jet(fk_1, ..., fk_n)
     where fk_j represents the j-th derivative of the k-th component of F etc.
     
-    Note that this routine requires that both f and g are represented by jetpoly
+    Note that this routine requires that fk (and gl etc.) are represented by jetpoly
     objects in their higher-order array entries (they store the various partial derivatives
     for the given orders).
     In particular, the ordinary derive.eval routine will produce such objects. 
@@ -148,23 +148,23 @@ def general_faa_di_bruno(f, g, run_params={}):
     '''
     # Further information can be found here:
     # https://mathoverflow.net/questions/106323/faa-di-brunos-formula-for-vector-valued-functions
-    n_dim = len(g) # (== domain dimension of f)
+    rdim = len(f) # (== range dimension of f)
     max_order = f[0].order # number of requested derivatives
     assert all([jf.order == max_order for jf in f] + [jg.order == max_order for jg in g])
     
     if len(run_params) == 0:
         run_params = _make_run_params(max_order)
     facts, indices = run_params['factorials'], run_params['indices']
-    
-    out = [[fk.array(0) for fk in f]] + [[0 for k in range(n_dim)] for l in range(max_order)]
+
+    out = [[fk.array(0) for fk in f]] + [[0 for k in range(rdim)] for l in range(max_order)]
     for order, r, e in indices:
-        for k in range(n_dim):
+        for k in range(rdim):
             jfk_r = f[k].array(r)
             if check_zero(jfk_r): 
                 # skip in case that the r-th derivative of the k-th component of jfk does not exist
                 continue
             out[order][k] += symtensor_call([[jg.array(nj)/facts[nj] for jg in g] for nj in e], jfk_r.terms)/facts[r]*facts[order]
-    return [jet(*[out[k][j] for k in range(max_order + 1)], n=max_order) for j in range(n_dim)]
+    return [jet(*[out[k][j] for k in range(max_order + 1)], n=max_order) for j in range(rdim)]
 
 def compose(*evals, run_params={}, **kwargs):
     '''
