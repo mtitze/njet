@@ -217,11 +217,11 @@ class jetpoly:
             Hereby it must hold facts[k] = k!
             
         mult_prm: bool, optional
-            Whether or not to include multiplicities into the final result related to the permulation of expressions (e.g. derivatives)
+            Whether or not to include multiplicities into the final result related to the permutation of expressions (e.g. derivatives).
             (default: True).
             
         mult_drv: bool, optional
-            Whether or not to include multiplicities related to the derivatives of powers (default: True)
+            Whether or not to include multiplicities related to the derivatives of powers.
         
         Returns
         -------
@@ -255,7 +255,7 @@ class jetpoly:
                 if power == 0: # the (k, 0)-entries correspond to the scalar 1 and will be ignored here.
                     continue
                 indices[index] = power
-                if mult_prm or mult_drv:
+                if mult_drv:
                     multiplicity = multiplicity*facts[power]
                     
             # Step 2: Update the Taylor-coefficients dictionary
