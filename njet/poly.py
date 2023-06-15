@@ -94,10 +94,7 @@ class jetpoly:
         return other + self
     
     def __neg__(self):
-        new_terms = {}
-        for key, value in self.terms.items():
-            new_terms[key] = -value
-        return self.__class__(terms=new_terms)
+        return self.__class__(terms={key: -value for key, value in self.terms.items()})
     
     def __sub__(self, other):
         return self + -other
@@ -218,7 +215,6 @@ class jetpoly:
             
         mult_prm: bool, optional
             Whether or not to include multiplicities into the final result related to the permutation of expressions (e.g. derivatives).
-            (default: True).
             
         mult_drv: bool, optional
             Whether or not to include multiplicities related to the derivatives of powers.
