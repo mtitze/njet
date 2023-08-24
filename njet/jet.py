@@ -208,12 +208,13 @@ class jet:
         return other**self
     
     def __truediv__(self, other):
-        other = self.convert(other)
-        return self.__mul__(other.inv())
+        '''
+        Compute the result self/other.
+        '''
+        return self*(1/other)
     
     def __rtruediv__(self, other):
-        other = self.convert(other)
-        return other.__mul__(self.inv())
+        return other*self.inv()
     
     def copy(self):
         '''
