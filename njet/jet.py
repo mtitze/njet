@@ -153,7 +153,6 @@ class jet:
         return result
     
     def __radd__(self, other):
-        other = self.convert(other)
         return self + other
     
     def __sub__(self, other):
@@ -176,11 +175,9 @@ class jet:
         return result
     
     def __rmul__(self, other):
-        other = self.convert(other)
         return self*other
     
     def __pow__(self, other):
-        
         other = self.convert(other)
         assert other.order == 0 # only scalars are accepted here.
         m = other.array(0)

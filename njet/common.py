@@ -10,7 +10,7 @@ def check_zero(value):
         return all([check_zero(e) for e in value])
     else:
         return check
-    
+
 def factorials(n: int):
     k = 1
     facts = [1]
@@ -18,7 +18,7 @@ def factorials(n: int):
         k *= j
         facts.append(k)
     return facts
-    
+
 def _nCr(n, r=[]):
     # Generator idea for n_over_k's,
     # taken from https://stackoverflow.com/questions/24093387/pascals-triangle-for-python

@@ -1,4 +1,5 @@
 import warnings
+
 from .common import check_zero, factorials
 
 class jetpoly:
@@ -74,7 +75,7 @@ class jetpoly:
     def _repr_html_(self):
         outstr = self.__str__().replace('\n', '<br>')
         return f'<samp>{outstr}</samp>'
-    
+
     def __add__(self, other):
         if not isinstance(self, type(other)):
             other = self.__class__(other)
