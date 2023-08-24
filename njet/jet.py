@@ -3,11 +3,6 @@ from copy import copy
 from .common import check_zero, factorials, nCr, convert_indices
 from .poly import jetpoly
 
-def sum_by_jetpoly(ls):
-    # sum over the members of a given list so that each member e of jetpoly class appears on the
-    # left. This can be used to prevent that in case of numpy the new values are numpy.arrays.
-    return sum([e for e in ls if isinstance(e, jetpoly)]) + sum([e for e in ls if not isinstance(e, jetpoly)])
-
 def general_leibniz_rule(f1, f2):
     '''
     Compute the higher-order derivatives of the product of two functions f1*f2.
@@ -28,7 +23,7 @@ def general_leibniz_rule(f1, f2):
     '''
     nmax = len(f1) - 1 # len(f1): max number of summands
     nok = nCr(nmax)
-    return [sum_by_jetpoly([nok[n][k]*f1[n-k]*f2[k] if isinstance(f1[n-k], jetpoly) else nok[n][k]*f2[k]*f1[n-k] for k in range(n + 1)]) for n in range(nmax + 1)]
+    return [sum([nok[n][k]*f1[n-k]*f2[k] for k in range(n + 1)]) for n in range(nmax + 1)]
 
 def faa_di_bruno(f, g):
     '''
@@ -58,7 +53,7 @@ def faa_di_bruno(f, g):
         List containing the values (f o g)^k for k = 0, ..., len(f) - 1.
     '''
     bell = bell_polynomials(*g[1:])
-    return [sum_by_jetpoly([bell.get((n, k), 0)*f[k] for k in range(len(f))]) for n in range(len(f))] # or with numpy arrays: np.matmul(bell, f)
+    return [sum([bell.get((n, k), 0)*f[k] for k in range(len(f))]) for n in range(len(f))] # or with numpy arrays: np.matmul(bell, f)
 
 def bell_polynomials(*z):
     '''
@@ -80,7 +75,7 @@ def bell_polynomials(*z):
     nok = nCr(n)
     for jn in range(n + 1):
         for jk in range(1, jn + 1):
-            B[(jn, jk)] = sum_by_jetpoly([nok[jn - 1][m - 1]*B.get((jn - m, jk - 1), 0)*z[m - 1] for m in range(1, jn - jk + 2)])
+            B[(jn, jk)] = sum([nok[jn - 1][m - 1]*B.get((jn - m, jk - 1), 0)*z[m - 1] for m in range(1, jn - jk + 2)])
     return B
     
 class jet:
@@ -146,6 +141,8 @@ class jet:
         return result
     
     def __add__(self, other):
+        if isinstance(other, jetpoly): # ensure that any jetpoly contains jets as coefficients (required in nested expressions), and not the other way around.
+            return other + self
         other = self.convert(other)
         max_order = max([self.order, other.order])
         result_array = [self.array(n) + other.array(n) for n in range(max_order + 1)]
@@ -162,6 +159,8 @@ class jet:
         return -self + other
         
     def __mul__(self, other):
+        if isinstance(other, jetpoly): # ensure that any jetpoly contains jets as coefficients (required in nested expressions), and not the other way around.
+            return other*self
         other = self.convert(other)
         max_order = max([self.order, other.order])
         result = self.__class__(n=max_order, graph=[(2, '*'), self.graph, other.graph])
